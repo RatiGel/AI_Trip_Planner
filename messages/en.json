@@ -1,0 +1,156 @@
+{
+  "site": {
+    "name": "TbilisiTrip",
+    "tagline": "Your AI-powered guide to Georgia"
+  },
+  "nav": {
+    "home": "Home",
+    "cities": "Cities",
+    "map": "Map",
+    "chat": "AI Planner",
+    "trips": "My Trips",
+    "tickets": "Tickets",
+    "admin": "Admin",
+    "login": "Sign in",
+    "register": "Sign up",
+    "logout": "Sign out",
+    "language": "Language"
+  },
+  "home": {
+    "heroTitle": "Plan a perfect trip to Tbilisi",
+    "heroSubtitle": "Tell our AI what you love, and get a day-by-day plan with museums, cafes, nightlife and more.",
+    "ctaPlan": "Plan my trip",
+    "ctaBrowse": "Browse places",
+    "featuredCities": "Featured cities",
+    "featuredPlaces": "Featured places",
+    "howItWorks": "How it works",
+    "step1Title": "Tell us your style",
+    "step1Body": "How many days, what you love, your budget.",
+    "step2Title": "Get a smart itinerary",
+    "step2Body": "AI picks real curated places — not generic suggestions.",
+    "step3Title": "Book and go",
+    "step3Body": "Reserve venues, buy bus/rail tickets, save your trip."
+  },
+  "cities": {
+    "title": "Cities",
+    "subtitle": "Browse curated guides for every Georgian city.",
+    "placesCount": "{count} places"
+  },
+  "city": {
+    "overview": "Overview",
+    "highlights": "Top picks",
+    "all": "All places",
+    "categoriesLabel": "Categories"
+  },
+  "place": {
+    "openingHours": "Opening hours",
+    "address": "Address",
+    "phone": "Phone",
+    "website": "Website",
+    "reserve": "Reserve",
+    "viewOnMap": "View on map",
+    "similarNearby": "Similar nearby",
+    "priceLevel": "Price",
+    "rating": "Rating"
+  },
+  "categories": {
+    "museum": "Museums",
+    "sight": "Sights",
+    "cafe": "Cafes",
+    "club": "Nightlife",
+    "restaurant": "Restaurants",
+    "park": "Parks",
+    "shop": "Shopping",
+    "wine": "Wine"
+  },
+  "chat": {
+    "title": "AI Trip Planner",
+    "subtitle": "Tell me about your trip. I'll build a day-by-day plan from real places.",
+    "placeholder": "e.g. I have 3 days in Tbilisi and I love museums and good coffee",
+    "send": "Send",
+    "save": "Save this trip",
+    "newChat": "New chat",
+    "examples": "Examples",
+    "example1": "I have 3 days and want to see museums",
+    "example2": "Best nightlife for 2 nights",
+    "example3": "Family-friendly weekend with kids"
+  },
+  "map": {
+    "title": "Map",
+    "nearMe": "Find near me",
+    "filters": "Filters",
+    "openNow": "Open now",
+    "distance": "Distance",
+    "showList": "Show list"
+  },
+  "trips": {
+    "title": "My Trips",
+    "empty": "You haven't saved any trips yet.",
+    "startPlanning": "Start planning"
+  },
+  "tickets": {
+    "title": "Tickets",
+    "subtitle": "Travel between Georgian cities or use Tbilisi public transit.",
+    "bus": "Bus",
+    "rail": "Railway",
+    "transitPass": "Tbilisi transit pass",
+    "from": "From",
+    "to": "To",
+    "date": "Date",
+    "passengers": "Passengers",
+    "search": "Search",
+    "buy": "Buy"
+  },
+  "reserve": {
+    "title": "Reserve a table",
+    "date": "Date",
+    "time": "Time",
+    "partySize": "Party size",
+    "notes": "Special requests",
+    "confirm": "Confirm reservation"
+  },
+  "admin": {
+    "title": "Admin",
+    "dashboard": "Dashboard",
+    "cities": "Cities",
+    "places": "Places",
+    "categories": "Categories",
+    "reservations": "Reservations",
+    "ticketOrders": "Ticket orders",
+    "users": "Users",
+    "newPlace": "New place",
+    "newCity": "New city",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit"
+  },
+  "auth": {
+    "signInTitle": "Welcome back",
+    "signInSubtitle": "Sign in to save trips and make reservations.",
+    "signUpTitle": "Create your account",
+    "signUpSubtitle": "It only takes a minute.",
+    "email": "Email",
+    "password": "Password",
+    "name": "Full name",
+    "signInButton": "Sign in",
+    "signUpButton": "Create account",
+    "google": "Continue with Google",
+    "noAccount": "No account?",
+    "hasAccount": "Already have an account?",
+    "createOne": "Create one",
+    "signInLink": "Sign in"
+  },
+  "common": {
+    "search": "Search",
+    "loading": "Loading…",
+    "back": "Back",
+    "viewAll": "View all",
+    "showMore": "Show more",
+    "comingSoon": "Coming soon"
+  },
+  "footer": {
+    "tagline": "Made for travellers in Georgia.",
+    "rights": "© {year} TbilisiTrip. All rights reserved."
+  }
+}
