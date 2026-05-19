@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Trip Planner — Tbilisi & Georgia
 
-## Getting Started
+AI-powered tourism site for Georgia. Admin curates POIs (museums, sights, cafes,
+nightlife, etc.); visitors get a Claude-powered chat that builds day-by-day
+itineraries, browse on a map, reserve tables, and buy bus / rail / Tbilisi
+transit tickets.
 
-First, run the development server:
+**Phase 1 (this repo, current state):** frontend only, runs on hardcoded mock
+data — no DB, no auth, no real AI calls. Every screen is reachable end-to-end
+in both English and Georgian.
+
+## Stack
+
+- Next.js 16 (App Router, Turbopack)
+- React 19, TypeScript
+- Tailwind CSS v4 + shadcn/ui (on `@base-ui/react`)
+- next-intl 4 (en + ka)
+- lucide-react icons, sonner toasts
+
+Planned for later phases: Mongoose / MongoDB, Auth.js, Mapbox, Claude API
+(Anthropic SDK), Stripe, Resend.
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev   # http://localhost:3000 → redirects to /en
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Other scripts:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build   # production build
+npm run start   # serve the production build
+npm run lint
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Folder layout
 
-## Learn More
+```
+src/
+  app/
+    [locale]/
+      page.tsx                 # landing
+      cities/                  # list + [slug] detail
+      places/[slug]/           # POI detail
+      map/                     # map view (mocked)
+      chat/                    # AI chat UI (mocked replies)
+      trips/                   # saved itineraries
+      tickets/                 # bus / rail / transit pass
+      reserve/[placeId]/       # reservation form
+      admin/                   # admin dashboard
+        places/{,new}/
+        cities/
+        reservations/
+        orders/
+      login/, register/        # auth UI (no logic yet)
+  components/
+    ui/                        # shadcn primitives
+    site/                      # header, footer, cards, forms
+    chat/, map/, admin/        # feature components
+  i18n/
+    routing.ts navigation.ts request.ts
+  lib/
+    mock/                      # fake data — same shape as future Mongoose models
+    utils.ts
+  types/index.ts
+  proxy.ts                     # next-intl locale routing
+messages/
+  en.json, ka.json
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Phase roadmap
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Frontend with mocked data — done
+2. Backend + Mongoose models, API routes
+3. Auth.js (credentials + Google) and admin role gating
+4. Mapbox integration with geocoding + nearby search
+5. Claude API (Anthropic SDK) chat with tool-use
+6. Stripe payments + Resend confirmations
+7. SEO, analytics, deploy to Vercel
