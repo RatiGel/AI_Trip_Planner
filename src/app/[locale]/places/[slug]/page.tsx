@@ -7,14 +7,12 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PlaceCard } from "@/components/site/place-card";
-import { getPlaceBySlug, getPlacesByCity, mockPlaces } from "@/lib/mock/places";
+import { connectDB } from "@/lib/db";
+import { PlaceModel } from "@/lib/models/place";
+import type { Place } from "@/types";
 
 const DAY_NAMES_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const DAY_NAMES_KA = ["კვი", "ორშ", "სამ", "ოთხ", "ხუთ", "პარ", "შაბ"];
-
-export function generateStaticParams() {
-  return mockPlaces.map((p) => ({ slug: p.slug }));
-}
 
 export default async function PlacePage({
   params,
@@ -23,22 +21,25 @@ export default async function PlacePage({
 }) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
-  const place = getPlaceBySlug(slug);
+  await connectDB();
+  const place = (await PlaceModel.findOne({ slug }).lean()) as unknown as Place | null;
   if (!place) notFound();
-  return <PlaceContent slug={slug} />;
+  const similar = (await PlaceModel.find({
+    citySlug: place.citySlug,
+    slug: { $ne: slug },
+  })
+    .limit(3)
+    .lean()) as unknown as Place[];
+  return <PlaceContent place={place} similar={similar} />;
 }
 
-function PlaceContent({ slug }: { slug: string }) {
+function PlaceContent({ place, similar }: { place: Place; similar: Place[] }) {
   const t = useTranslations("place");
   const tCat = useTranslations("categories");
   const locale = useLocale();
-  const place = getPlaceBySlug(slug)!;
   const name = locale === "ka" ? place.nameKa : place.name;
   const description = locale === "ka" ? place.descriptionKa : place.description;
   const dayNames = locale === "ka" ? DAY_NAMES_KA : DAY_NAMES_EN;
-  const similar = getPlacesByCity(place.citySlug)
-    .filter((p) => p.id !== place.id)
-    .slice(0, 3);
 
   return (
     <article className="container mx-auto grid gap-8 px-4 py-10 lg:grid-cols-3">
@@ -100,7 +101,7 @@ function PlaceContent({ slug }: { slug: string }) {
             <h2 className="mb-4 text-xl font-semibold">{t("similarNearby")}</h2>
             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
               {similar.map((p) => (
-                <PlaceCard key={p.id} place={p} />
+                <PlaceCard key={p.slug} place={p} />
               ))}
             </div>
           </section>

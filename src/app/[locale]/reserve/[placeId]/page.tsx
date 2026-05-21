@@ -3,11 +3,9 @@ import { notFound } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { ReserveForm } from "@/components/site/reserve-form";
-import { mockPlaces } from "@/lib/mock/places";
-
-export function generateStaticParams() {
-  return mockPlaces.filter((p) => p.reservable).map((p) => ({ placeId: p.id }));
-}
+import { connectDB } from "@/lib/db";
+import { PlaceModel } from "@/lib/models/place";
+import type { Place } from "@/types";
 
 export default async function ReservePage({
   params,
@@ -16,15 +14,15 @@ export default async function ReservePage({
 }) {
   const { locale, placeId } = await params;
   setRequestLocale(locale);
-  const place = mockPlaces.find((p) => p.id === placeId);
+  await connectDB();
+  const place = (await PlaceModel.findById(placeId).lean()) as unknown as Place | null;
   if (!place) notFound();
-  return <ReserveContent placeId={placeId} />;
+  return <ReserveContent place={place} />;
 }
 
-function ReserveContent({ placeId }: { placeId: string }) {
+function ReserveContent({ place }: { place: Place }) {
   const t = useTranslations("reserve");
   const locale = useLocale();
-  const place = mockPlaces.find((p) => p.id === placeId)!;
   const name = locale === "ka" ? place.nameKa : place.name;
 
   return (

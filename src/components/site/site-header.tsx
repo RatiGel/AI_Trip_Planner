@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Menu, MapPin, Sparkles } from "lucide-react";
+import { Menu, MapPin, Sparkles, LogOut, User } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
 import { Link, usePathname } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +27,7 @@ export function SiteHeader() {
   const t = useTranslations("nav");
   const tSite = useTranslations("site");
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -66,9 +68,28 @@ export function SiteHeader() {
               {t("chat")}
             </Link>
           </Button>
-          <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
-            <Link href="/login">{t("login")}</Link>
-          </Button>
+
+          {session?.user ? (
+            <div className="hidden md:flex items-center gap-2">
+              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <User className="size-4" />
+                {session.user.name ?? session.user.email}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => signOut({ callbackUrl: "/" })}
+              >
+                <LogOut className="size-4" />
+                {t("logout")}
+              </Button>
+            </div>
+          ) : (
+            <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
+              <Link href="/login">{t("login")}</Link>
+            </Button>
+          )}
+
           <LanguageSwitcher />
 
           <Sheet>
@@ -98,18 +119,29 @@ export function SiteHeader() {
                   {t("admin")}
                 </Link>
                 <div className="h-px bg-border my-2" />
-                <Link
-                  href="/login"
-                  className="rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
-                >
-                  {t("login")}
-                </Link>
-                <Link
-                  href="/register"
-                  className="rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
-                >
-                  {t("register")}
-                </Link>
+                {session?.user ? (
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="rounded-md px-3 py-2 text-sm font-medium hover:bg-accent text-left"
+                  >
+                    {t("logout")}
+                  </button>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className="rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
+                    >
+                      {t("login")}
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
+                    >
+                      {t("register")}
+                    </Link>
+                  </>
+                )}
               </nav>
             </SheetContent>
           </Sheet>

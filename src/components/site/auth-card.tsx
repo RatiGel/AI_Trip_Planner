@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { signIn } from "next-auth/react";
+import { useRouter } from "@/i18n/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,16 +13,48 @@ import { Link } from "@/i18n/navigation";
 
 export function AuthCard({ mode }: { mode: "signin" | "signup" }) {
   const t = useTranslations("auth");
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    toast.success(mode === "signin" ? t("signInButton") : t("signUpButton"));
-  }
+  const [loading, setLoading] = useState(false);
 
   const isSignup = mode === "signup";
+
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+
+    if (isSignup) {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Registration failed");
+        setLoading(false);
+        return;
+      }
+    }
+
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    setLoading(false);
+
+    if (result?.error) {
+      toast.error("Invalid email or password");
+      return;
+    }
+
+    router.push("/trips");
+    router.refresh();
+  }
 
   return (
     <div className="container mx-auto flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-10">
@@ -32,7 +66,7 @@ export function AuthCard({ mode }: { mode: "signin" | "signup" }) {
           {isSignup ? t("signUpSubtitle") : t("signInSubtitle")}
         </p>
 
-        <Button variant="outline" className="mt-6 w-full">
+        <Button variant="outline" className="mt-6 w-full" disabled>
           {t("google")}
         </Button>
 
@@ -51,6 +85,7 @@ export function AuthCard({ mode }: { mode: "signin" | "signup" }) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
           )}
@@ -62,6 +97,7 @@ export function AuthCard({ mode }: { mode: "signin" | "signup" }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={loading}
             />
           </div>
           <div className="space-y-2">
@@ -73,10 +109,11 @@ export function AuthCard({ mode }: { mode: "signin" | "signup" }) {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={8}
+              disabled={loading}
             />
           </div>
-          <Button type="submit" className="w-full">
-            {isSignup ? t("signUpButton") : t("signInButton")}
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "…" : isSignup ? t("signUpButton") : t("signInButton")}
           </Button>
         </form>
 

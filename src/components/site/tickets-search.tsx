@@ -16,11 +16,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import {
-  mockBusTickets,
-  mockRailTickets,
-  mockTransitPasses,
-} from "@/lib/mock/tickets";
 import type { TicketOption } from "@/types";
 
 const CITIES = ["Tbilisi", "Batumi", "Kazbegi", "Kutaisi"];
@@ -59,17 +54,21 @@ function ResultRow({ option, onBuy }: { option: TicketOption; onBuy: () => void 
   );
 }
 
-export function TicketsSearch() {
+export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
   const t = useTranslations("tickets");
   const [tab, setTab] = useState<"bus" | "rail" | "transit-pass">("bus");
   const [from, setFrom] = useState("Tbilisi");
   const [to, setTo] = useState("Batumi");
   const [date, setDate] = useState("");
 
+  const busTickets = tickets.filter((t) => t.type === "bus");
+  const railTickets = tickets.filter((t) => t.type === "rail");
+  const transitPasses = tickets.filter((t) => t.type === "transit-pass");
+
   const results = useMemo(() => {
-    const list = tab === "bus" ? mockBusTickets : tab === "rail" ? mockRailTickets : [];
+    const list = tab === "bus" ? busTickets : tab === "rail" ? railTickets : [];
     return list.filter((o) => o.from === from && o.to === to);
-  }, [tab, from, to]);
+  }, [tab, from, to, busTickets, railTickets]);
 
   function buy(o: TicketOption) {
     toast.success(`${o.operator} · ${o.priceGEL}₾`);
@@ -84,14 +83,7 @@ export function TicketsSearch() {
       </TabsList>
 
       <TabsContent value="bus" className="mt-6 space-y-6">
-        <RouteForm
-          from={from}
-          to={to}
-          date={date}
-          onFrom={setFrom}
-          onTo={setTo}
-          onDate={setDate}
-        />
+        <RouteForm from={from} to={to} date={date} onFrom={setFrom} onTo={setTo} onDate={setDate} />
         <div className="space-y-3">
           {results.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("search")}…</p>
@@ -102,14 +94,7 @@ export function TicketsSearch() {
       </TabsContent>
 
       <TabsContent value="rail" className="mt-6 space-y-6">
-        <RouteForm
-          from={from}
-          to={to}
-          date={date}
-          onFrom={setFrom}
-          onTo={setTo}
-          onDate={setDate}
-        />
+        <RouteForm from={from} to={to} date={date} onFrom={setFrom} onTo={setTo} onDate={setDate} />
         <div className="space-y-3">
           {results.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("search")}…</p>
@@ -120,11 +105,8 @@ export function TicketsSearch() {
       </TabsContent>
 
       <TabsContent value="transit-pass" className="mt-6 grid gap-3 sm:grid-cols-3">
-        {mockTransitPasses.map((p) => (
-          <div
-            key={p.id}
-            className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5"
-          >
+        {transitPasses.map((p) => (
+          <div key={p.id} className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5">
             <Badge className="w-fit" variant="secondary">
               <Clock className="size-3.5" /> {p.operator}
             </Badge>
@@ -138,19 +120,10 @@ export function TicketsSearch() {
 }
 
 function RouteForm({
-  from,
-  to,
-  date,
-  onFrom,
-  onTo,
-  onDate,
+  from, to, date, onFrom, onTo, onDate,
 }: {
-  from: string;
-  to: string;
-  date: string;
-  onFrom: (v: string) => void;
-  onTo: (v: string) => void;
-  onDate: (v: string) => void;
+  from: string; to: string; date: string;
+  onFrom: (v: string) => void; onTo: (v: string) => void; onDate: (v: string) => void;
 }) {
   const t = useTranslations("tickets");
   return (
@@ -158,26 +131,18 @@ function RouteForm({
       <div className="space-y-1">
         <Label className="text-xs">{t("from")}</Label>
         <Select value={from} onValueChange={(v) => v && onFrom(v)}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
+          <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
-            {CITIES.map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
+            {CITIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
       <div className="space-y-1">
         <Label className="text-xs">{t("to")}</Label>
         <Select value={to} onValueChange={(v) => v && onTo(v)}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
+          <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
-            {CITIES.filter((c) => c !== from).map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
+            {CITIES.filter((c) => c !== from).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>

@@ -86,7 +86,8 @@
   "trips": {
     "title": "My Trips",
     "empty": "You haven't saved any trips yet.",
-    "startPlanning": "Start planning"
+    "startPlanning": "Start planning",
+    "signInToSee": "Sign in to see your trips"
   },
   "tickets": {
     "title": "Tickets",

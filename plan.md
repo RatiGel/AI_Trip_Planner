@@ -4,15 +4,15 @@
 
 ---
 
-## Phase 2 — Backend (current)
+## Phase 2 — Backend ✅
 
 Connect real data. Replace all `src/lib/mock/` reads with API routes backed by MongoDB.
 
 ### 2.1 Database setup
-- [ ] Add `MONGODB_URI` to `.env.local`
-- [ ] Install `mongoose`
-- [ ] `src/lib/db.ts` — connection singleton (reuse across hot reloads)
-- [ ] Mongoose models matching existing types in `src/types/index.ts`:
+- [x] Add `MONGODB_URI` to `.env.local`
+- [x] Install `mongoose`
+- [x] `src/lib/db.ts` — connection singleton (reuse across hot reloads)
+- [x] Mongoose models matching existing types in `src/types/index.ts`:
   - `City`, `Place`, `TicketOption`, `Reservation`, `SavedItinerary`
 
 ### 2.2 API routes
@@ -20,35 +20,39 @@ All under `src/app/api/`:
 
 | Route | Method | Description |
 |---|---|---|
-| `/api/cities` | GET | list cities |
-| `/api/cities/[slug]` | GET | single city |
-| `/api/places` | GET | list places (`?city=`, `?category=`) |
-| `/api/places/[slug]` | GET | single place |
-| `/api/tickets` | GET | list ticket options |
-| `/api/reservations` | GET / POST | list / create reservation |
-| `/api/trips` | GET / POST | saved itineraries |
+| `/api/cities` | GET | list cities ✅ |
+| `/api/cities/[slug]` | GET | single city ✅ |
+| `/api/places` | GET | list places (`?city=`, `?category=`) ✅ |
+| `/api/places/[slug]` | GET | single place ✅ |
+| `/api/tickets` | GET | list ticket options ✅ |
+| `/api/reservations` | GET / POST | list / create reservation ✅ |
+| `/api/trips` | GET / POST | saved itineraries ✅ |
 
 ### 2.3 Seed script
-- [ ] `scripts/seed.ts` — import mock data into MongoDB once
-- [ ] Run: `npx tsx scripts/seed.ts`
+- [x] `scripts/seed.ts` — import mock data into MongoDB once
+- [x] Run: `npx tsx --env-file=.env.local scripts/seed.ts`
 
 ### 2.4 Swap mock → API in UI
-- [ ] Replace direct mock imports with `fetch()` calls in server components
-- [ ] Keep mock types as-is (Mongoose schema mirrors them)
+- [x] Replace direct mock imports with DB calls in server components
 
 ---
 
-## Phase 3 — Auth
+## Phase 3 — Auth ✅
 
 Gate admin, enable saved trips and reservations per user.
 
-- [ ] `AUTH_SECRET`, `AUTH_GOOGLE_ID/SECRET` in `.env.local`
-- [ ] Install `next-auth@beta` (Auth.js v5)
-- [ ] `src/lib/auth.ts` — config with Google provider + MongoDB adapter
-- [ ] Session available via `auth()` in server components
-- [ ] Protect `src/app/[locale]/admin/` layout — redirect if no session
-- [ ] Add `userId` to `Reservation` and `SavedItinerary` models
-- [ ] `/api/auth/[...nextauth]` route handler
+- [x] `AUTH_SECRET` in `.env.local`
+- [x] Install `next-auth@beta` (Auth.js v5)
+- [x] `src/lib/auth.ts` — Credentials provider, JWT sessions
+- [x] `src/lib/models/user.ts` — User model with bcrypt passwords
+- [x] `/api/register` — sign-up endpoint
+- [x] `/api/auth/[...nextauth]` route handler
+- [x] `src/components/site/auth-card.tsx` — wired to real auth
+- [x] `src/components/providers.tsx` — SessionProvider wrapper
+- [x] Header shows user name + logout when signed in
+- [x] `userId` on `Reservation` and `Itinerary` models
+- [ ] Protect `src/app/[locale]/admin/` layout — redirect if no session (Phase 4 prep)
+- [ ] Google OAuth provider (needs `AUTH_GOOGLE_ID/SECRET`)
 
 ---
 

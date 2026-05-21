@@ -6,12 +6,10 @@ import { notFound } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { CategoryTabs } from "@/components/site/category-tabs";
-import { getCityBySlug, mockCities } from "@/lib/mock/cities";
-import { getPlacesByCity } from "@/lib/mock/places";
-
-export function generateStaticParams() {
-  return mockCities.map((c) => ({ slug: c.slug }));
-}
+import { connectDB } from "@/lib/db";
+import { CityModel } from "@/lib/models/city";
+import { PlaceModel } from "@/lib/models/place";
+import type { City, Place } from "@/types";
 
 export default async function CityPage({
   params,
@@ -20,17 +18,17 @@ export default async function CityPage({
 }) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
-  const city = getCityBySlug(slug);
+  await connectDB();
+  const city = (await CityModel.findOne({ slug }).lean()) as unknown as City | null;
   if (!city) notFound();
-  return <CityContent slug={slug} />;
+  const places = (await PlaceModel.find({ citySlug: slug }).lean()) as unknown as Place[];
+  return <CityContent city={city} places={places} />;
 }
 
-function CityContent({ slug }: { slug: string }) {
+function CityContent({ city, places }: { city: City; places: Place[] }) {
   const t = useTranslations("city");
   const tNav = useTranslations("nav");
   const locale = useLocale();
-  const city = getCityBySlug(slug)!;
-  const places = getPlacesByCity(slug);
   const name = locale === "ka" ? city.nameKa : city.name;
   const description = locale === "ka" ? city.descriptionKa : city.description;
 
