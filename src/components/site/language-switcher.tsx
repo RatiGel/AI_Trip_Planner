@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
 
-const LABELS: Record<Locale, string> = { en: "English", ka: "ქართული" };
+const LABELS: Record<Locale, string> = { en: "English", ka: "ქართული", ru: "Русский" };
 
 export function LanguageSwitcher() {
   const t = useTranslations("nav");
