@@ -144,6 +144,50 @@
   font-family: var(--font-display), "Georgia", serif;
 }
 
+/* Site theme tokens — dark by default, overridden by .light class */
+:root,
+:root.dark {
+  --site-bg-base: #0a0a0a;
+  --site-bg-surface: #141414;
+  --site-bg-elevated: #1e1e1e;
+  --site-header-bg: rgba(10, 10, 10, 0.92);
+  --site-text: rgba(255, 255, 255, 1);
+  --site-text-80: rgba(255, 255, 255, 0.8);
+  --site-text-65: rgba(255, 255, 255, 0.65);
+  --site-text-60: rgba(255, 255, 255, 0.6);
+  --site-text-50: rgba(255, 255, 255, 0.5);
+  --site-text-40: rgba(255, 255, 255, 0.4);
+  --site-text-35: rgba(255, 255, 255, 0.35);
+  --site-border-06: rgba(255, 255, 255, 0.06);
+  --site-border-08: rgba(255, 255, 255, 0.08);
+  --site-border-10: rgba(255, 255, 255, 0.1);
+  --site-border-20: rgba(255, 255, 255, 0.2);
+  --site-surface-08: rgba(255, 255, 255, 0.08);
+  --site-surface-10: rgba(255, 255, 255, 0.1);
+  --site-surface-15: rgba(255, 255, 255, 0.15);
+}
+
+:root.light {
+  --site-bg-base: #fafafa;
+  --site-bg-surface: #f2f2f2;
+  --site-bg-elevated: #e6e6e6;
+  --site-header-bg: rgba(250, 250, 250, 0.92);
+  --site-text: rgba(15, 15, 15, 1);
+  --site-text-80: rgba(15, 15, 15, 0.8);
+  --site-text-65: rgba(15, 15, 15, 0.65);
+  --site-text-60: rgba(15, 15, 15, 0.6);
+  --site-text-50: rgba(15, 15, 15, 0.5);
+  --site-text-40: rgba(15, 15, 15, 0.4);
+  --site-text-35: rgba(15, 15, 15, 0.35);
+  --site-border-06: rgba(0, 0, 0, 0.06);
+  --site-border-08: rgba(0, 0, 0, 0.08);
+  --site-border-10: rgba(0, 0, 0, 0.1);
+  --site-border-20: rgba(0, 0, 0, 0.2);
+  --site-surface-08: rgba(0, 0, 0, 0.06);
+  --site-surface-10: rgba(0, 0, 0, 0.08);
+  --site-surface-15: rgba(0, 0, 0, 0.1);
+}
+
 /* Hide scrollbar for horizontal scroll containers */
 .scrollbar-hide {
   -ms-overflow-style: none;

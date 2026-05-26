@@ -24,7 +24,7 @@ function PlaceCard({ place, featured = false }: { place: Place; featured?: boole
   return (
     <motion.div
       className={`group overflow-hidden rounded-2xl${featured ? " md:col-span-2" : ""}`}
-      style={{ background: "#1E1E1E" }}
+      style={{ background: "var(--site-bg-elevated)" }}
       initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -53,8 +53,8 @@ function PlaceCard({ place, featured = false }: { place: Place; featured?: boole
           >
             {badge}
           </span>
-          <h3 className="font-display mb-1.5 text-xl text-white">{place.name}</h3>
-          <p className="line-clamp-2 text-[13px] leading-relaxed text-white/50">{place.description}</p>
+          <h3 className="font-display mb-1.5 text-xl" style={{ color: "var(--site-text)" }}>{place.name}</h3>
+          <p className="line-clamp-2 text-[13px] leading-relaxed" style={{ color: "var(--site-text-50)" }}>{place.description}</p>
           <div className="mt-3 flex items-center gap-3">
             {place.rating && (
               <span className="flex items-center gap-1 text-[13px] font-semibold" style={{ color: "#E8A020" }}>
@@ -62,7 +62,7 @@ function PlaceCard({ place, featured = false }: { place: Place; featured?: boole
                 {place.rating}
               </span>
             )}
-            <span className="text-[12px] text-white/35">
+            <span className="text-[12px]" style={{ color: "var(--site-text-35)" }}>
               {"$".repeat(place.priceLevel ?? 1)}
             </span>
           </div>
@@ -77,7 +77,7 @@ export function FeaturedPlaces({ places }: { places: Place[] }) {
   const [featured, ...rest] = places.slice(0, 4);
 
   return (
-    <section style={{ background: "#0A0A0A" }} className="px-6 py-20 md:px-12">
+    <section style={{ background: "var(--site-bg-base)" }} className="px-6 py-20 md:px-12">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-3">
@@ -86,8 +86,8 @@ export function FeaturedPlaces({ places }: { places: Place[] }) {
           </p>
           <div className="flex items-end justify-between">
             <h2
-              className="font-display leading-tight text-white"
-              style={{ fontSize: "clamp(36px, 5vw, 56px)", letterSpacing: "-1.5px" }}
+              className="font-display leading-tight"
+              style={{ fontSize: "clamp(36px, 5vw, 56px)", letterSpacing: "-1.5px", color: "var(--site-text)" }}
             >
               {t("heading")} <em className="italic" style={{ color: "#F5C842" }}>{t("headingEm")}</em>
             </h2>
@@ -99,7 +99,7 @@ export function FeaturedPlaces({ places }: { places: Place[] }) {
               {t("viewAll")} <ArrowRight className="size-4" />
             </Link>
           </div>
-          <p className="mt-3 max-w-xl text-base text-white/40">
+          <p className="mt-3 max-w-xl text-base" style={{ color: "var(--site-text-40)" }}>
             {t("description")}
           </p>
         </div>

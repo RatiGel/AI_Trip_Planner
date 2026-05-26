@@ -42,7 +42,7 @@ export function StatsBar() {
   return (
     <div
       className="flex justify-center"
-      style={{ background: "#141414", borderTop: "1px solid rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+      style={{ background: "var(--site-bg-surface)", borderTop: "1px solid var(--site-border-06)", borderBottom: "1px solid var(--site-border-06)" }}
     >
       {STATS.map((s, i) => (
         <motion.div
@@ -50,7 +50,7 @@ export function StatsBar() {
           className="flex flex-1 flex-col items-center px-8 py-7 text-center"
           style={{
             maxWidth: 220,
-            borderRight: i < STATS.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
+            borderRight: i < STATS.length - 1 ? "1px solid var(--site-border-06)" : "none",
           }}
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -58,7 +58,7 @@ export function StatsBar() {
           transition={{ delay: i * 0.1, duration: 0.5 }}
         >
           <CountUp target={s.num} suffix={s.suffix} />
-          <span className="mt-1 text-xs tracking-wide text-white/40">{s.label}</span>
+          <span className="mt-1 text-xs tracking-wide" style={{ color: "var(--site-text-40)" }}>{s.label}</span>
         </motion.div>
       ))}
     </div>

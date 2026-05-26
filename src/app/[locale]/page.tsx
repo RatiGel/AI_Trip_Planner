@@ -18,7 +18,7 @@ export default async function HomePage({
   const featuredPlaces = mockPlaces.slice(0, 4);
 
   return (
-    <div style={{ background: "#0A0A0A" }}>
+    <div style={{ background: "var(--site-bg-base)" }}>
       <HeroSection />
       <StatsBar />
       <CategoriesStrip />

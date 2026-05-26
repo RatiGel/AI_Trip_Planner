@@ -67,6 +67,7 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       className={`${inter.variable} ${georgian.variable} ${dmSerif.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         <NextIntlClientProvider>

@@ -16,7 +16,7 @@ export function CategoriesStrip() {
   ];
 
   return (
-    <section style={{ background: "#141414" }} className="px-6 py-20 md:px-12">
+    <section style={{ background: "var(--site-bg-surface)" }} className="px-6 py-20 md:px-12">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-12 flex items-end justify-between">
@@ -24,8 +24,8 @@ export function CategoriesStrip() {
             <p className="mb-3 text-[11px] font-bold uppercase tracking-[3px]" style={{ color: "#B5271D" }}>
               {t("eyebrow")}
             </p>
-            <h2 className="font-display leading-tight tracking-tight text-white"
-              style={{ fontSize: "clamp(36px, 5vw, 56px)", letterSpacing: "-1.5px" }}>
+            <h2 className="font-display leading-tight tracking-tight"
+              style={{ fontSize: "clamp(36px, 5vw, 56px)", letterSpacing: "-1.5px", color: "var(--site-text)" }}>
               {t("heading")} <em className="italic" style={{ color: "#F5C842" }}>{t("headingEm")}</em>
             </h2>
           </div>
