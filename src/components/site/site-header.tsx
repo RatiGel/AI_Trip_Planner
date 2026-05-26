@@ -4,52 +4,9 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ChevronDown, Sparkles, LogOut, User } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { LanguageSwitcher } from "./language-switcher";
-
-const NAV = [
-  {
-    label: "Discover",
-    href: "/discover",
-    children: [
-      { label: "Sightseeing", href: "/discover?category=sight" },
-      { label: "Museums", href: "/discover?category=museum" },
-      { label: "Neighborhoods", href: "/discover" },
-      { label: "Parks & Nature", href: "/discover?category=nature" },
-    ],
-  },
-  {
-    label: "Experiences",
-    href: "/experiences",
-    children: [
-      { label: "Tours & Guides", href: "/experiences?type=tour" },
-      { label: "Day Trips", href: "/experiences?type=daytrip" },
-      { label: "Wellness & Spas", href: "/experiences?type=wellness" },
-      { label: "Outdoor Activities", href: "/experiences?type=outdoor" },
-    ],
-  },
-  {
-    label: "Food & Drinks",
-    href: "/food",
-    children: [
-      { label: "Restaurants", href: "/food?type=restaurant" },
-      { label: "Cafes", href: "/food?type=cafe" },
-      { label: "Wine Bars", href: "/food?type=wine" },
-      { label: "Nightlife", href: "/food?type=nightlife" },
-    ],
-  },
-  {
-    label: "Events",
-    href: "/events",
-    children: [
-      { label: "Upcoming Events", href: "/events" },
-      { label: "Festivals", href: "/events?type=festival" },
-      { label: "Arts & Culture", href: "/events?type=arts" },
-      { label: "Music & Concerts", href: "/events?type=music" },
-    ],
-  },
-  { label: "Travel Info", href: "/travel-info", children: [] },
-];
 
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
@@ -57,6 +14,52 @@ export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const { data: session } = useSession();
+  const t = useTranslations("header");
+  const tNav = useTranslations("nav");
+
+  const NAV = [
+    {
+      label: t("discover"),
+      href: "/discover",
+      children: [
+        { label: t("discoverSightseeing"), href: "/discover?category=sight" },
+        { label: t("discoverMuseums"), href: "/discover?category=museum" },
+        { label: t("discoverNeighborhoods"), href: "/discover" },
+        { label: t("discoverParks"), href: "/discover?category=nature" },
+      ],
+    },
+    {
+      label: t("experiences"),
+      href: "/experiences",
+      children: [
+        { label: t("experiencesTours"), href: "/experiences?type=tour" },
+        { label: t("experiencesDayTrips"), href: "/experiences?type=daytrip" },
+        { label: t("experiencesWellness"), href: "/experiences?type=wellness" },
+        { label: t("experiencesOutdoor"), href: "/experiences?type=outdoor" },
+      ],
+    },
+    {
+      label: t("foodDrinks"),
+      href: "/food",
+      children: [
+        { label: t("foodRestaurants"), href: "/food?type=restaurant" },
+        { label: t("foodCafes"), href: "/food?type=cafe" },
+        { label: t("foodWine"), href: "/food?type=wine" },
+        { label: t("foodNightlife"), href: "/food?type=nightlife" },
+      ],
+    },
+    {
+      label: t("events"),
+      href: "/events",
+      children: [
+        { label: t("eventsUpcoming"), href: "/events" },
+        { label: t("eventsFestivals"), href: "/events?type=festival" },
+        { label: t("eventsArts"), href: "/events?type=arts" },
+        { label: t("eventsMusic"), href: "/events?type=music" },
+      ],
+    },
+    { label: t("travelInfo"), href: "/travel-info", children: [] },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -144,7 +147,7 @@ export function SiteHeader() {
             style={{ background: "#B5271D", boxShadow: "0 4px 16px rgba(181,39,29,0.4)" }}
           >
             <Sparkles className="size-3.5" />
-            Plan My Trip
+            {t("planMyTrip")}
           </Link>
 
           {session?.user ? (
@@ -165,7 +168,7 @@ export function SiteHeader() {
               href="/login"
               className="hidden rounded-md px-3 py-1.5 text-[13px] text-white/50 transition-colors hover:text-white md:block"
             >
-              Sign in
+              {tNav("login")}
             </Link>
           )}
 
@@ -212,11 +215,11 @@ export function SiteHeader() {
                   onClick={() => { signOut({ callbackUrl: "/" }); setMobileOpen(false); }}
                   className="rounded-xl px-4 py-3 text-left text-[15px] text-white/50 hover:bg-white/5"
                 >
-                  Sign out
+                  {tNav("logout")}
                 </button>
               ) : (
                 <Link href="/login" className="block rounded-xl px-4 py-3 text-[15px] text-white/50 hover:bg-white/5" onClick={() => setMobileOpen(false)}>
-                  Sign in
+                  {tNav("login")}
                 </Link>
               )}
             </nav>

@@ -2,16 +2,19 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 
-const CATEGORIES = [
-  { slug: "food", label: "Food & Wine", count: 24, icon: "🍷", img: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&q=75" },
-  { slug: "nightlife", label: "Nightlife", count: 18, icon: "🎵", img: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=75" },
-  { slug: "museum", label: "Culture & Art", count: 31, icon: "🏛️", img: "https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=400&q=75" },
-  { slug: "nature", label: "Nature & Parks", count: 12, icon: "🌿", img: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=75" },
-];
-
 export function CategoriesStrip() {
+  const t = useTranslations("categoriesSection");
+
+  const CATEGORIES = [
+    { slug: "food", label: t("food"), count: 24, icon: "🍷", img: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&q=75" },
+    { slug: "nightlife", label: t("nightlife"), count: 18, icon: "🎵", img: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&q=75" },
+    { slug: "museum", label: t("culture"), count: 31, icon: "🏛️", img: "https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=400&q=75" },
+    { slug: "nature", label: t("nature"), count: 12, icon: "🌿", img: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=75" },
+  ];
+
   return (
     <section style={{ background: "#141414" }} className="px-6 py-20 md:px-12">
       <div className="mx-auto max-w-7xl">
@@ -19,11 +22,11 @@ export function CategoriesStrip() {
         <div className="mb-12 flex items-end justify-between">
           <div>
             <p className="mb-3 text-[11px] font-bold uppercase tracking-[3px]" style={{ color: "#B5271D" }}>
-              What moves you
+              {t("eyebrow")}
             </p>
             <h2 className="font-display leading-tight tracking-tight text-white"
               style={{ fontSize: "clamp(36px, 5vw, 56px)", letterSpacing: "-1.5px" }}>
-              Explore by <em className="italic" style={{ color: "#F5C842" }}>Experience</em>
+              {t("heading")} <em className="italic" style={{ color: "#F5C842" }}>{t("headingEm")}</em>
             </h2>
           </div>
           <Link
@@ -31,7 +34,7 @@ export function CategoriesStrip() {
             className="hidden text-sm font-semibold transition-colors hover:text-white md:block"
             style={{ color: "#E8A020" }}
           >
-            See all categories →
+            {t("seeAll")}
           </Link>
         </div>
 
@@ -68,7 +71,7 @@ export function CategoriesStrip() {
                   >
                     <span className="mb-1.5 block text-2xl">{cat.icon}</span>
                     <p className="font-display text-lg text-white">{cat.label}</p>
-                    <p className="mt-0.5 text-[11px] text-white/50">{cat.count} places</p>
+                    <p className="mt-0.5 text-[11px] text-white/50">{cat.count} {t("places")}</p>
                   </div>
                 </div>
               </Link>

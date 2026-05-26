@@ -3,55 +3,58 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 
-const NEIGHBORHOODS = [
-  {
-    slug: "old-town",
-    name: "Old Town",
-    tag: "Historic",
-    desc: "Winding cobblestone streets, balconied wooden houses, sulphur baths.",
-    img: "https://images.unsplash.com/photo-1564507004663-b6dfb3c824d5?w=900&q=80",
-  },
-  {
-    slug: "marjanishvili",
-    name: "Marjanishvili",
-    tag: "Nightlife",
-    desc: "Tbilisi's most vibrant quarter — cafes, galleries, clubs, and Fabrika.",
-    img: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=900&q=80",
-  },
-  {
-    slug: "vake",
-    name: "Vake",
-    tag: "Upscale",
-    desc: "Tree-lined boulevards, fine dining, embassies, and Vake Park.",
-    img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=80",
-  },
-  {
-    slug: "mtatsminda",
-    name: "Mtatsminda",
-    tag: "Panoramic",
-    desc: "Hilltop district with the TV tower, funicular, and sweeping city views.",
-    img: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&q=80",
-  },
-];
-
 export function NeighborhoodsSection() {
+  const t = useTranslations("neighborhoodsSection");
+
+  const NEIGHBORHOODS = [
+    {
+      slug: "old-town",
+      name: t("oldTownName"),
+      tag: t("oldTownTag"),
+      desc: t("oldTownDesc"),
+      img: "https://images.unsplash.com/photo-1564507004663-b6dfb3c824d5?w=900&q=80",
+    },
+    {
+      slug: "marjanishvili",
+      name: t("marjanName"),
+      tag: t("marjanTag"),
+      desc: t("marjanDesc"),
+      img: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=900&q=80",
+    },
+    {
+      slug: "vake",
+      name: t("vakeName"),
+      tag: t("vakeTag"),
+      desc: t("vakeDesc"),
+      img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=80",
+    },
+    {
+      slug: "mtatsminda",
+      name: t("mtatsName"),
+      tag: t("mtatsTag"),
+      desc: t("mtatsDesc"),
+      img: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&q=80",
+    },
+  ];
+
   return (
     <section style={{ background: "#141414" }} className="px-6 py-20 md:px-12">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <p className="mb-3 text-[11px] font-bold uppercase tracking-[3px]" style={{ color: "#B5271D" }}>
-          The city by area
+          {t("eyebrow")}
         </p>
         <h2
           className="font-display mb-3 leading-tight text-white"
           style={{ fontSize: "clamp(36px, 5vw, 56px)", letterSpacing: "-1.5px" }}
         >
-          Explore <em className="italic" style={{ color: "#F5C842" }}>Neighborhoods</em>
+          {t("heading")} <em className="italic" style={{ color: "#F5C842" }}>{t("headingEm")}</em>
         </h2>
         <p className="mb-12 max-w-xl text-base text-white/40">
-          Every district has its own personality. Find the one that matches yours.
+          {t("description")}
         </p>
 
         {/* Grid */}

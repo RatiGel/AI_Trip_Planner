@@ -2,17 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 
-const TRIP_TYPES = ["2 days", "a weekend", "a week", "a honeymoon", "a family trip"];
-
 export function AIPlannerCTA() {
+  const t = useTranslations("aiCta");
+  const TRIP_TYPES = t("tripTypes").split(",");
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
     const id = setInterval(() => setIdx((i) => (i + 1) % TRIP_TYPES.length), 2400);
     return () => clearInterval(id);
-  }, []);
+  }, [TRIP_TYPES.length]);
 
   return (
     <section
@@ -44,14 +45,14 @@ export function AIPlannerCTA() {
             className="mb-6 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-[12px] font-semibold tracking-wide"
             style={{ borderColor: "rgba(232,160,32,0.3)", background: "rgba(232,160,32,0.12)", color: "#F5C842" }}
           >
-            ◆ Powered by Claude AI
+            ◆ {t("badge")}
           </div>
 
           <h2
             className="font-display mb-5 leading-tight text-white"
             style={{ fontSize: "clamp(36px, 4vw, 56px)", letterSpacing: "-1px" }}
           >
-            Plan{" "}
+            {t("planPrefix")}{" "}
             <motion.span
               key={idx}
               initial={{ opacity: 0, y: 12 }}
@@ -63,12 +64,11 @@ export function AIPlannerCTA() {
             >
               {TRIP_TYPES[idx]}
             </motion.span>
-            <br />in Tbilisi
+            <br />{t("planSuffix")}
           </h2>
 
           <p className="mb-8 max-w-md text-base leading-relaxed text-white/60">
-            Tell our AI how long you&apos;re staying, what you love, and your budget.
-            It builds a day-by-day itinerary — instantly.
+            {t("description")}
           </p>
 
           <Link
@@ -76,7 +76,7 @@ export function AIPlannerCTA() {
             className="inline-block rounded-full px-9 py-4 text-[15px] font-semibold text-white transition-all duration-250 hover:-translate-y-0.5"
             style={{ background: "#B5271D", boxShadow: "0 8px 32px rgba(181,39,29,0.45)" }}
           >
-            Start planning — it&apos;s free
+            {t("cta")}
           </Link>
         </motion.div>
 
@@ -118,7 +118,7 @@ export function AIPlannerCTA() {
           {/* Input bar */}
           <div className="flex items-center gap-2.5 border-t pt-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
             <div className="flex-1 rounded-full px-4 py-2.5 text-[13px] text-white/35" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}>
-              Ask anything about Tbilisi…
+              {t("placeholder")}
             </div>
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full text-white text-base" style={{ background: "#B5271D" }}>
               ↑

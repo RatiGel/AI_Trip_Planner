@@ -153,5 +153,88 @@
   "footer": {
     "tagline": "Made for travellers in Georgia.",
     "rights": "© {year} TbilisiTrip. All rights reserved."
+  },
+  "header": {
+    "planMyTrip": "Plan My Trip",
+    "discover": "Discover",
+    "discoverSightseeing": "Sightseeing",
+    "discoverMuseums": "Museums",
+    "discoverNeighborhoods": "Neighborhoods",
+    "discoverParks": "Parks & Nature",
+    "experiences": "Experiences",
+    "experiencesTours": "Tours & Guides",
+    "experiencesDayTrips": "Day Trips",
+    "experiencesWellness": "Wellness & Spas",
+    "experiencesOutdoor": "Outdoor Activities",
+    "foodDrinks": "Food & Drinks",
+    "foodRestaurants": "Restaurants",
+    "foodCafes": "Cafes",
+    "foodWine": "Wine Bars",
+    "foodNightlife": "Nightlife",
+    "events": "Events",
+    "eventsUpcoming": "Upcoming Events",
+    "eventsFestivals": "Festivals",
+    "eventsArts": "Arts & Culture",
+    "eventsMusic": "Music & Concerts",
+    "travelInfo": "Travel Info"
+  },
+  "hero": {
+    "eyebrow": "Georgia, Caucasus",
+    "headline": "Discover",
+    "sub": "Ancient city. Modern soul. Where sulphur baths meet rooftop bars, and medieval towers overlook a thriving art scene.",
+    "ctaAI": "Plan My Trip with AI",
+    "ctaExplore": "Explore the City",
+    "scroll": "Scroll"
+  },
+  "categoriesSection": {
+    "eyebrow": "What moves you",
+    "heading": "Explore by",
+    "headingEm": "Experience",
+    "seeAll": "See all categories →",
+    "places": "places",
+    "food": "Food & Wine",
+    "nightlife": "Nightlife",
+    "culture": "Culture & Art",
+    "nature": "Nature & Parks"
+  },
+  "aiCta": {
+    "badge": "Powered by Claude AI",
+    "planPrefix": "Plan",
+    "planSuffix": "in Tbilisi",
+    "tripTypes": "2 days,a weekend,a week,a honeymoon,a family trip",
+    "description": "Tell our AI how long you're staying, what you love, and your budget. It builds a day-by-day itinerary — instantly.",
+    "cta": "Start planning — it's free",
+    "placeholder": "Ask anything about Tbilisi…"
+  },
+  "featuredSection": {
+    "eyebrow": "Must-see",
+    "heading": "Top",
+    "headingEm": "Attractions",
+    "description": "Hand-picked experiences that define Tbilisi — from ancient fortresses to world-famous techno clubs.",
+    "viewAll": "View all"
+  },
+  "neighborhoodsSection": {
+    "eyebrow": "The city by area",
+    "heading": "Explore",
+    "headingEm": "Neighborhoods",
+    "description": "Every district has its own personality. Find the one that matches yours.",
+    "oldTownName": "Old Town",
+    "oldTownTag": "Historic",
+    "oldTownDesc": "Winding cobblestone streets, balconied wooden houses, sulphur baths.",
+    "marjanName": "Marjanishvili",
+    "marjanTag": "Nightlife",
+    "marjanDesc": "Tbilisi's most vibrant quarter — cafes, galleries, clubs, and Fabrika.",
+    "vakeName": "Vake",
+    "vakeTag": "Upscale",
+    "vakeDesc": "Tree-lined boulevards, fine dining, embassies, and Vake Park.",
+    "mtatsName": "Mtatsminda",
+    "mtatsTag": "Panoramic",
+    "mtatsDesc": "Hilltop district with the TV tower, funicular, and sweeping city views."
+  },
+  "statsSection": {
+    "attractions": "Curated Attractions",
+    "districts": "Unique Districts",
+    "history": "Years of History",
+    "languages": "Languages"
   }
 }

@@ -2,13 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
-
-const STATS = [
-  { num: 80, suffix: "+", label: "Curated Attractions" },
-  { num: 4, suffix: "", label: "Unique Districts" },
-  { num: 1500, suffix: "", label: "Years of History" },
-  { num: 2, suffix: "", label: "Languages" },
-];
+import { useTranslations } from "next-intl";
 
 function CountUp({ target, suffix }: { target: number; suffix: string }) {
   const [count, setCount] = useState(0);
@@ -36,6 +30,15 @@ function CountUp({ target, suffix }: { target: number; suffix: string }) {
 }
 
 export function StatsBar() {
+  const t = useTranslations("statsSection");
+
+  const STATS = [
+    { num: 80, suffix: "+", label: t("attractions") },
+    { num: 4, suffix: "", label: t("districts") },
+    { num: 1500, suffix: "", label: t("history") },
+    { num: 3, suffix: "", label: t("languages") },
+  ];
+
   return (
     <div
       className="flex justify-center"

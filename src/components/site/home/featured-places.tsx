@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Star, ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { Place } from "@/types";
 
@@ -72,6 +73,7 @@ function PlaceCard({ place, featured = false }: { place: Place; featured?: boole
 }
 
 export function FeaturedPlaces({ places }: { places: Place[] }) {
+  const t = useTranslations("featuredSection");
   const [featured, ...rest] = places.slice(0, 4);
 
   return (
@@ -80,25 +82,25 @@ export function FeaturedPlaces({ places }: { places: Place[] }) {
         {/* Header */}
         <div className="mb-3">
           <p className="mb-3 text-[11px] font-bold uppercase tracking-[3px]" style={{ color: "#B5271D" }}>
-            Must-see
+            {t("eyebrow")}
           </p>
           <div className="flex items-end justify-between">
             <h2
               className="font-display leading-tight text-white"
               style={{ fontSize: "clamp(36px, 5vw, 56px)", letterSpacing: "-1.5px" }}
             >
-              Top <em className="italic" style={{ color: "#F5C842" }}>Attractions</em>
+              {t("heading")} <em className="italic" style={{ color: "#F5C842" }}>{t("headingEm")}</em>
             </h2>
             <Link
               href="/discover"
               className="hidden items-center gap-1.5 text-sm font-semibold transition-colors hover:text-white md:flex"
               style={{ color: "#E8A020" }}
             >
-              View all <ArrowRight className="size-4" />
+              {t("viewAll")} <ArrowRight className="size-4" />
             </Link>
           </div>
           <p className="mt-3 max-w-xl text-base text-white/40">
-            Hand-picked experiences that define Tbilisi — from ancient fortresses to world-famous techno clubs.
+            {t("description")}
           </p>
         </div>
 

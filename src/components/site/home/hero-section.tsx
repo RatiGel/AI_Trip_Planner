@@ -1,9 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 
 export function HeroSection() {
+  const t = useTranslations("hero");
+
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "100svh", minHeight: "700px" }}>
       {/* Background image with zoom animation */}
@@ -30,22 +33,21 @@ export function HeroSection() {
           {/* Eyebrow */}
           <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-md">
             <span className="text-[10px] font-bold tracking-[2.5px] uppercase text-yellow-300">
-              ✦ Georgia, Caucasus
+              ✦ {t("eyebrow")}
             </span>
           </div>
 
           {/* Headline */}
           <h1 className="font-display mb-6 leading-[0.88] tracking-[-3px] text-white"
             style={{ fontSize: "clamp(60px, 11vw, 120px)" }}>
-            Discover<br />
+            {t("headline")}<br />
             <em className="text-yellow-300">Tbilisi</em>
           </h1>
 
           {/* Sub */}
           <p className="mx-auto mb-10 max-w-lg font-light leading-relaxed text-white/80"
             style={{ fontSize: "clamp(16px, 2vw, 20px)" }}>
-            Ancient city. Modern soul. Where sulphur baths meet rooftop bars,
-            and medieval towers overlook a thriving art scene.
+            {t("sub")}
           </p>
 
           {/* CTAs */}
@@ -58,13 +60,13 @@ export function HeroSection() {
                 boxShadow: "0 8px 32px rgba(181,39,29,0.5)",
               }}
             >
-              Plan My Trip with AI
+              {t("ctaAI")}
             </Link>
             <Link
               href="/discover"
               className="rounded-full border border-white/30 bg-white/10 px-9 py-4 text-[15px] font-medium text-white backdrop-blur-md transition-all duration-250 hover:bg-white/20"
             >
-              Explore the City
+              {t("ctaExplore")}
             </Link>
           </div>
         </motion.div>
@@ -83,7 +85,7 @@ export function HeroSection() {
           animate={{ scaleY: [1, 1.2, 1], opacity: [0.4, 1, 0.4] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         />
-        <span className="text-[10px] tracking-[2px] uppercase text-white/40">Scroll</span>
+        <span className="text-[10px] tracking-[2px] uppercase text-white/40">{t("scroll")}</span>
       </motion.div>
     </div>
   );
