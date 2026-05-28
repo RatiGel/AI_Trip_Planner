@@ -3,19 +3,18 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { ArrowRight, Bus, Clock, MapPin, Star, Train, Wallet, Map } from "lucide-react";
+import { ArrowRight, Bus, Clock, Tag, Train, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import type { TicketOption, TourOption, TourCategory } from "@/types";
+import type { DealCategory, DealOption, TicketOption } from "@/types";
 
 const CITIES = ["Tbilisi", "Batumi", "Kazbegi", "Kutaisi"];
 
-const TOUR_CATEGORY_COLOR: Record<TourCategory, string> = {
-  walking: "#16A34A",
-  "day-trip": "#B5271D",
+const DEAL_CATEGORY_COLOR: Record<DealCategory, string> = {
+  attraction: "#B5271D",
   food: "#D97706",
-  culture: "#7C3AED",
-  adventure: "#0891B2",
+  transport: "#0891B2",
+  experience: "#7C3AED",
 };
 
 function fmtDuration(min?: number) {
@@ -105,9 +104,9 @@ function TransitCard({ option, onBuy, index }: { option: TicketOption; onBuy: ()
   );
 }
 
-function TourCard({ tour, onBook, index }: { tour: TourOption; onBook: () => void; index: number }) {
+function DealCard({ deal, onGrab, index }: { deal: DealOption; onGrab: () => void; index: number }) {
   const t = useTranslations("tickets");
-  const color = TOUR_CATEGORY_COLOR[tour.category];
+  const color = DEAL_CATEGORY_COLOR[deal.category];
   return (
     <motion.div
       className="group overflow-hidden rounded-2xl"
@@ -117,72 +116,76 @@ function TourCard({ tour, onBook, index }: { tour: TourOption; onBook: () => voi
       transition={{ duration: 0.35, delay: index * 0.07 }}
       whileHover={{ y: -4, borderColor: "rgba(232,160,32,0.25)" }}
     >
-      {tour.image && (
+      {deal.image && (
         <div className="relative overflow-hidden" style={{ aspectRatio: "16/10" }}>
           <Image
-            src={tour.image}
-            alt={tour.name}
+            src={deal.image}
+            alt={deal.title}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
+          {/* Discount badge */}
           <div
-            className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
-            style={{ background: color }}
+            className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-bold text-white"
+            style={{ background: "#16A34A" }}
           >
-            {tour.category}
+            -{deal.discountPct}% {t("discount")}
           </div>
-          {tour.durationHours && (
-            <div
-              className="absolute right-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold text-white"
-              style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)" }}
+          {/* Category + optional promo badge */}
+          <div className="absolute right-3 top-3 flex flex-col items-end gap-1.5">
+            <span
+              className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
+              style={{ background: color }}
             >
-              <Clock className="size-3" />
-              {tour.durationHours}{t("hrs")}
-            </div>
-          )}
+              {deal.category}
+            </span>
+            {deal.badge && (
+              <span
+                className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
+                style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)" }}
+              >
+                {deal.badge}
+              </span>
+            )}
+          </div>
         </div>
       )}
       <div className="p-5">
-        <h3 className="font-display mb-1.5 text-lg" style={{ color: "var(--site-text)" }}>{tour.name}</h3>
-        <p className="mb-3 line-clamp-2 text-[13px] leading-relaxed" style={{ color: "var(--site-text-50)" }}>
-          {tour.description}
+        <h3 className="font-display mb-1.5 text-lg" style={{ color: "var(--site-text)" }}>{deal.title}</h3>
+        <p className="mb-4 line-clamp-2 text-[13px] leading-relaxed" style={{ color: "var(--site-text-50)" }}>
+          {deal.description}
         </p>
-        <p className="mb-4 flex items-center gap-1 text-[12px]" style={{ color: "var(--site-text-40)" }}>
-          <MapPin className="size-3.5 shrink-0" />
-          {t("meetsAt")}: {tour.meetingPoint}
-        </p>
+        {deal.validUntil && (
+          <p className="mb-3 flex items-center gap-1 text-[11px] uppercase tracking-[1px]" style={{ color: "var(--site-text-40)" }}>
+            <Clock className="size-3" />
+            {t("validUntil")} {deal.validUntil}
+          </p>
+        )}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[10px] uppercase tracking-[1.5px]" style={{ color: "var(--site-text-40)" }}>
-              {t("perPerson")}
+            <p className="text-[12px] line-through" style={{ color: "var(--site-text-35)" }}>
+              {deal.priceOriginal}₾
             </p>
             <p className="text-xl font-bold" style={{ color: "#E8A020" }}>
-              {tour.priceGEL}<span className="ml-0.5 text-base">₾</span>
+              {deal.priceGEL}<span className="ml-0.5 text-base">₾</span>
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            {tour.rating && (
-              <span className="flex items-center gap-1 text-[13px] font-semibold" style={{ color: "#E8A020" }}>
-                <Star className="size-3.5 fill-current" />{tour.rating}
-              </span>
-            )}
-            <button
-              onClick={onBook}
-              className="rounded-full px-4 py-2 text-[13px] font-semibold text-white transition-all hover:-translate-y-0.5"
-              style={{ background: "#B5271D", boxShadow: "0 4px 16px rgba(181,39,29,0.35)" }}
-            >
-              {t("buy")}
-            </button>
-          </div>
+          <button
+            onClick={onGrab}
+            className="rounded-full px-4 py-2 text-[13px] font-semibold text-white transition-all hover:-translate-y-0.5"
+            style={{ background: "#B5271D", boxShadow: "0 4px 16px rgba(181,39,29,0.35)" }}
+          >
+            {t("grab")}
+          </button>
         </div>
       </div>
     </motion.div>
   );
 }
 
-type TabType = "bus" | "rail" | "transit-pass" | "tour";
+type TabType = "bus" | "rail" | "transit-pass" | "deal";
 
-export function TicketsSearch({ tickets, tours }: { tickets: TicketOption[]; tours: TourOption[] }) {
+export function TicketsSearch({ tickets, deals }: { tickets: TicketOption[]; deals: DealOption[] }) {
   const t = useTranslations("tickets");
   const [tab, setTab] = useState<TabType>("bus");
   const [from, setFrom] = useState("Tbilisi");
@@ -198,16 +201,15 @@ export function TicketsSearch({ tickets, tours }: { tickets: TicketOption[]; tou
     return list.filter((o) => o.from === from && o.to === to);
   }, [tab, from, to, busTickets, railTickets]);
 
-  function buy(o: TicketOption | TourOption) {
-    const label = "name" in o ? o.name : `${o.operator}`;
-    toast.success(`${label} · ${o.priceGEL}₾`, { description: "Redirecting to payment…" });
+  function buy(label: string, price: number) {
+    toast.success(`${label} · ${price}₾`, { description: "Redirecting to payment…" });
   }
 
   const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: "bus", label: t("bus"), icon: <Bus className="size-4" /> },
     { id: "rail", label: t("rail"), icon: <Train className="size-4" /> },
     { id: "transit-pass", label: t("transitPass"), icon: <Wallet className="size-4" /> },
-    { id: "tour", label: t("tours"), icon: <Map className="size-4" /> },
+    { id: "deal", label: t("deals"), icon: <Tag className="size-4" /> },
   ];
 
   const showRouteForm = tab === "bus" || tab === "rail";
@@ -297,16 +299,16 @@ export function TicketsSearch({ tickets, tours }: { tickets: TicketOption[]; tou
 
       {/* Results */}
       <AnimatePresence mode="wait">
-        {tab === "tour" ? (
+        {tab === "deal" ? (
           <motion.div
-            key="tours"
+            key="deals"
             className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {tours.map((tour, i) => (
-              <TourCard key={tour.id} tour={tour} onBook={() => buy(tour)} index={i} />
+            {deals.map((deal, i) => (
+              <DealCard key={deal.id} deal={deal} onGrab={() => buy(deal.title, deal.priceGEL)} index={i} />
             ))}
           </motion.div>
         ) : tab === "transit-pass" ? (
@@ -318,7 +320,7 @@ export function TicketsSearch({ tickets, tours }: { tickets: TicketOption[]; tou
             exit={{ opacity: 0 }}
           >
             {transitPasses.map((p, i) => (
-              <TransitCard key={p.id} option={p} onBuy={() => buy(p)} index={i} />
+              <TransitCard key={p.id} option={p} onBuy={() => buy(p.operator, p.priceGEL)} index={i} />
             ))}
           </motion.div>
         ) : results.length === 0 ? (
@@ -342,7 +344,7 @@ export function TicketsSearch({ tickets, tours }: { tickets: TicketOption[]; tou
             exit={{ opacity: 0 }}
           >
             {results.map((o, i) => (
-              <TicketCard key={o.id} option={o} onBuy={() => buy(o)} index={i} />
+              <TicketCard key={o.id} option={o} onBuy={() => buy(`${o.operator}`, o.priceGEL)} index={i} />
             ))}
           </motion.div>
         )}

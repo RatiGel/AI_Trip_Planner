@@ -88,19 +88,19 @@ export interface SavedItinerary {
 
 export type TicketType = "bus" | "rail" | "transit-pass";
 
-export type TourCategory = "walking" | "day-trip" | "food" | "culture" | "adventure";
+export type DealCategory = "attraction" | "food" | "transport" | "experience";
 
-export interface TourOption {
+export interface DealOption {
   id: string;
-  name: string;
+  title: string;
   description: string;
-  durationHours: number;
+  priceOriginal: number;
   priceGEL: number;
-  category: TourCategory;
-  meetingPoint: string;
+  discountPct: number;
+  category: DealCategory;
+  validUntil?: string;
   image?: string;
-  rating?: number;
-  maxGroupSize?: number;
+  badge?: string;
 }
 
 export interface TicketOption {
