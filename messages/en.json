@@ -100,7 +100,12 @@
     "date": "Date",
     "passengers": "Passengers",
     "search": "Search",
-    "buy": "Buy"
+    "buy": "Buy",
+    "eyebrow": "Online Booking",
+    "heading": "Book Your",
+    "headingEm": "Journey",
+    "description": "Bus routes, railway tickets and Tbilisi city transit passes — buy online in seconds.",
+    "noResults": "No routes found. Try a different origin or destination."
   },
   "reserve": {
     "title": "Reserve a table",
@@ -176,7 +181,8 @@
     "eventsFestivals": "Festivals",
     "eventsArts": "Arts & Culture",
     "eventsMusic": "Music & Concerts",
-    "travelInfo": "Travel Info"
+    "travelInfo": "Travel Info",
+    "tickets": "Tickets"
   },
   "hero": {
     "eyebrow": "Georgia, Caucasus",

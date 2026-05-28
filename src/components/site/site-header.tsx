@@ -60,6 +60,7 @@ export function SiteHeader() {
       ],
     },
     { label: t("travelInfo"), href: "/travel-info", children: [] },
+    { label: t("tickets"), href: "/tickets", children: [] },
   ];
 
   useEffect(() => {
