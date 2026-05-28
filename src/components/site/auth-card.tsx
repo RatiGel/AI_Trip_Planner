@@ -66,7 +66,13 @@ export function AuthCard({ mode }: { mode: "signin" | "signup" }) {
           {isSignup ? t("signUpSubtitle") : t("signInSubtitle")}
         </p>
 
-        <Button variant="outline" className="mt-6 w-full" disabled>
+        <Button
+          variant="outline"
+          className="mt-6 w-full"
+          type="button"
+          disabled={loading}
+          onClick={() => signIn("google", { callbackUrl: "/trips" })}
+        >
           {t("google")}
         </Button>
 
