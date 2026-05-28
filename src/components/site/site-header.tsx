@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ChevronDown, Sparkles, LogOut, User } from "lucide-react";
+import { Menu, X, ChevronDown, Sparkles, LogOut, User, Ticket } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -18,7 +18,7 @@ export function SiteHeader() {
   const t = useTranslations("header");
   const tNav = useTranslations("nav");
 
-  const NAV = [
+  const NAV: { label: string; href: string; icon?: React.ReactNode; children: { label: string; href: string }[] }[] = [
     {
       label: t("discover"),
       href: "/discover",
@@ -59,7 +59,8 @@ export function SiteHeader() {
         { label: t("eventsMusic"), href: "/events?type=music" },
       ],
     },
-    { label: t("ticketsDeals"), href: "/tickets", children: [] },
+    { label: t("tickets"), href: "/tickets", icon: <Ticket className="size-3.5" />, children: [] },
+    { label: t("deals"), href: "/tickets", children: [] },
   ];
 
   useEffect(() => {
@@ -102,9 +103,10 @@ export function SiteHeader() {
             >
               <Link
                 href={item.href}
-                className="flex items-center gap-1 rounded-md px-3 py-2 text-[14px] font-medium transition-colors"
+                className="flex items-center gap-1.5 rounded-md px-3 py-2 text-[14px] font-medium transition-colors"
                 style={{ color: "var(--site-text-80)" }}
               >
+                {item.icon && item.icon}
                 {item.label}
                 {item.children.length > 0 && (
                   <ChevronDown

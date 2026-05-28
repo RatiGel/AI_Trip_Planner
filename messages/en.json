@@ -185,7 +185,8 @@
     "eventsFestivals": "Festivals",
     "eventsArts": "Arts & Culture",
     "eventsMusic": "Music & Concerts",
-    "ticketsDeals": "Tickets & Deals"
+    "tickets": "Tickets",
+    "deals": "Deals"
   },
   "hero": {
     "eyebrow": "Georgia, Caucasus",

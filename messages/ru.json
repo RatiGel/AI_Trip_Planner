@@ -185,7 +185,8 @@
     "eventsFestivals": "Фестивали",
     "eventsArts": "Искусство и культура",
     "eventsMusic": "Музыка и концерты",
-    "ticketsDeals": "Билеты и акции"
+    "tickets": "Билеты",
+    "deals": "Акции"
   },
   "hero": {
     "eyebrow": "Грузия, Кавказ",
