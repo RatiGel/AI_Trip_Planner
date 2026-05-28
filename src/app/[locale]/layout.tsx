@@ -8,6 +8,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "@/components/ui/sonner";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
+import { AiChatFab } from "@/components/site/ai-chat-fab";
 import { Providers } from "@/components/providers";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
@@ -75,6 +76,7 @@ export default async function LocaleLayout({
             <SiteHeader />
             <main className="flex-1">{children}</main>
             <SiteFooter />
+            <AiChatFab />
             <Toaster richColors position="top-center" />
           </Providers>
         </NextIntlClientProvider>

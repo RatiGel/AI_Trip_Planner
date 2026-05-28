@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ChevronDown, Sparkles, LogOut, User, Ticket } from "lucide-react";
+import { Menu, X, ChevronDown, LogOut, User, Ticket } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -153,14 +153,7 @@ export function SiteHeader() {
             <Ticket className="size-3.5" />
             {t("tickets")}
           </Link>
-          <Link
-            href="/chat"
-            className="hidden items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold text-white transition-all hover:-translate-y-0.5 sm:flex"
-            style={{ background: "#B5271D", boxShadow: "0 4px 16px rgba(181,39,29,0.4)" }}
-          >
-            <Sparkles className="size-3.5" />
-            {t("planMyTrip")}
-          </Link>
+
 
           {session?.user ? (
             <div className="hidden items-center gap-2 md:flex">
