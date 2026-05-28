@@ -1,13 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { ArrowRight, Bus, Clock, Train, Wallet } from "lucide-react";
+import { ArrowRight, Bus, Clock, MapPin, Star, Train, Wallet, Map } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import type { TicketOption } from "@/types";
+import type { TicketOption, TourOption, TourCategory } from "@/types";
 
 const CITIES = ["Tbilisi", "Batumi", "Kazbegi", "Kutaisi"];
+
+const TOUR_CATEGORY_COLOR: Record<TourCategory, string> = {
+  walking: "#16A34A",
+  "day-trip": "#B5271D",
+  food: "#D97706",
+  culture: "#7C3AED",
+  adventure: "#0891B2",
+};
 
 function fmtDuration(min?: number) {
   if (!min) return "";
@@ -22,10 +31,7 @@ function TicketCard({ option, onBuy, index }: { option: TicketOption; onBuy: () 
   return (
     <motion.div
       className="flex flex-col gap-4 rounded-2xl p-5 sm:flex-row sm:items-center sm:justify-between"
-      style={{
-        background: "var(--site-bg-elevated)",
-        border: "1px solid var(--site-border-06)",
-      }}
+      style={{ background: "var(--site-bg-elevated)", border: "1px solid var(--site-border-06)" }}
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.07 }}
@@ -73,19 +79,13 @@ function TransitCard({ option, onBuy, index }: { option: TicketOption; onBuy: ()
   return (
     <motion.div
       className="flex flex-col gap-5 rounded-2xl p-6"
-      style={{
-        background: "var(--site-bg-elevated)",
-        border: "1px solid var(--site-border-06)",
-      }}
+      style={{ background: "var(--site-bg-elevated)", border: "1px solid var(--site-border-06)" }}
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: index * 0.08 }}
       whileHover={{ borderColor: "rgba(8,145,178,0.3)" }}
     >
-      <div
-        className="flex size-11 items-center justify-center rounded-full"
-        style={{ background: "rgba(8,145,178,0.15)" }}
-      >
+      <div className="flex size-11 items-center justify-center rounded-full" style={{ background: "rgba(8,145,178,0.15)" }}>
         <Wallet className="size-5" style={{ color: "#0891B2" }} />
       </div>
       <div>
@@ -105,9 +105,84 @@ function TransitCard({ option, onBuy, index }: { option: TicketOption; onBuy: ()
   );
 }
 
-type TabType = "bus" | "rail" | "transit-pass";
+function TourCard({ tour, onBook, index }: { tour: TourOption; onBook: () => void; index: number }) {
+  const t = useTranslations("tickets");
+  const color = TOUR_CATEGORY_COLOR[tour.category];
+  return (
+    <motion.div
+      className="group overflow-hidden rounded-2xl"
+      style={{ background: "var(--site-bg-elevated)", border: "1px solid var(--site-border-06)" }}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: index * 0.07 }}
+      whileHover={{ y: -4, borderColor: "rgba(232,160,32,0.25)" }}
+    >
+      {tour.image && (
+        <div className="relative overflow-hidden" style={{ aspectRatio: "16/10" }}>
+          <Image
+            src={tour.image}
+            alt={tour.name}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+          <div
+            className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
+            style={{ background: color }}
+          >
+            {tour.category}
+          </div>
+          {tour.durationHours && (
+            <div
+              className="absolute right-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold text-white"
+              style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)" }}
+            >
+              <Clock className="size-3" />
+              {tour.durationHours}{t("hrs")}
+            </div>
+          )}
+        </div>
+      )}
+      <div className="p-5">
+        <h3 className="font-display mb-1.5 text-lg" style={{ color: "var(--site-text)" }}>{tour.name}</h3>
+        <p className="mb-3 line-clamp-2 text-[13px] leading-relaxed" style={{ color: "var(--site-text-50)" }}>
+          {tour.description}
+        </p>
+        <p className="mb-4 flex items-center gap-1 text-[12px]" style={{ color: "var(--site-text-40)" }}>
+          <MapPin className="size-3.5 shrink-0" />
+          {t("meetsAt")}: {tour.meetingPoint}
+        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-[1.5px]" style={{ color: "var(--site-text-40)" }}>
+              {t("perPerson")}
+            </p>
+            <p className="text-xl font-bold" style={{ color: "#E8A020" }}>
+              {tour.priceGEL}<span className="ml-0.5 text-base">₾</span>
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            {tour.rating && (
+              <span className="flex items-center gap-1 text-[13px] font-semibold" style={{ color: "#E8A020" }}>
+                <Star className="size-3.5 fill-current" />{tour.rating}
+              </span>
+            )}
+            <button
+              onClick={onBook}
+              className="rounded-full px-4 py-2 text-[13px] font-semibold text-white transition-all hover:-translate-y-0.5"
+              style={{ background: "#B5271D", boxShadow: "0 4px 16px rgba(181,39,29,0.35)" }}
+            >
+              {t("buy")}
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
-export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
+type TabType = "bus" | "rail" | "transit-pass" | "tour";
+
+export function TicketsSearch({ tickets, tours }: { tickets: TicketOption[]; tours: TourOption[] }) {
   const t = useTranslations("tickets");
   const [tab, setTab] = useState<TabType>("bus");
   const [from, setFrom] = useState("Tbilisi");
@@ -123,20 +198,24 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
     return list.filter((o) => o.from === from && o.to === to);
   }, [tab, from, to, busTickets, railTickets]);
 
-  function buy(o: TicketOption) {
-    toast.success(`${o.operator} · ${o.priceGEL}₾`, { description: "Redirecting to payment…" });
+  function buy(o: TicketOption | TourOption) {
+    const label = "name" in o ? o.name : `${o.operator}`;
+    toast.success(`${label} · ${o.priceGEL}₾`, { description: "Redirecting to payment…" });
   }
 
   const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: "bus", label: t("bus"), icon: <Bus className="size-4" /> },
     { id: "rail", label: t("rail"), icon: <Train className="size-4" /> },
     { id: "transit-pass", label: t("transitPass"), icon: <Wallet className="size-4" /> },
+    { id: "tour", label: t("tours"), icon: <Map className="size-4" /> },
   ];
+
+  const showRouteForm = tab === "bus" || tab === "rail";
 
   return (
     <div className="space-y-8">
       {/* Tab pills */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {TABS.map((tb) => (
           <button
             key={tb.id}
@@ -154,9 +233,9 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
         ))}
       </div>
 
-      {/* Route form — shown for bus/rail */}
+      {/* Route form — bus/rail only */}
       <AnimatePresence mode="wait">
-        {tab !== "transit-pass" && (
+        {showRouteForm && (
           <motion.div
             key="route-form"
             initial={{ opacity: 0, y: 8 }}
@@ -166,7 +245,6 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
             className="grid gap-3 rounded-2xl p-5 md:grid-cols-4"
             style={{ background: "var(--site-bg-surface)", border: "1px solid var(--site-border-06)" }}
           >
-            {/* From */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold uppercase tracking-[1.5px]" style={{ color: "var(--site-text-40)" }}>
                 {t("from")}
@@ -180,7 +258,6 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
                 {CITIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            {/* To */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold uppercase tracking-[1.5px]" style={{ color: "var(--site-text-40)" }}>
                 {t("to")}
@@ -194,7 +271,6 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
                 {CITIES.filter((c) => c !== from).map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            {/* Date */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold uppercase tracking-[1.5px]" style={{ color: "var(--site-text-40)" }}>
                 {t("date")}
@@ -207,7 +283,6 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
                 style={{ background: "var(--site-bg-elevated)", color: "var(--site-text)", border: "1px solid var(--site-border-08)" }}
               />
             </div>
-            {/* Search */}
             <div className="flex items-end">
               <button
                 className="w-full rounded-xl py-2.5 text-[14px] font-semibold text-white transition-all hover:-translate-y-0.5"
@@ -222,7 +297,19 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
 
       {/* Results */}
       <AnimatePresence mode="wait">
-        {tab === "transit-pass" ? (
+        {tab === "tour" ? (
+          <motion.div
+            key="tours"
+            className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {tours.map((tour, i) => (
+              <TourCard key={tour.id} tour={tour} onBook={() => buy(tour)} index={i} />
+            ))}
+          </motion.div>
+        ) : tab === "transit-pass" ? (
           <motion.div
             key="transit"
             className="grid gap-4 sm:grid-cols-3"

@@ -2,6 +2,7 @@ import { setRequestLocale, getTranslations } from "next-intl/server";
 import { connectDB } from "@/lib/db";
 import { TicketModel } from "@/lib/models/ticket";
 import { mockBusTickets, mockRailTickets, mockTransitPasses } from "@/lib/mock/tickets";
+import { mockTours } from "@/lib/mock/tours";
 import { TicketsSearch } from "@/components/site/tickets-search";
 import type { TicketOption } from "@/types";
 
@@ -61,7 +62,7 @@ export default async function TicketsPage({
 
       {/* Content */}
       <div className="mx-auto max-w-7xl px-6 py-12 md:px-12">
-        <TicketsSearch tickets={tickets} />
+        <TicketsSearch tickets={tickets} tours={mockTours} />
       </div>
     </div>
   );

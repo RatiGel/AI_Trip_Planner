@@ -105,7 +105,11 @@
     "heading": "Book Your",
     "headingEm": "Journey",
     "description": "Bus routes, railway tickets and Tbilisi city transit passes — buy online in seconds.",
-    "noResults": "No routes found. Try a different origin or destination."
+    "noResults": "No routes found. Try a different origin or destination.",
+    "tours": "Tours",
+    "perPerson": "per person",
+    "hrs": "hrs",
+    "meetsAt": "Meets at"
   },
   "reserve": {
     "title": "Reserve a table",
