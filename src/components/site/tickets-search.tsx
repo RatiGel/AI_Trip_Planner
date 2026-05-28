@@ -1,21 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Image from "next/image";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { ArrowRight, Bus, Clock, Tag, Train, Wallet } from "lucide-react";
+import { ArrowRight, Bus, Clock, Search, Train, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
-import type { DealCategory, DealOption, TicketOption } from "@/types";
+import type { TicketOption } from "@/types";
 
 const CITIES = ["Tbilisi", "Batumi", "Kazbegi", "Kutaisi"];
-
-const DEAL_CATEGORY_COLOR: Record<DealCategory, string> = {
-  attraction: "#B5271D",
-  food: "#D97706",
-  transport: "#0891B2",
-  experience: "#7C3AED",
-};
 
 function fmtDuration(min?: number) {
   if (!min) return "";
@@ -104,112 +96,46 @@ function TransitCard({ option, onBuy, index }: { option: TicketOption; onBuy: ()
   );
 }
 
-function DealCard({ deal, onGrab, index }: { deal: DealOption; onGrab: () => void; index: number }) {
-  const t = useTranslations("tickets");
-  const color = DEAL_CATEGORY_COLOR[deal.category];
-  return (
-    <motion.div
-      className="group overflow-hidden rounded-2xl"
-      style={{ background: "var(--site-bg-elevated)", border: "1px solid var(--site-border-06)" }}
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: index * 0.07 }}
-      whileHover={{ y: -4, borderColor: "rgba(232,160,32,0.25)" }}
-    >
-      {deal.image && (
-        <div className="relative overflow-hidden" style={{ aspectRatio: "16/10" }}>
-          <Image
-            src={deal.image}
-            alt={deal.title}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-          {/* Discount badge */}
-          <div
-            className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-bold text-white"
-            style={{ background: "#16A34A" }}
-          >
-            -{deal.discountPct}% {t("discount")}
-          </div>
-          {/* Category + optional promo badge */}
-          <div className="absolute right-3 top-3 flex flex-col items-end gap-1.5">
-            <span
-              className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
-              style={{ background: color }}
-            >
-              {deal.category}
-            </span>
-            {deal.badge && (
-              <span
-                className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white"
-                style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)" }}
-              >
-                {deal.badge}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-      <div className="p-5">
-        <h3 className="font-display mb-1.5 text-lg" style={{ color: "var(--site-text)" }}>{deal.title}</h3>
-        <p className="mb-4 line-clamp-2 text-[13px] leading-relaxed" style={{ color: "var(--site-text-50)" }}>
-          {deal.description}
-        </p>
-        {deal.validUntil && (
-          <p className="mb-3 flex items-center gap-1 text-[11px] uppercase tracking-[1px]" style={{ color: "var(--site-text-40)" }}>
-            <Clock className="size-3" />
-            {t("validUntil")} {deal.validUntil}
-          </p>
-        )}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[12px] line-through" style={{ color: "var(--site-text-35)" }}>
-              {deal.priceOriginal}₾
-            </p>
-            <p className="text-xl font-bold" style={{ color: "#E8A020" }}>
-              {deal.priceGEL}<span className="ml-0.5 text-base">₾</span>
-            </p>
-          </div>
-          <button
-            onClick={onGrab}
-            className="rounded-full px-4 py-2 text-[13px] font-semibold text-white transition-all hover:-translate-y-0.5"
-            style={{ background: "#B5271D", boxShadow: "0 4px 16px rgba(181,39,29,0.35)" }}
-          >
-            {t("grab")}
-          </button>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
+type TabType = "bus" | "rail" | "transit-pass";
 
-type TabType = "bus" | "rail" | "transit-pass" | "deal";
-
-export function TicketsSearch({ tickets, deals }: { tickets: TicketOption[]; deals: DealOption[] }) {
+export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
   const t = useTranslations("tickets");
   const [tab, setTab] = useState<TabType>("bus");
   const [from, setFrom] = useState("Tbilisi");
   const [to, setTo] = useState("Batumi");
   const [date, setDate] = useState("");
 
+  // Active search state — only updates on Search click
+  const [activeFrom, setActiveFrom] = useState("Tbilisi");
+  const [activeTo, setActiveTo] = useState("Batumi");
+  const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
+
   const busTickets = tickets.filter((t) => t.type === "bus");
   const railTickets = tickets.filter((t) => t.type === "rail");
   const transitPasses = tickets.filter((t) => t.type === "transit-pass");
 
-  const results = useMemo(() => {
-    const list = tab === "bus" ? busTickets : tab === "rail" ? railTickets : [];
-    return list.filter((o) => o.from === from && o.to === to);
-  }, [tab, from, to, busTickets, railTickets]);
+  const pool = tab === "bus" ? busTickets : tab === "rail" ? railTickets : [];
+  const results = pool.filter((o) => o.from === activeFrom && o.to === activeTo);
+
+  function handleSearch() {
+    setSearching(true);
+    setTimeout(() => {
+      setActiveFrom(from);
+      setActiveTo(to);
+      setSearched(true);
+      setSearching(false);
+    }, 600);
+  }
 
   function buy(label: string, price: number) {
-    toast.success(`${label} · ${price}₾`, { description: "Redirecting to payment…" });
+    toast.success(`${label} · ${price}₾`, { description: t("redirecting") });
   }
 
   const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: "bus", label: t("bus"), icon: <Bus className="size-4" /> },
     { id: "rail", label: t("rail"), icon: <Train className="size-4" /> },
     { id: "transit-pass", label: t("transitPass"), icon: <Wallet className="size-4" /> },
-    { id: "deal", label: t("deals"), icon: <Tag className="size-4" /> },
   ];
 
   const showRouteForm = tab === "bus" || tab === "rail";
@@ -221,7 +147,7 @@ export function TicketsSearch({ tickets, deals }: { tickets: TicketOption[]; dea
         {TABS.map((tb) => (
           <button
             key={tb.id}
-            onClick={() => setTab(tb.id)}
+            onClick={() => { setTab(tb.id); setSearched(false); }}
             className="flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-semibold transition-all"
             style={
               tab === tb.id
@@ -287,10 +213,15 @@ export function TicketsSearch({ tickets, deals }: { tickets: TicketOption[]; dea
             </div>
             <div className="flex items-end">
               <button
-                className="w-full rounded-xl py-2.5 text-[14px] font-semibold text-white transition-all hover:-translate-y-0.5"
+                onClick={handleSearch}
+                disabled={searching}
+                className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-[14px] font-semibold text-white transition-all hover:-translate-y-0.5 disabled:opacity-70"
                 style={{ background: "#B5271D", boxShadow: "0 4px 16px rgba(181,39,29,0.35)" }}
               >
-                {t("search")}
+                {searching
+                  ? <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  : <Search className="size-4" />}
+                {searching ? t("searching") : t("search")}
               </button>
             </div>
           </motion.div>
@@ -299,19 +230,7 @@ export function TicketsSearch({ tickets, deals }: { tickets: TicketOption[]; dea
 
       {/* Results */}
       <AnimatePresence mode="wait">
-        {tab === "deal" ? (
-          <motion.div
-            key="deals"
-            className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            {deals.map((deal, i) => (
-              <DealCard key={deal.id} deal={deal} onGrab={() => buy(deal.title, deal.priceGEL)} index={i} />
-            ))}
-          </motion.div>
-        ) : tab === "transit-pass" ? (
+        {tab === "transit-pass" ? (
           <motion.div
             key="transit"
             className="grid gap-4 sm:grid-cols-3"
@@ -322,6 +241,18 @@ export function TicketsSearch({ tickets, deals }: { tickets: TicketOption[]; dea
             {transitPasses.map((p, i) => (
               <TransitCard key={p.id} option={p} onBuy={() => buy(p.operator, p.priceGEL)} index={i} />
             ))}
+          </motion.div>
+        ) : !searched ? (
+          <motion.div
+            key="idle"
+            className="rounded-2xl py-16 text-center"
+            style={{ background: "var(--site-bg-surface)", border: "1px solid var(--site-border-06)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <Search className="mx-auto mb-3 size-8" style={{ color: "var(--site-text-40)" }} />
+            <p className="text-[14px]" style={{ color: "var(--site-text-50)" }}>{t("searchPrompt")}</p>
           </motion.div>
         ) : results.length === 0 ? (
           <motion.div
@@ -343,6 +274,9 @@ export function TicketsSearch({ tickets, deals }: { tickets: TicketOption[]; dea
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
+            <p className="text-[12px] uppercase tracking-[1.5px]" style={{ color: "var(--site-text-40)" }}>
+              {results.length} {t("routesFound")} · {activeFrom} → {activeTo}
+            </p>
             {results.map((o, i) => (
               <TicketCard key={o.id} option={o} onBuy={() => buy(`${o.operator}`, o.priceGEL)} index={i} />
             ))}

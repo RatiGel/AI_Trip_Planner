@@ -106,10 +106,20 @@
     "headingEm": "Journey",
     "description": "Bus routes, railway tickets and Tbilisi city transit passes — buy online in seconds.",
     "noResults": "No routes found. Try a different origin or destination.",
-    "deals": "Deals",
+    "searching": "Searching…",
+    "searchPrompt": "Select origin, destination and date, then press Search.",
+    "routesFound": "routes found",
+    "redirecting": "Redirecting to payment…"
+  },
+  "deals": {
+    "eyebrow": "Exclusive Offers",
+    "heading": "Best",
+    "headingEm": "Deals",
+    "description": "Discounted attractions, dining experiences and transport — book before they sell out.",
     "discount": "off",
     "validUntil": "Valid until",
-    "grab": "Grab Deal"
+    "grab": "Grab Deal",
+    "redirecting": "Redirecting to payment…"
   },
   "reserve": {
     "title": "Reserve a table",

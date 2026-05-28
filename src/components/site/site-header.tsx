@@ -59,7 +59,7 @@ export function SiteHeader() {
         { label: t("eventsMusic"), href: "/events?type=music" },
       ],
     },
-    { label: t("deals"), href: "/tickets", children: [] },
+    { label: t("deals"), href: "/deals", children: [] },
   ];
 
   useEffect(() => {
