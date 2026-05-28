@@ -59,7 +59,6 @@ export function SiteHeader() {
         { label: t("eventsMusic"), href: "/events?type=music" },
       ],
     },
-    { label: t("tickets"), href: "/tickets", icon: <Ticket className="size-3.5" />, children: [] },
     { label: t("deals"), href: "/tickets", children: [] },
   ];
 
@@ -146,6 +145,14 @@ export function SiteHeader() {
 
         {/* Right actions */}
         <div className="flex items-center gap-2">
+          <Link
+            href="/tickets"
+            className="hidden items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-all hover:-translate-y-0.5 sm:flex"
+            style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
+          >
+            <Ticket className="size-3.5" />
+            {t("tickets")}
+          </Link>
           <Link
             href="/chat"
             className="hidden items-center gap-2 rounded-full px-4 py-2 text-[13px] font-semibold text-white transition-all hover:-translate-y-0.5 sm:flex"
