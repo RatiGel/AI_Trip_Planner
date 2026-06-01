@@ -32,21 +32,23 @@ Read `node_modules/next/dist/docs/` before adding any new Next.js APIs or patter
 
 ## Architecture Overview
 
-**AI Trip Planner** — bilingual (English + Georgian) tourism site for Georgia. Phases 2 and 3 are complete: MongoDB backend live, auth working.
+**AI Trip Planner** — trilingual (English, Georgian, Russian) tourism site for Georgia. Phases 2 and 3 are complete: MongoDB backend live, auth working.
 
 ### Routing
 
-All user-facing pages live under `src/app/[locale]/`. The middleware in `src/proxy.ts` (via next-intl) intercepts requests and redirects `localhost:3000` → `/en/...`. The locale prefix is always present in the URL.
+All user-facing pages live under `src/app/[locale]/`. The middleware in `src/proxy.ts` (oddly named — it is the Next.js middleware file, not a proxy) intercepts requests via next-intl and redirects `localhost:3000` → `/en/...`. The locale prefix is always present in the URL.
 
 Import `Link`, `useRouter`, `redirect`, and `usePathname` from `src/i18n/navigation.ts`, **not** from `next/navigation` — this is the i18n-aware wrapper from next-intl.
 
 ### i18n
 
-next-intl 4. Server components call `setRequestLocale(locale)` before any rendering. Use `Link`, `useRouter`, `redirect` from `@/i18n/navigation` (locale-aware wrappers), never from `next/navigation` directly. Add keys to both `messages/en.json` and `messages/ka.json` together.
+next-intl 4. Three locales: `en`, `ka`, `ru` (default: `en`). Server components call `setRequestLocale(locale)` before any rendering. Use `Link`, `useRouter`, `redirect` from `@/i18n/navigation` (locale-aware wrappers), never from `next/navigation` directly. Add keys to all three message files (`messages/en.json`, `messages/ka.json`, `messages/ru.json`) together.
 
 ### Database
 
-MongoDB via Mongoose. Connection singleton in `src/lib/db.ts` (call `await connectDB()` before any model query). Models in `src/lib/models/`: `CityModel`, `PlaceModel`, `TicketModel`, `ReservationModel`, `ItineraryModel`, `UserModel`. Types in `src/types/index.ts` mirror the model shapes. Mock data in `src/lib/mock/` is kept for the seed script only — pages query MongoDB directly.
+MongoDB via Mongoose. Connection singleton in `src/lib/db.ts` (call `await connectDB()` before any model query). Models in `src/lib/models/`: `CityModel`, `PlaceModel`, `TicketModel`, `ReservationModel`, `ItineraryModel`, `UserModel`. Types in `src/types/index.ts` mirror the model shapes.
+
+Mock data in `src/lib/mock/` is still used by some pages (homepage `FeaturedPlaces`, chat suggestions) — not fully migrated to DB yet. The seed script at `scripts/seed.ts` populates MongoDB from the mock data.
 
 ### Data Fetching
 
@@ -69,10 +71,18 @@ NextAuth v5 (`next-auth@beta`). Config in `src/lib/auth.ts`. Credentials provide
 - `src/components/ui/` — shadcn primitives, never modify directly
 - `src/components/site/` — shared app components (header, footer, cards, forms)
 - `src/components/admin/` — admin-only components
-- `src/components/chat/` — chat UI (currently mocked)
+- `src/components/chat/` — chat UI (`ChatUI`) currently uses mock replies with `setTimeout`; no real API calls yet
 - `src/components/map/` — map placeholder (Mapbox in Phase 5)
+- `src/components/site/home/` — homepage section components (HeroSection, StatsBar, CategoriesStrip, FeaturedPlaces, NeighborhoodsSection, AIPlannerCTA)
 
-**Admin section** — `src/app/[locale]/admin/` has its own layout with sidebar nav. Not auth-gated yet.
+**Admin section** — `src/app/[locale]/admin/` has its own layout with sidebar nav. Pages: dashboard, cities, places (+ places/new), orders, reservations. Not auth-gated yet.
+
+### Fonts
+
+Three CSS variables from `next/font/google`:
+- `--font-sans` — Inter (Latin)
+- `--font-georgian` — Noto Sans Georgian
+- `--font-display` — DM Serif Display
 
 ### Phase Roadmap
 
