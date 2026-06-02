@@ -14,7 +14,8 @@
     "login": "Sign in",
     "register": "Sign up",
     "logout": "Sign out",
-    "language": "Language"
+    "language": "Language",
+    "planner": "Plan Route"
   },
   "home": {
     "heroTitle": "Plan a perfect trip to Tbilisi",
@@ -73,7 +74,12 @@
     "examples": "Examples",
     "example1": "I have 3 days and want to see museums",
     "example2": "Best nightlife for 2 nights",
-    "example3": "Family-friendly weekend with kids"
+    "example3": "Family-friendly weekend with kids",
+    "selectPlaces": "Choose your places",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "confirmSelection": "Confirm {count} places →",
+    "building": "Building your itinerary…"
   },
   "map": {
     "title": "Map",
@@ -257,5 +263,29 @@
     "districts": "Unique Districts",
     "history": "Years of History",
     "languages": "Languages"
+  },
+  "planner": {
+    "title": "Route Planner",
+    "subtitle": "Tell me your trip and I'll build an optimized day-by-day route from real places.",
+    "days": "Days",
+    "pace": "Pace",
+    "pace_relaxed": "Relaxed",
+    "pace_balanced": "Balanced",
+    "pace_packed": "Packed",
+    "interests": "What do you enjoy?",
+    "interestsPlaceholder": "e.g. wine, local food, old architecture and nightlife",
+    "focus": "Focus on (optional)",
+    "generate": "Plan my route",
+    "planning": "Planning…",
+    "error": "Couldn't generate a route. Try again.",
+    "emptyMap": "Fill in your preferences and generate a route to see it on the map.",
+    "stops": "Stops",
+    "distance": "Distance",
+    "travel": "Travel",
+    "endsAt": "Ends",
+    "dayN": "Day {n}",
+    "totalOverview": "{days} days · {distance} · ~{time} total",
+    "travelLeg": "travel",
+    "mayBeClosed": "May be closed"
   }
 }

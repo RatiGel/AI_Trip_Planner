@@ -29,6 +29,8 @@ const PlaceSchema = new Schema<PlaceDoc>(
     reservable: { type: Boolean, default: false },
     phone: String,
     website: String,
+    averageVisitDurationMin: Number,
+    popularityScore: { type: Number, min: 0, max: 100 },
   },
   { toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );

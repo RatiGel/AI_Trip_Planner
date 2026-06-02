@@ -13,24 +13,39 @@ import { mockPlaces } from "@/lib/mock/places";
 import { mockCategories } from "@/lib/mock/categories";
 import type { CategorySlug, Place } from "@/types";
 
-const CITY_BOUNDS = {
-  // Loose bounding box around Tbilisi center for the mock map projection.
-  minLng: 44.76,
-  maxLng: 44.83,
-  minLat: 41.68,
-  maxLat: 41.73,
-};
+const TBILISI_DEFAULT = "https://maps.google.com/maps?q=41.6938,44.8015&z=13&output=embed";
 
-function project(place: Place) {
-  const x =
-    ((place.geo.lng - CITY_BOUNDS.minLng) / (CITY_BOUNDS.maxLng - CITY_BOUNDS.minLng)) * 100;
-  const y =
-    100 -
-    ((place.geo.lat - CITY_BOUNDS.minLat) / (CITY_BOUNDS.maxLat - CITY_BOUNDS.minLat)) * 100;
-  return {
-    x: Math.max(2, Math.min(98, x)),
-    y: Math.max(2, Math.min(98, y)),
-  };
+function embedUrl(place: Place) {
+  return `https://maps.google.com/maps?q=${place.geo.lat},${place.geo.lng}&z=17&output=embed`;
+}
+
+function FilterPanel({
+  active,
+  toggle,
+}: {
+  active: Set<CategorySlug>;
+  toggle: (c: CategorySlug) => void;
+}) {
+  const tCat = useTranslations("categories");
+  const t = useTranslations("map");
+  return (
+    <div className="space-y-4">
+      <Button variant="outline" className="w-full" size="sm">
+        <Crosshair className="size-4" /> {t("nearMe")}
+      </Button>
+      <div className="space-y-2">
+        {mockCategories.map((c) => (
+          <label
+            key={c.slug}
+            className="flex cursor-pointer items-center gap-2 rounded-md p-2 hover:bg-accent"
+          >
+            <Checkbox checked={active.has(c.slug)} onCheckedChange={() => toggle(c.slug)} />
+            <span className="text-sm">{tCat(c.slug)}</span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function MapPlaceholder() {
@@ -39,14 +54,14 @@ export function MapPlaceholder() {
   const locale = useLocale();
   const [active, setActive] = useState<Set<CategorySlug>>(new Set());
   const [selected, setSelected] = useState<string | null>(null);
+  const [mapSrc, setMapSrc] = useState(TBILISI_DEFAULT);
 
   const places = useMemo(
     () =>
       active.size === 0
         ? mockPlaces.filter((p) => p.citySlug === "tbilisi")
         : mockPlaces.filter(
-            (p) =>
-              p.citySlug === "tbilisi" && p.categories.some((c) => active.has(c)),
+            (p) => p.citySlug === "tbilisi" && p.categories.some((c) => active.has(c)),
           ),
     [active],
   );
@@ -60,40 +75,66 @@ export function MapPlaceholder() {
     });
   }
 
-  const selectedPlace = places.find((p) => p.id === selected) ?? places[0];
+  function select(place: Place) {
+    setSelected(place.id);
+    setMapSrc(embedUrl(place));
+  }
+
+  const selectedPlace = places.find((p) => p.id === selected) ?? null;
   const selectedName = selectedPlace
     ? locale === "ka"
       ? selectedPlace.nameKa
       : selectedPlace.name
     : "";
 
+  const Sidebar = (
+    <div className="flex flex-col h-full">
+      <div className="border-b border-border p-4">
+        <p className="text-sm font-medium">{t("filters")}</p>
+      </div>
+      <div className="p-4 border-b border-border">
+        <FilterPanel active={active} toggle={toggle} />
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {places.map((p) => {
+          const name = locale === "ka" ? p.nameKa : p.name;
+          const isSelected = selected === p.id;
+          return (
+            <button
+              key={p.id}
+              onClick={() => select(p)}
+              className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-accent transition-colors border-b border-border/50 ${
+                isSelected ? "bg-accent" : ""
+              }`}
+            >
+              <MapPin
+                className={`size-4 mt-0.5 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
+              />
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{name}</p>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {p.categories.slice(0, 2).map((c) => (
+                    <Badge key={c} variant="outline" className="text-[10px]">
+                      {tCat(c)}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
     <div className="grid h-[calc(100vh-4rem)] grid-rows-[auto_1fr] md:grid-cols-[320px_1fr] md:grid-rows-1">
-      <aside className="hidden md:flex flex-col border-r border-border bg-card">
-        <div className="border-b border-border p-4">
-          <p className="text-sm font-medium">{t("filters")}</p>
-        </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          <Button variant="outline" className="w-full" size="sm">
-            <Crosshair className="size-4" /> {t("nearMe")}
-          </Button>
-          <div className="space-y-2">
-            {mockCategories.map((c) => (
-              <label
-                key={c.slug}
-                className="flex cursor-pointer items-center gap-2 rounded-md p-2 hover:bg-accent"
-              >
-                <Checkbox
-                  checked={active.has(c.slug)}
-                  onCheckedChange={() => toggle(c.slug)}
-                />
-                <span className="text-sm">{tCat(c.slug)}</span>
-              </label>
-            ))}
-          </div>
-        </div>
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex flex-col border-r border-border bg-card overflow-hidden">
+        {Sidebar}
       </aside>
 
+      {/* Mobile top bar */}
       <div className="md:hidden flex items-center gap-2 border-b border-border bg-card p-2">
         <Sheet>
           <SheetTrigger asChild>
@@ -101,59 +142,33 @@ export function MapPlaceholder() {
               <ListFilter className="size-4" /> {t("filters")}
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-72">
-            <SheetHeader>
+          <SheetContent side="left" className="w-80 p-0">
+            <SheetHeader className="sr-only">
               <SheetTitle>{t("filters")}</SheetTitle>
             </SheetHeader>
-            <div className="px-4 pt-2 space-y-2">
-              {mockCategories.map((c) => (
-                <label key={c.slug} className="flex items-center gap-2 rounded-md p-2 hover:bg-accent">
-                  <Checkbox checked={active.has(c.slug)} onCheckedChange={() => toggle(c.slug)} />
-                  <span className="text-sm">{tCat(c.slug)}</span>
-                </label>
-              ))}
-            </div>
+            {Sidebar}
           </SheetContent>
         </Sheet>
-        <Button size="sm" variant="outline">
-          <Crosshair className="size-4" /> {t("nearMe")}
-        </Button>
       </div>
 
-      <div className="relative overflow-hidden bg-[radial-gradient(circle_at_30%_20%,#dbeafe,transparent_60%),radial-gradient(circle_at_80%_70%,#ddd6fe,transparent_55%),#f8fafc]">
-        <div className="absolute inset-0 grid-bg opacity-50" aria-hidden />
-        <div className="absolute inset-0 p-4">
-          {places.map((p) => {
-            const { x, y } = project(p);
-            const isSelected = selectedPlace?.id === p.id;
-            return (
-              <button
-                key={p.id}
-                onClick={() => setSelected(p.id)}
-                style={{ left: `${x}%`, top: `${y}%` }}
-                className="group absolute -translate-x-1/2 -translate-y-full"
-                aria-label={p.name}
-              >
-                <span
-                  className={`relative inline-flex items-center gap-1 rounded-full border bg-background px-2 py-1 text-xs font-medium shadow-sm transition ${
-                    isSelected
-                      ? "border-primary ring-2 ring-primary/30"
-                      : "border-border hover:border-primary/60"
-                  }`}
-                >
-                  <MapPin className="size-3.5 text-primary" />
-                  <span className="max-w-32 truncate">
-                    {locale === "ka" ? p.nameKa : p.name}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
+      {/* Map area */}
+      <div className="relative overflow-hidden">
+        <iframe
+          key={mapSrc}
+          src={mapSrc}
+          width="100%"
+          height="100%"
+          style={{ border: 0, display: "block" }}
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          title="Tbilisi map"
+        />
 
+        {/* Selected place card */}
         {selectedPlace && (
-          <div className="absolute inset-x-3 bottom-3 md:left-auto md:right-4 md:bottom-4 md:max-w-sm">
-            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
+          <div className="absolute inset-x-3 bottom-3 md:left-auto md:right-4 md:bottom-4 md:max-w-sm pointer-events-none">
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-lg pointer-events-auto">
               <div className="relative aspect-video w-full overflow-hidden bg-muted">
                 {selectedPlace.images[0] && (
                   <Image
@@ -175,23 +190,13 @@ export function MapPlaceholder() {
                   ))}
                 </div>
                 <Button asChild size="sm" className="w-full">
-                  <Link href={`/places/${selectedPlace.slug}`}>
-                    {t("showList")}
-                  </Link>
+                  <Link href={`/places/${selectedPlace.slug}`}>{t("showList")}</Link>
                 </Button>
               </div>
             </div>
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        .grid-bg {
-          background-image: linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
-          background-size: 40px 40px;
-        }
-      `}</style>
     </div>
   );
 }

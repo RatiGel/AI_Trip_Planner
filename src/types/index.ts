@@ -59,12 +59,115 @@ export interface Place {
   reservable: boolean;
   phone?: string;
   website?: string;
+  /** Typical time a visitor spends here, in minutes. Optional — derived from
+   *  category when absent (see lib/places/visit-duration.ts). */
+  averageVisitDurationMin?: number;
+  /** 0-100 popularity used for candidate ranking. Optional — derived from
+   *  rating * reviewCount when absent. */
+  popularityScore?: number;
+}
+
+// ── AI Route Planner ────────────────────────────────────────────────
+// The AI is responsible ONLY for itinerary planning. It never returns
+// coordinates, addresses, or routes — only place IDs drawn from the
+// candidate list. All geographic data comes from the database.
+
+export type TripPace = "relaxed" | "balanced" | "packed";
+
+/** Raw preferences submitted by the user. */
+export interface TravelPreferences {
+  citySlug: string;
+  days: number;
+  /** Free-text description of what the traveller enjoys. */
+  interests: string;
+  /** Optional category hints used to pre-filter candidates. */
+  categories?: CategorySlug[];
+  pace?: TripPace;
+  /** Wall-clock the traveller wants to start each day, e.g. "09:00". */
+  dayStart?: string;
+}
+
+/** A single stop as chosen by the AI — place_id + reason only. */
+export interface AIItineraryStop {
+  place_id: string;
+  reason: string;
+}
+
+export interface AIItineraryDay {
+  day: number;
+  stops: AIItineraryStop[];
+}
+
+/** Exactly the JSON shape the AI is constrained to return. */
+export interface AIItinerary {
+  title: string;
+  days: AIItineraryDay[];
+}
+
+/** A stop after the DB join + optimization: full place + schedule. */
+export interface RouteStop {
+  order: number; // 1-based position within the day
+  place: Place;
+  reason: string;
+  /** Estimated arrival time, "HH:MM". */
+  arrival: string;
+  /** Estimated departure time, "HH:MM". */
+  departure: string;
+  visitDurationMin: number;
+  /** Travel from the PREVIOUS stop to this one (0 for the first stop). */
+  travelFromPrevMin: number;
+  travelFromPrevMeters: number;
+  /** True when this stop is likely closed at the scheduled arrival. */
+  closedWarning?: boolean;
+}
+
+export interface RouteStats {
+  totalDistanceMeters: number;
+  totalTravelMin: number;
+  totalVisitMin: number;
+  /** "HH:MM" the day is expected to wrap up. */
+  dayEndsAt: string;
+  stopCount: number;
+}
+
+export interface RouteDay {
+  day: number;
+  /** Hex colour assigned to this day's markers + polyline. */
+  color: string;
+  stops: RouteStop[];
+  stats: RouteStats;
+}
+
+export interface RoutePlan {
+  title: string;
+  days: RouteDay[];
+  /** Aggregate across all days. */
+  totals: RouteStats;
+  /** Travel mode used for distance/time estimates. */
+  mode: "walking" | "driving" | "straight-line";
+}
+
+export interface PlacePreviewCard {
+  placeId: string;
+  name: string;
+  nameKa: string;
+  category: CategorySlug;
+  imageUrl?: string;
+  rating: number;
+  reviewCount: number;
+  description: string;
+  reason: string;
+  day: number;
 }
 
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  type?: "place-selection" | "route-plan";
+  previewPlaces?: PlacePreviewCard[];
+  pendingItinerary?: AIItinerary;
+  itineraryPlaces?: Place[];
   itinerary?: SavedItinerary;
 }
 
