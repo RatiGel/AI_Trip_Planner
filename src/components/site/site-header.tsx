@@ -195,10 +195,14 @@ export function SiteHeader() {
                   {tNav("superadmin")}
                 </Link>
               )}
-              <span className="flex items-center gap-1.5 text-[13px]" style={{ color: "var(--site-text-50)" }}>
+              <Link
+                href="/profile"
+                className="flex items-center gap-1.5 text-[13px] transition-colors hover:opacity-80"
+                style={{ color: "var(--site-text-50)" }}
+              >
                 <User className="size-3.5" />
                 {session.user.name ?? session.user.email}
-              </span>
+              </Link>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className="rounded-md px-3 py-1.5 text-[13px] transition-colors"
