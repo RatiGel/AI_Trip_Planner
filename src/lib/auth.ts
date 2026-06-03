@@ -58,6 +58,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           token.id = user.id;
           token.role = "tourist";
         }
+        // Bootstrap: always grant superadmin to the platform owner email
+        if (user.email === "ninikusradze@gmail.com") {
+          token.role = "superadmin";
+        }
       }
       return token;
     },
