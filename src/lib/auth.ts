@@ -74,6 +74,10 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     session({ session, token }) {
       if (token.id) session.user.id = token.id as string;
       if (token.role) session.user.role = token.role as string;
+      // Always enforce superadmin for owner — runs on every page load
+      if (session.user.email === "ninikusradze@gmail.com") {
+        session.user.role = "superadmin";
+      }
       return session;
     },
   },
