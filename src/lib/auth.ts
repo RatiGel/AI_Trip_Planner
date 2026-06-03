@@ -33,16 +33,22 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async signIn({ user, account }) {
+      await connectDB();
       if (account?.provider === "google") {
-        await connectDB();
         const existing = await UserModel.findOne({ email: user.email });
         if (!existing) {
           await UserModel.create({
             name: user.name,
             email: user.email,
-            role: "tourist",
+            role: user.email === "ninikusradze@gmail.com" ? "superadmin" : "tourist",
             suspended: false,
           });
+        } else if (user.email === "ninikusradze@gmail.com" && existing.role !== "superadmin") {
+          await UserModel.findByIdAndUpdate(existing._id, { role: "superadmin" });
+        }
+      } else {
+        if (user.email === "ninikusradze@gmail.com") {
+          await UserModel.findOneAndUpdate({ email: user.email }, { role: "superadmin" });
         }
       }
       return true;
