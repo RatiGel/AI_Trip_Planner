@@ -8,6 +8,7 @@ export interface IUser {
   avatar?: string;
   role: "tourist" | "business" | "admin" | "superadmin";
   suspended: boolean;
+  warnings: number;
   createdAt: Date;
 }
 
@@ -23,6 +24,7 @@ const UserSchema = new Schema<IUser>(
       default: "tourist",
     },
     suspended: { type: Boolean, default: false },
+    warnings: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
