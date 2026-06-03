@@ -197,11 +197,11 @@ export function SiteHeader() {
               )}
               <Link
                 href="/profile"
-                className="flex items-center gap-1.5 text-[13px] transition-colors hover:opacity-80"
-                style={{ color: "var(--site-text-50)" }}
+                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all hover:-translate-y-0.5 hover:opacity-80"
+                style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
               >
                 <User className="size-3.5" />
-                {session.user.name ?? session.user.email}
+                {session.user.name?.split(" ")[0] ?? "Profile"}
               </Link>
               <button
                 onClick={() => signOut({ callbackUrl: "/" })}
