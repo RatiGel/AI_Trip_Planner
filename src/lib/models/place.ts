@@ -31,6 +31,16 @@ const PlaceSchema = new Schema<PlaceDoc>(
     website: String,
     averageVisitDurationMin: Number,
     popularityScore: { type: Number, min: 0, max: 100 },
+    ownerId: { type: String, index: true },
+    status: {
+      type: String,
+      enum: ["pending", "active", "rejected"],
+      default: "active",
+      index: true,
+    },
+    featured: { type: Boolean, default: false },
+    rejectionReason: { type: String },
+    viewCount: { type: Number, default: 0 },
   },
   { toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
