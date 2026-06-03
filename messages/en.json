@@ -15,7 +15,9 @@
     "register": "Sign up",
     "logout": "Sign out",
     "language": "Language",
-    "planner": "Plan Route"
+    "planner": "Plan Route",
+    "myBusiness": "My Business",
+    "superadmin": "Super Admin"
   },
   "home": {
     "heroTitle": "Plan a perfect trip to Tbilisi",

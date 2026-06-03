@@ -10,10 +10,10 @@ if (!MONGODB_URI) throw new Error("MONGODB_URI not set");
 async function main() {
   await mongoose.connect(MONGODB_URI);
 
-  const email = "ratige12@gmail.com";
+  const email = "ninikusradze@gmail.com";
   const result = await mongoose.connection.db!
     .collection("users")
-    .updateOne({ email }, { $set: { role: "admin" } });
+    .updateOne({ email }, { $set: { role: "superadmin" } });
 
   if (result.matchedCount === 0) {
     console.log(`No user found with email: ${email}`);

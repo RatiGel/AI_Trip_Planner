@@ -166,6 +166,35 @@ export function SiteHeader() {
 
           {session?.user ? (
             <div className="hidden items-center gap-2 md:flex">
+              {(session.user as { role?: string }).role === "business" && (
+                <Link
+                  href="/business"
+                  className="flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-all hover:-translate-y-0.5"
+                  style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
+                >
+                  {tNav("myBusiness")}
+                </Link>
+              )}
+              {(["admin", "superadmin"] as string[]).includes(
+                (session.user as { role?: string }).role ?? ""
+              ) && (
+                <Link
+                  href="/admin"
+                  className="flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-all hover:-translate-y-0.5"
+                  style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
+                >
+                  {tNav("admin")}
+                </Link>
+              )}
+              {(session.user as { role?: string }).role === "superadmin" && (
+                <Link
+                  href="/superadmin"
+                  className="flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-all hover:-translate-y-0.5"
+                  style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
+                >
+                  {tNav("superadmin")}
+                </Link>
+              )}
               <span className="flex items-center gap-1.5 text-[13px]" style={{ color: "var(--site-text-50)" }}>
                 <User className="size-3.5" />
                 {session.user.name ?? session.user.email}

@@ -37,25 +37,33 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         await connectDB();
         const existing = await UserModel.findOne({ email: user.email });
         if (!existing) {
-          await UserModel.create({ name: user.name, email: user.email });
+          await UserModel.create({
+            name: user.name,
+            email: user.email,
+            role: "tourist",
+            suspended: false,
+          });
         }
       }
       return true;
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
-        if (account?.provider === "google") {
-          await connectDB();
-          const dbUser = await UserModel.findOne({ email: user.email }).lean();
-          if (dbUser) token.id = dbUser._id.toString();
+        await connectDB();
+        const dbUser = await UserModel.findOne({ email: user.email }).lean();
+        if (dbUser) {
+          token.id = dbUser._id.toString();
+          token.role = dbUser.role ?? "tourist";
         } else {
           token.id = user.id;
+          token.role = "tourist";
         }
       }
       return token;
     },
     session({ session, token }) {
-      if (token.id) (session.user as { id?: string }).id = token.id as string;
+      if (token.id) session.user.id = token.id as string;
+      if (token.role) session.user.role = token.role as string;
       return session;
     },
   },

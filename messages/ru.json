@@ -15,7 +15,9 @@
     "register": "Регистрация",
     "logout": "Выйти",
     "language": "Язык",
-    "planner": "Маршрут"
+    "planner": "Маршрут",
+    "myBusiness": "Мой бизнес",
+    "superadmin": "Суперадмин"
   },
   "home": {
     "heroTitle": "Спланируйте идеальную поездку в Тбилиси",

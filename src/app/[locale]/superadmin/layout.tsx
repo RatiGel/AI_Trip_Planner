@@ -1,30 +1,25 @@
 import {
+  BarChart3,
   Building2,
-  CalendarCheck,
-  Image,
+  Flag,
   LayoutDashboard,
-  MapPin,
-  Receipt,
+  Shield,
   Users,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { Link, redirect } from "@/i18n/navigation";
 import { auth } from "@/lib/auth";
 
 const NAV = [
-  { href: "/admin", labelKey: "dashboard" as const, Icon: LayoutDashboard },
-  { href: "/admin/places", labelKey: "places" as const, Icon: MapPin },
-  { href: "/admin/cities", labelKey: "cities" as const, Icon: Building2 },
-  { href: "/admin/reservations", labelKey: "reservations" as const, Icon: CalendarCheck },
-  { href: "/admin/orders", labelKey: "ticketOrders" as const, Icon: Receipt },
-  { href: "/admin/users", labelKey: "users" as const, Icon: Users },
-  { href: "/admin/media", labelKey: "media" as const, Icon: Image },
+  { href: "/superadmin", label: "Overview", Icon: LayoutDashboard },
+  { href: "/superadmin/users", label: "Users", Icon: Users },
+  { href: "/superadmin/businesses", label: "Businesses", Icon: Building2 },
+  { href: "/superadmin/content", label: "Content", Icon: Flag },
+  { href: "/superadmin/reports", label: "Reports", Icon: BarChart3 },
+  { href: "/superadmin/security", label: "Security", Icon: Shield },
 ];
 
-const ALLOWED_ROLES = ["admin", "superadmin"];
-
-export default async function AdminLayout({
+export default async function SuperAdminLayout({
   children,
   params,
 }: {
@@ -36,7 +31,7 @@ export default async function AdminLayout({
 
   const session = await auth();
   const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!role || !ALLOWED_ROLES.includes(role)) {
+  if (role !== "superadmin") {
     redirect({ href: "/", locale });
   }
 
@@ -44,21 +39,20 @@ export default async function AdminLayout({
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  const t = useTranslations("admin");
   return (
     <div className="container mx-auto grid gap-6 px-4 py-8 md:grid-cols-[220px_1fr]">
       <aside className="hidden md:block">
         <div className="sticky top-20 space-y-1 rounded-2xl border border-border bg-card p-2">
           <p className="px-3 pt-2 pb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            {t("title")}
+            Super Admin
           </p>
-          {NAV.map(({ href, labelKey, Icon }) => (
+          {NAV.map(({ href, label, Icon }) => (
             <Link
               key={href}
               href={href}
               className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
             >
-              <Icon className="size-4" /> {t(labelKey)}
+              <Icon className="size-4" /> {label}
             </Link>
           ))}
         </div>
