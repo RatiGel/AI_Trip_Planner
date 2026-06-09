@@ -1,6 +1,7 @@
 "use client";
 
 import "mapbox-gl/dist/mapbox-gl.css";
+import "leaflet/dist/leaflet.css";
 import { useEffect, useMemo, useRef } from "react";
 import type { Map as MbMap, Marker as MbMarker, LngLatBoundsLike } from "mapbox-gl";
 import { useLocale } from "next-intl";
@@ -199,7 +200,7 @@ function MapboxMap({
   return <div ref={containerRef} className="h-full w-full" />;
 }
 
-// ── Fallback map (no token): normalized projection over the plan's bbox ──
+// ── Fallback map (no Mapbox token): Leaflet + OpenStreetMap (free) ────
 function FallbackMap({
   pins,
   plan,
@@ -211,98 +212,130 @@ function FallbackMap({
   selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
-  const bbox = useMemo(() => {
-    const lngs = pins.map((p) => p.lng);
-    const lats = pins.map((p) => p.lat);
-    const pad = 0.004;
-    return {
-      minLng: Math.min(...lngs) - pad,
-      maxLng: Math.max(...lngs) + pad,
-      minLat: Math.min(...lats) - pad,
-      maxLat: Math.max(...lats) + pad,
-    };
-  }, [pins]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<import("leaflet").Map | null>(null);
+  const markersRef = useRef<Map<string, import("leaflet").Marker>>(new Map());
+  const polylinesRef = useRef<import("leaflet").Polyline[]>([]);
 
-  const project = (lng: number, lat: number) => {
-    const x = ((lng - bbox.minLng) / (bbox.maxLng - bbox.minLng)) * 100;
-    const y = 100 - ((lat - bbox.minLat) / (bbox.maxLat - bbox.minLat)) * 100;
-    return { x: Math.max(3, Math.min(97, x)), y: Math.max(4, Math.min(96, y)) };
-  };
+  useEffect(() => {
+    if (!containerRef.current || pins.length === 0) return;
+    let cancelled = false;
 
-  return (
-    <div className="relative h-full w-full overflow-hidden bg-[radial-gradient(circle_at_30%_20%,#dbeafe,transparent_60%),radial-gradient(circle_at_80%_70%,#ddd6fe,transparent_55%),#f8fafc]">
-      <div
-        className="absolute inset-0 opacity-40"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-        aria-hidden
-      />
-      <div className="pointer-events-none absolute left-3 top-3 rounded-md bg-background/80 px-2 py-1 text-[11px] text-muted-foreground shadow-sm">
-        Map preview · add NEXT_PUBLIC_MAPBOX_TOKEN for live map
-      </div>
+    (async () => {
+      const L = (await import("leaflet")).default;
+      if (cancelled || !containerRef.current) return;
 
-      {/* Polylines per day */}
-      <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 100 100">
-        {plan.days
-          .filter((d) => d.stops.length > 1)
-          .map((d) => {
-            const pts = d.stops
-              .map((s) => {
-                const { x, y } = project(s.place.geo.lng, s.place.geo.lat);
-                return `${x},${y}`;
-              })
-              .join(" ");
-            return (
-              <polyline
-                key={d.day}
-                points={pts}
-                fill="none"
-                stroke={d.color}
-                strokeWidth={0.6}
-                strokeOpacity={0.7}
-                strokeDasharray="1.5 1"
-                vectorEffect="non-scaling-stroke"
-              />
-            );
-          })}
-      </svg>
+      // Fix Leaflet default icon paths broken by bundlers
+      // @ts-expect-error – _getIconUrl is internal
+      delete L.Icon.Default.prototype._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      });
 
-      {pins.map((pin) => {
-        const { x, y } = project(pin.lng, pin.lat);
-        const selected = pin.id === selectedId;
-        return (
-          <button
-            key={pin.id}
-            onClick={() => onSelect(pin.id)}
-            style={{ left: `${x}%`, top: `${y}%` }}
-            className="absolute -translate-x-1/2 -translate-y-1/2"
-            aria-label={`${pin.order}. ${pin.name}`}
-          >
-            <span
-              className="flex items-center justify-center rounded-full font-bold text-white shadow-md transition-transform"
-              style={{
-                background: pin.color,
-                width: selected ? 34 : 28,
-                height: selected ? 34 : 28,
-                border: selected ? "2px solid #fff" : "2px solid transparent",
-                fontSize: 13,
-              }}
-            >
-              {pin.order}
-            </span>
-            {selected && (
-              <span className="absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap rounded-md border border-border bg-card px-2 py-1 text-xs font-medium shadow-lg">
-                {pin.name}
-              </span>
-            )}
-          </button>
+      if (!mapRef.current) {
+        mapRef.current = L.map(containerRef.current, { zoomControl: true });
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          maxZoom: 19,
+        }).addTo(mapRef.current);
+      }
+
+      const map = mapRef.current;
+
+      // Clear previous markers and polylines
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current.clear();
+      polylinesRef.current.forEach((p) => p.remove());
+      polylinesRef.current = [];
+
+      // Draw route polylines per day
+      for (const day of plan.days) {
+        if (day.stops.length < 2) continue;
+        const coords = day.stops.map(
+          (s) => [s.place.geo.lat, s.place.geo.lng] as [number, number],
         );
-      })}
-    </div>
-  );
+        const poly = L.polyline(coords, {
+          color: day.color,
+          weight: 3,
+          opacity: 0.7,
+          dashArray: "6 4",
+        }).addTo(map);
+        polylinesRef.current.push(poly);
+      }
+
+      // Draw numbered circle markers
+      for (const pin of pins) {
+        const icon = L.divIcon({
+          html: `<div style="
+            display:flex;align-items:center;justify-content:center;
+            width:28px;height:28px;border-radius:9999px;
+            background:${pin.color};color:#fff;font-weight:700;font-size:13px;
+            box-shadow:0 2px 6px rgba(0,0,0,.35);
+            border:2px solid ${pin.id === selectedId ? "#fff" : "transparent"};
+            transform:scale(${pin.id === selectedId ? 1.25 : 1});
+          ">${pin.order}</div>`,
+          className: "",
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+        });
+        const marker = L.marker([pin.lat, pin.lng], { icon })
+          .addTo(map)
+          .bindPopup(`<b>${pin.order}. ${pin.name}</b>`);
+        marker.on("click", () => onSelect(pin.id));
+        markersRef.current.set(pin.id, marker);
+      }
+
+      // Fit to all stops
+      const latLngs = pins.map((p) => [p.lat, p.lng] as [number, number]);
+      map.fitBounds(L.latLngBounds(latLngs), { padding: [40, 40], maxZoom: 16 });
+    })();
+
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plan]);
+
+  // Re-highlight selected marker without full redraw
+  useEffect(() => {
+    if (!mapRef.current || !selectedId) return;
+    (async () => {
+      const L = (await import("leaflet")).default;
+      const pin = pins.find((p) => p.id === selectedId);
+      if (!pin) return;
+      markersRef.current.forEach((marker, id) => {
+        const selected = id === selectedId;
+        marker.setIcon(
+          L.divIcon({
+            html: `<div style="
+              display:flex;align-items:center;justify-content:center;
+              width:28px;height:28px;border-radius:9999px;
+              background:${pins.find((p) => p.id === id)?.color ?? "#888"};
+              color:#fff;font-weight:700;font-size:13px;
+              box-shadow:0 2px 6px rgba(0,0,0,.35);
+              border:2px solid ${selected ? "#fff" : "transparent"};
+              transform:scale(${selected ? 1.25 : 1});
+            ">${pins.find((p) => p.id === id)?.order ?? ""}</div>`,
+            className: "",
+            iconSize: [28, 28],
+            iconAnchor: [14, 14],
+          }),
+        );
+      });
+      mapRef.current?.flyTo([pin.lat, pin.lng], 16, { duration: 0.8 });
+      markersRef.current.get(selectedId)?.openPopup();
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
+
+  useEffect(() => {
+    return () => {
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+  }, []);
+
+  return <div ref={containerRef} className="h-full w-full" />;
 }
 
 export function RouteMap(props: {

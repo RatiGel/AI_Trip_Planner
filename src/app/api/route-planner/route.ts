@@ -42,7 +42,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    // STEP 2: candidate places from the DB.
     const candidates = await getCandidatePlaces(prefs);
     if (candidates.length === 0) {
       return NextResponse.json(
@@ -51,26 +50,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // STEP 3-4: AI selects place IDs only.
     const itinerary = await generateItinerary(prefs, candidates);
-
-    // STEP 5: join IDs → full place records (candidates already carry geo).
     const placesById = new Map<string, Place>(candidates.map((p) => [p.id, p]));
+    const plan = buildRoutePlan(itinerary, placesById, { dayStart: prefs.dayStart });
 
-    // STEP 6: optimize order + build schedule/stats.
-    const plan = buildRoutePlan(itinerary, placesById, {
-      dayStart: prefs.dayStart,
-    });
-
-    const isMock =
-      process.env.USE_MOCK_AI === "true" ||
-      (!process.env.ANTHROPIC_API_KEY && !process.env.GROQ_API_KEY);
+    const isMock = !process.env.OPENROUTER_API_KEY;
     return NextResponse.json({ plan, mock: isMock });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    if (message.includes("ANTHROPIC_API_KEY")) {
+    if (message.includes("OPENROUTER_API_KEY")) {
       return NextResponse.json(
-        { error: "AI is not configured. Set ANTHROPIC_API_KEY." },
+        { error: "AI is not configured. Set OPENROUTER_API_KEY." },
         { status: 503 },
       );
     }

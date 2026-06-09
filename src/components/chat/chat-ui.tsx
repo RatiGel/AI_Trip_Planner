@@ -139,6 +139,7 @@ export function ChatUI() {
       toast.error("Failed to build itinerary");
     } finally {
       setPending(false);
+      setConfirming(false);
     }
   }
 
@@ -167,9 +168,15 @@ export function ChatUI() {
     </div>
   );
 
+  // Index of the latest place-selection message — only that one shows cards.
+  const latestPreviewIdx = messages.reduce(
+    (best, m, i) => (m.type === "place-selection" ? i : best),
+    -1,
+  );
+
   const messageList = (
     <div className="space-y-3">
-      {messages.map((m) => (
+      {messages.map((m, idx) => (
         <div
           key={m.id}
           className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
@@ -200,11 +207,12 @@ export function ChatUI() {
             </div>
           )}
 
-          {/* Place selection cards */}
+          {/* Place selection cards — only for the latest preview, not while confirming */}
           {m.type === "place-selection" &&
+            idx === latestPreviewIdx &&
             m.previewPlaces &&
             m.pendingItinerary &&
-            !plan && !confirming && (
+            !confirming && (
               <PlaceSelectionCards
                 places={m.previewPlaces}
                 pendingItinerary={m.pendingItinerary}

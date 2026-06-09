@@ -65,6 +65,12 @@ export interface Place {
   /** 0-100 popularity used for candidate ranking. Optional — derived from
    *  rating * reviewCount when absent. */
   popularityScore?: number;
+  /** External place ID (Foursquare fsq_id), set by sync-ratings script. */
+  extPlaceId?: string;
+  /** Rating from external source (0-5 scale). Preferred over `rating` for ranking. */
+  extRating?: number;
+  /** Review count from external source. Preferred over `reviewCount` for ranking. */
+  extReviewCount?: number;
 }
 
 // ── AI Route Planner ────────────────────────────────────────────────

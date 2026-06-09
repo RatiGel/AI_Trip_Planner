@@ -41,6 +41,9 @@ const PlaceSchema = new Schema<PlaceDoc>(
     featured: { type: Boolean, default: false },
     rejectionReason: { type: String },
     viewCount: { type: Number, default: 0 },
+    extPlaceId: { type: String, index: true, sparse: true },
+    extRating: { type: Number, min: 0, max: 5 },
+    extReviewCount: { type: Number, min: 0 },
   },
   { toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
