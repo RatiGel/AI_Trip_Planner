@@ -65,6 +65,11 @@ export interface Place {
   /** 0-100 popularity used for candidate ranking. Optional — derived from
    *  rating * reviewCount when absent. */
   popularityScore?: number;
+  ownerId?: string;
+  status?: "pending" | "active" | "rejected";
+  featured?: boolean;
+  rejectionReason?: string;
+  viewCount?: number;
   /** External place ID (Foursquare fsq_id), set by sync-ratings script. */
   extPlaceId?: string;
   /** Rating from external source (0-5 scale). Preferred over `rating` for ranking. */

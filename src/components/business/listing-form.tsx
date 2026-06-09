@@ -177,7 +177,7 @@ export function ListingForm({ listingId, defaultValues }: ListingFormProps) {
       <div className="grid gap-4 md:grid-cols-3">
         <div className="space-y-2">
           <Label>Price level</Label>
-          <Select value={priceLevel} onValueChange={setPriceLevel}>
+          <Select value={priceLevel} onValueChange={(v) => v != null && setPriceLevel(v)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>

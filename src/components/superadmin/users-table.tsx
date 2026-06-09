@@ -108,7 +108,7 @@ export function SuperAdminUsersTable({ users: initial }: { users: SuperAdminUser
                   <Input value={editState.email} onChange={(e) => setEditState((s) => ({ ...s, email: e.target.value }))} className="h-8 w-44" />
                 </TableCell>
                 <TableCell>
-                  <Select value={editState.role} onValueChange={(v) => setEditState((s) => ({ ...s, role: v }))}>
+                  <Select value={editState.role} onValueChange={(v) => setEditState((s) => ({ ...s, role: v ?? s.role }))}>
                     <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {["tourist", "business", "admin", "superadmin"].map((r) => (

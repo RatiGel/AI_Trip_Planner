@@ -130,7 +130,7 @@ export function ProfileClient({
                 <Label>Business type</Label>
                 <Select
                   value={form.businessType}
-                  onValueChange={(v) => setForm((f) => ({ ...f, businessType: v }))}
+                  onValueChange={(v) => setForm((f) => ({ ...f, businessType: v ?? f.businessType }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
