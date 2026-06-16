@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
+import { useParams } from "next/navigation";
 import { Clock } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
+import { payNow } from "@/lib/pay";
 import type { DealCategory, DealOption } from "@/types";
 
 const DEAL_CATEGORY_COLOR: Record<DealCategory, string> = {
@@ -17,9 +20,26 @@ const DEAL_CATEGORY_COLOR: Record<DealCategory, string> = {
 function DealCard({ deal, index }: { deal: DealOption; index: number }) {
   const t = useTranslations("deals");
   const color = DEAL_CATEGORY_COLOR[deal.category];
+  const params = useParams();
+  const locale = typeof params?.locale === "string" ? params.locale : "en";
+  const [loading, setLoading] = useState(false);
 
-  function grab() {
+  async function grab() {
+    setLoading(true);
     toast.success(`${deal.title} · ${deal.priceGEL}₾`, { description: t("redirecting") });
+    try {
+      await payNow({
+        purpose: "deal",
+        targetId: deal.id,
+        amount: deal.priceGEL,
+        desc: deal.title,
+        locale,
+      });
+      // payNow redirects to Flitt on success; keep spinner until navigation.
+    } catch (e) {
+      setLoading(false);
+      toast.error((e as Error).message);
+    }
   }
 
   return (
@@ -85,10 +105,11 @@ function DealCard({ deal, index }: { deal: DealOption; index: number }) {
           </div>
           <button
             onClick={grab}
-            className="rounded-full px-4 py-2 text-[13px] font-semibold text-white transition-all hover:-translate-y-0.5"
+            disabled={loading}
+            className="rounded-full px-4 py-2 text-[13px] font-semibold text-white transition-all hover:-translate-y-0.5 disabled:opacity-60"
             style={{ background: "#B5271D", boxShadow: "0 4px 16px rgba(181,39,29,0.35)" }}
           >
-            {t("grab")}
+            {loading ? "…" : t("grab")}
           </button>
         </div>
       </div>

@@ -40,6 +40,14 @@ export interface City {
   placesCount: number;
 }
 
+export interface PlaceService {
+  id: string;
+  name: string;
+  nameKa?: string;
+  description?: string;
+  priceGEL: number;
+}
+
 export interface Place {
   id: string;
   slug: string;
@@ -68,6 +76,12 @@ export interface Place {
   ownerId?: string;
   status?: "pending" | "active" | "rejected";
   featured?: boolean;
+  /** True once the 50 GEL listing publication fee is paid. */
+  paid?: boolean;
+  /** Paid services/products the business sells on this listing. */
+  services?: PlaceService[];
+  /** Booking fee/deposit charged per reservation, in GEL. 0/undefined = free. */
+  reservationPriceGEL?: number;
   rejectionReason?: string;
   viewCount?: number;
   /** External place ID (Foursquare fsq_id), set by sync-ratings script. */
@@ -236,4 +250,6 @@ export interface Reservation {
   partySize: number;
   notes?: string;
   status: "pending" | "confirmed" | "cancelled";
+  priceGEL?: number;
+  paymentStatus?: "unpaid" | "paid";
 }

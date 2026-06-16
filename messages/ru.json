@@ -54,7 +54,8 @@
     "viewOnMap": "Показать на карте",
     "similarNearby": "Похожие рядом",
     "priceLevel": "Цена",
-    "rating": "Рейтинг"
+    "rating": "Рейтинг",
+    "services": "Услуги"
   },
   "categories": {
     "museum": "Музеи",
@@ -289,5 +290,14 @@
     "totalOverview": "{days} дн. · {distance} · ~{time} всего",
     "travelLeg": "в пути",
     "mayBeClosed": "Может быть закрыто"
+  },
+  "payment": {
+    "successTitle": "Платёж выполнен",
+    "successBody": "Ваш платёж получен. Спасибо!",
+    "failedTitle": "Платёж не выполнен",
+    "failedBody": "Не удалось завершить платёж. Попробуйте снова.",
+    "pendingTitle": "Платёж обрабатывается",
+    "pendingBody": "Мы подтверждаем ваш платёж. Статус скоро обновится.",
+    "backHome": "На главную"
   }
 }

@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import { TicketModel } from "@/lib/models/ticket";
 import { mockBusTickets, mockRailTickets, mockTransitPasses } from "@/lib/mock/tickets";
 import { TicketsSearch } from "@/components/site/tickets-search";
+import { serializeDoc } from "@/lib/serialize";
 import type { TicketOption } from "@/types";
 
 export default async function TicketsPage({
@@ -14,7 +15,7 @@ export default async function TicketsPage({
   setRequestLocale(locale);
 
   await connectDB();
-  let tickets = (await TicketModel.find().lean()) as unknown as TicketOption[];
+  let tickets = serializeDoc<TicketOption[]>(await TicketModel.find().lean());
   if (tickets.length === 0) {
     tickets = [...mockBusTickets, ...mockRailTickets, ...mockTransitPasses];
   }

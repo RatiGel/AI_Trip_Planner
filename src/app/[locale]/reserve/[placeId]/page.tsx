@@ -1,10 +1,12 @@
 import Image from "next/image";
+import mongoose from "mongoose";
 import { notFound } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { ReserveForm } from "@/components/site/reserve-form";
 import { connectDB } from "@/lib/db";
 import { PlaceModel } from "@/lib/models/place";
+import { serializePlace } from "@/lib/serialize";
 import type { Place } from "@/types";
 
 export default async function ReservePage({
@@ -14,9 +16,14 @@ export default async function ReservePage({
 }) {
   const { locale, placeId } = await params;
   setRequestLocale(locale);
+  // placeId may be a slug, a Mongo _id, or legacy/mock id — resolve robustly.
+  if (!placeId) notFound();
   await connectDB();
-  const place = (await PlaceModel.findById(placeId).lean()) as unknown as Place | null;
-  if (!place) notFound();
+  const doc = mongoose.isValidObjectId(placeId)
+    ? await PlaceModel.findById(placeId).lean()
+    : await PlaceModel.findOne({ slug: placeId }).lean();
+  if (!doc) notFound();
+  const place = serializePlace(doc);
   return <ReserveContent place={place} />;
 }
 

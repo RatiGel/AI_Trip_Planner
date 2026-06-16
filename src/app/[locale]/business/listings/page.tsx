@@ -20,7 +20,7 @@ export default async function BusinessListingsPage({
 
   await connectDB();
   const places = await PlaceModel.find({ ownerId: userId })
-    .select("name slug status featured viewCount rating reviewCount citySlug")
+    .select("name slug status featured viewCount rating reviewCount citySlug paid")
     .sort({ createdAt: -1 })
     .lean();
 
@@ -34,6 +34,7 @@ export default async function BusinessListingsPage({
     rating: p.rating ?? 0,
     reviewCount: p.reviewCount ?? 0,
     citySlug: p.citySlug,
+    paid: p.paid ?? false,
   }));
 
   return (

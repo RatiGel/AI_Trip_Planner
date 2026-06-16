@@ -54,7 +54,8 @@
     "viewOnMap": "რუკაზე ნახვა",
     "similarNearby": "მსგავსი ახლომდებარე",
     "priceLevel": "ფასი",
-    "rating": "შეფასება"
+    "rating": "შეფასება",
+    "services": "სერვისები"
   },
   "categories": {
     "museum": "მუზეუმები",
@@ -289,5 +290,14 @@
     "totalOverview": "{days} დღე · {distance} · ~{time} სულ",
     "travelLeg": "გზაში",
     "mayBeClosed": "შესაძლოა დაკეტილია"
+  },
+  "payment": {
+    "successTitle": "გადახდა წარმატებულია",
+    "successBody": "თქვენი გადახდა მიღებულია. გმადლობთ!",
+    "failedTitle": "გადახდა ვერ შესრულდა",
+    "failedBody": "გადახდის დასრულება ვერ მოხერხდა. სცადეთ თავიდან.",
+    "pendingTitle": "გადახდა მუშავდება",
+    "pendingBody": "ვადასტურებთ თქვენს გადახდას. სტატუსი მალე განახლდება.",
+    "backHome": "მთავარზე დაბრუნება"
   }
 }

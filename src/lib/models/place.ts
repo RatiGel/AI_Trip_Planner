@@ -10,6 +10,13 @@ const OpeningHoursSchema = new Schema(
   { _id: false }
 );
 
+const ServiceSchema = new Schema({
+  name: { type: String, required: true },
+  nameKa: String,
+  description: String,
+  priceGEL: { type: Number, required: true, min: 0 },
+});
+
 const PlaceSchema = new Schema<PlaceDoc>(
   {
     slug: { type: String, required: true, unique: true },
@@ -39,6 +46,12 @@ const PlaceSchema = new Schema<PlaceDoc>(
       index: true,
     },
     featured: { type: Boolean, default: false },
+    /** True once the 50 GEL listing publication fee is paid. */
+    paid: { type: Boolean, default: false },
+    /** Generic paid services/products the business sells on this listing. */
+    services: { type: [ServiceSchema], default: [] },
+    /** Booking fee/deposit charged per reservation, in GEL. 0/undefined = free. */
+    reservationPriceGEL: { type: Number, min: 0 },
     rejectionReason: { type: String },
     viewCount: { type: Number, default: 0 },
     extPlaceId: { type: String, index: true, sparse: true },

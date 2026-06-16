@@ -54,7 +54,8 @@
     "viewOnMap": "View on map",
     "similarNearby": "Similar nearby",
     "priceLevel": "Price",
-    "rating": "Rating"
+    "rating": "Rating",
+    "services": "Services"
   },
   "categories": {
     "museum": "Museums",
@@ -289,5 +290,14 @@
     "totalOverview": "{days} days · {distance} · ~{time} total",
     "travelLeg": "travel",
     "mayBeClosed": "May be closed"
+  },
+  "payment": {
+    "successTitle": "Payment successful",
+    "successBody": "Your payment was received. Thank you!",
+    "failedTitle": "Payment failed",
+    "failedBody": "Your payment could not be completed. Please try again.",
+    "pendingTitle": "Payment pending",
+    "pendingBody": "We are confirming your payment. This page will reflect the final status shortly.",
+    "backHome": "Back to home"
   }
 }

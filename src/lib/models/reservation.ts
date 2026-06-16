@@ -8,6 +8,9 @@ export interface IReservation {
   partySize: number;
   notes?: string;
   status: "pending" | "confirmed" | "cancelled";
+  /** Price the business charges for this reservation, in GEL. 0/undefined = free. */
+  priceGEL?: number;
+  paymentStatus: "unpaid" | "paid";
 }
 
 const ReservationSchema = new Schema<IReservation>(
@@ -18,6 +21,8 @@ const ReservationSchema = new Schema<IReservation>(
     partySize: { type: Number, required: true, min: 1 },
     notes: String,
     status: { type: String, enum: ["pending", "confirmed", "cancelled"], default: "pending" },
+    priceGEL: { type: Number, min: 0 },
+    paymentStatus: { type: String, enum: ["unpaid", "paid"], default: "unpaid" },
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );

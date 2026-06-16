@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { ArrowRight, Bus, Clock, Search, Train, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { payNow } from "@/lib/pay";
 import type { TicketOption } from "@/types";
 
 const CITIES = ["Tbilisi", "Batumi", "Kazbegi", "Kutaisi"];
@@ -100,6 +102,8 @@ type TabType = "bus" | "rail" | "transit-pass";
 
 export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
   const t = useTranslations("tickets");
+  const params = useParams();
+  const locale = typeof params?.locale === "string" ? params.locale : "en";
   const [tab, setTab] = useState<TabType>("bus");
   const [from, setFrom] = useState("Tbilisi");
   const [to, setTo] = useState("Batumi");
@@ -128,8 +132,17 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
     }, 600);
   }
 
-  function buy(label: string, price: number) {
-    toast.success(`${label} · ${price}₾`, { description: t("redirecting") });
+  async function buy(option: TicketOption) {
+    const isDbId = /^[a-f0-9]{24}$/i.test(option.id);
+    if (!isDbId) {
+      toast.error("This ticket is not yet available for online purchase.");
+      return;
+    }
+    try {
+      await payNow({ purpose: "ticket", targetId: option.id, locale });
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   }
 
   const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
@@ -239,7 +252,7 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
             exit={{ opacity: 0 }}
           >
             {transitPasses.map((p, i) => (
-              <TransitCard key={p.id} option={p} onBuy={() => buy(p.operator, p.priceGEL)} index={i} />
+              <TransitCard key={p.id} option={p} onBuy={() => buy(p)} index={i} />
             ))}
           </motion.div>
         ) : !searched ? (
@@ -278,7 +291,7 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
               {results.length} {t("routesFound")} · {activeFrom} → {activeTo}
             </p>
             {results.map((o, i) => (
-              <TicketCard key={o.id} option={o} onBuy={() => buy(`${o.operator}`, o.priceGEL)} index={i} />
+              <TicketCard key={o.id} option={o} onBuy={() => buy(o)} index={i} />
             ))}
           </motion.div>
         )}

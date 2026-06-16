@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Pencil, Trash2 } from "lucide-react";
+import { PayButton } from "@/components/site/pay-button";
 
 interface Listing {
   id: string;
@@ -24,6 +25,7 @@ interface Listing {
   rating: number;
   reviewCount: number;
   citySlug: string;
+  paid: boolean;
 }
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = {
@@ -89,6 +91,16 @@ export function ListingsTable({ listings: initial }: { listings: Listing[] }) {
                 {l.rating > 0 ? `${l.rating.toFixed(1)} (${l.reviewCount})` : "—"}
               </TableCell>
               <TableCell className="text-right space-x-1">
+                {!l.paid && (
+                  <span className="inline-block align-middle mr-1">
+                    <PayButton
+                      purpose="listing_fee"
+                      targetId={l.id}
+                      label="Publish · 50 GEL"
+                      size="sm"
+                    />
+                  </span>
+                )}
                 <Button
                   size="icon"
                   variant="ghost"
