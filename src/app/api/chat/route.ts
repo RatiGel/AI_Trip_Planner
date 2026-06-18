@@ -1,3 +1,4 @@
+import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { PlaceModel } from "@/lib/models/place";
@@ -15,21 +16,59 @@ import type {
 
 export const runtime = "nodejs";
 
-const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const MODEL = "nvidia/nemotron-3-nano-30b-a3b:free";
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const CHAT_SYSTEM = `You are a friendly AI travel assistant for Georgia (the country in the Caucasus), specializing in Tbilisi.
 
-Be warm, concise, and conversational. When the user has given you BOTH their number of days AND their interests/preferences, include a <trip_plan> tag at the very end of your message with this exact JSON (no extra whitespace outside the tags):
-
-<trip_plan>{"days":N,"interests":"user interests verbatim","pace":"relaxed|balanced|packed","categories":["museum","sight","cafe","restaurant","park","wine","shop","club"],"citySlug":"tbilisi","confirmationMessage":"Short friendly message like: Perfect! Here's your 3-day Tbilisi adventure — review the places below and confirm when you're happy!"}</trip_plan>
+Be warm, concise, and conversational. When the user has given you BOTH their number of days AND their interests/preferences, call the create_trip_plan tool to build their itinerary.
 
 Rules:
-- Only include categories that actually match the user's stated interests (omit unrelated ones).
-- Pace: "relaxed" if they say slow/easy, "packed" if busy/full, otherwise "balanced".
+- Only call create_trip_plan when you have BOTH the number of days AND what the user enjoys. Ask for missing info first.
+- Pace: "relaxed" if they mention slow/easy, "packed" if busy/full/action, otherwise "balanced".
 - City: default "tbilisi" unless they name another Georgian city.
-- Only output <trip_plan> when you truly have BOTH days AND interests. Ask for missing info first.
-- Remove the <trip_plan> tag from any visible text — it is machine-readable only.`;
+- confirmationMessage: a short warm message, e.g. "Perfect! Here's your 3-day Tbilisi adventure — review the places below and confirm when you're happy!"
+- Only include categories that genuinely match the stated interests.`;
+
+const CREATE_TRIP_PLAN_TOOL: Anthropic.Messages.Tool = {
+  name: "create_trip_plan",
+  description:
+    "Call this when you have collected the user's trip duration and interests and are ready to generate their itinerary.",
+  input_schema: {
+    type: "object",
+    properties: {
+      days: { type: "number", description: "Number of travel days (1-7)" },
+      interests: { type: "string", description: "User interests as described by the user" },
+      pace: {
+        type: "string",
+        enum: ["relaxed", "balanced", "packed"],
+        description: "Trip pace",
+      },
+      categories: {
+        type: "array",
+        items: { type: "string" },
+        description: "Relevant category slugs from: museum, sight, cafe, restaurant, park, wine, shop, club",
+      },
+      citySlug: {
+        type: "string",
+        description: "City slug — default: tbilisi",
+      },
+      confirmationMessage: {
+        type: "string",
+        description: "Short warm message shown to the user while the itinerary is being built",
+      },
+    },
+    required: ["days", "interests", "confirmationMessage"],
+  },
+};
+
+type TripPlanInput = {
+  days: number;
+  interests: string;
+  pace?: "relaxed" | "balanced" | "packed";
+  categories?: CategorySlug[];
+  citySlug?: string;
+  confirmationMessage: string;
+};
 
 function extractPrefsMock(message: string): TravelPreferences {
   const daysMatch = message.match(/(\d+)\s*day/i);
@@ -74,28 +113,46 @@ function toPlace(doc: Record<string, unknown>): Place {
   return { ...(rest as Omit<Place, "id">), id: String(_id) };
 }
 
-async function callOpenRouter(
-  messages: { role: string; content: string }[],
-): Promise<string> {
-  async function attempt() {
-    const res = await fetch(OPENROUTER_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ model: MODEL, messages, max_tokens: 2000, temperature: 0.7 }),
-    });
-    if (!res.ok) throw new Error(`OpenRouter ${res.status}: ${await res.text()}`);
-    const data = await res.json() as { choices: Array<{ message: { content: string | null } }> };
-    return data.choices[0]?.message?.content ?? "";
-  }
+function sse(data: unknown): Uint8Array {
+  return new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`);
+}
 
-  // Model is a reasoning model; content can be null when reasoning exhausts tokens.
-  // Retry once before giving up.
-  const first = await attempt();
-  if (first) return first;
-  return await attempt();
+async function buildPreview(
+  input: TripPlanInput,
+  fallbackCity: string,
+): Promise<{
+  reply: string;
+  stage: "preview";
+  previewPlaces: PlacePreviewCard[];
+  pendingItinerary: AIItinerary;
+  itineraryPlaces: Place[];
+  mock: boolean;
+} | null> {
+  const prefs: TravelPreferences = {
+    citySlug: input.citySlug || fallbackCity,
+    days: Math.min(7, Math.max(1, input.days)),
+    interests: input.interests,
+    pace: input.pace ?? "balanced",
+    categories: input.categories,
+  };
+
+  const candidates = await getCandidatePlaces(prefs);
+  if (!candidates.length) return null;
+
+  const itinerary = await generateItinerary(prefs, candidates);
+  const placesById = new Map<string, Place>(candidates.map((p) => [p.id, p]));
+  const previewPlaces = buildPreviewCards(itinerary, placesById);
+  const chosenIds = new Set(itinerary.days.flatMap((d) => d.stops.map((s) => s.place_id)));
+  const itineraryPlaces = candidates.filter((c) => chosenIds.has(c.id));
+
+  return {
+    reply: input.confirmationMessage,
+    stage: "preview",
+    previewPlaces,
+    pendingItinerary: itinerary,
+    itineraryPlaces,
+    mock: false,
+  };
 }
 
 export async function POST(req: NextRequest) {
@@ -114,7 +171,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  // ── Confirm stage ────────────────────────────────────────────────────
+  // ── Confirm stage (non-streaming JSON) ───────────────────────────────
   if (body.stage === "confirm") {
     const { selectedPlaceIds, pendingItinerary, itineraryPlaces } = body;
     if (!selectedPlaceIds?.length || !pendingItinerary) {
@@ -123,10 +180,8 @@ export async function POST(req: NextRequest) {
         { status: 400 },
       );
     }
-
     try {
       let placesById: Map<string, Place>;
-
       if (itineraryPlaces?.length) {
         placesById = new Map((itineraryPlaces as Place[]).map((p) => [p.id, p]));
       } else {
@@ -136,13 +191,11 @@ export async function POST(req: NextRequest) {
           (docs as Record<string, unknown>[]).map(toPlace).map((p) => [p.id, p]),
         );
       }
-
       const plan = buildRoutePlan(pendingItinerary, placesById);
       const daysCount = pendingItinerary.days.length;
       const stopsCount = pendingItinerary.days.reduce((n, d) => n + d.stops.length, 0);
-
       return NextResponse.json({
-        reply: `Your ${daysCount}-day itinerary with ${stopsCount} stops is ready! Here's your optimized route with arrival times.`,
+        reply: `Your ${daysCount}-day itinerary with ${stopsCount} stops is ready! Here's your optimized route.`,
         plan,
       });
     } catch (e) {
@@ -151,117 +204,26 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── Chat messages path ───────────────────────────────────────────────
+  // ── Chat stage (SSE streaming) ───────────────────────────────────────
   const messages: ChatMessage[] = body.messages ?? [];
   const citySlug = body.citySlug ?? "tbilisi";
 
-  if (!Array.isArray(messages) || messages.length === 0) {
+  if (!Array.isArray(messages) || !messages.length) {
     return NextResponse.json({ error: "messages required" }, { status: 400 });
   }
 
-  const hasKey = !!process.env.OPENROUTER_API_KEY;
+  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
+  const writer = writable.getWriter();
 
-  // ── No API key: heuristic mock path ──────────────────────────────────
-  if (!hasKey) {
-    const lastUserMsg =
-      [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
-    const hasDays = /\d+\s*day/i.test(lastUserMsg) || messages.length >= 2;
-
-    if (hasDays) {
+  // ── No API key: heuristic mock ───────────────────────────────────────
+  if (!process.env.ANTHROPIC_API_KEY) {
+    (async () => {
       try {
-        const prefs = extractPrefsMock(lastUserMsg);
-        prefs.citySlug = citySlug;
-        const candidates = await getCandidatePlaces(prefs);
-        if (candidates.length > 0) {
-          const itinerary = await generateItinerary(prefs, candidates);
-          const placesById = new Map<string, Place>(candidates.map((p) => [p.id, p]));
-          const previewPlaces = buildPreviewCards(itinerary, placesById);
-          const chosenIds = new Set(itinerary.days.flatMap((d) => d.stops.map((s) => s.place_id)));
-          const itineraryPlaces = candidates.filter((c) => chosenIds.has(c.id));
-          return NextResponse.json({
-            reply: `Here's a ${prefs.days}-day Tbilisi itinerary! Add OPENROUTER_API_KEY for personalized AI chat. Review the places below and confirm when you're happy!`,
-            stage: "preview",
-            previewPlaces,
-            pendingItinerary: itinerary,
-            itineraryPlaces,
-            mock: true,
-          });
-        }
-      } catch (e) {
-        console.error("[chat mock]", e);
-      }
-    }
-
-    return NextResponse.json({
-      reply: "Tell me how many days you have and what you enjoy, and I'll build an itinerary! (Preview mode — add OPENROUTER_API_KEY for real AI)",
-      mock: true,
-    });
-  }
-
-  // ── OpenRouter path ──────────────────────────────────────────────────
-  const orMessages = [
-    { role: "system", content: CHAT_SYSTEM },
-    ...messages
-      .filter((m) => m.role === "user" || m.role === "assistant")
-      .map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
-  ];
-
-  try {
-    const rawReply = await callOpenRouter(orMessages);
-
-    // When model returns empty after retries, fall back to heuristic extraction.
-    if (!rawReply) {
-      const lastUserMsg =
-        [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
-      if (/\d+\s*day/i.test(lastUserMsg)) {
-        const prefs = extractPrefsMock(lastUserMsg);
-        prefs.citySlug = citySlug;
-        const candidates = await getCandidatePlaces(prefs);
-        if (candidates.length > 0) {
-          const itinerary = await generateItinerary(prefs, candidates);
-          const placesById = new Map<string, Place>(candidates.map((p) => [p.id, p]));
-          const previewPlaces = buildPreviewCards(itinerary, placesById);
-          const chosenIds = new Set(itinerary.days.flatMap((d) => d.stops.map((s) => s.place_id)));
-          const itineraryPlaces = candidates.filter((c) => chosenIds.has(c.id));
-          return NextResponse.json({
-            reply: `Here's your ${prefs.days}-day Tbilisi itinerary! Review the places below and confirm when you're happy!`,
-            stage: "preview",
-            previewPlaces,
-            pendingItinerary: itinerary,
-            itineraryPlaces,
-            mock: false,
-          });
-        }
-      }
-      return NextResponse.json({ reply: "Tell me how many days you have and what you enjoy!" });
-    }
-
-    // Extract <trip_plan> if present. Accept unclosed tags (model truncates occasionally).
-    const planMatch = rawReply.match(/<trip_plan>([\s\S]*?)(?:<\/trip_plan>|$)/i);
-    const visibleReply = rawReply.replace(/<trip_plan>[\s\S]*/gi, "").trim();
-
-    if (planMatch) {
-      let input: {
-        days: number;
-        interests: string;
-        pace?: "relaxed" | "balanced" | "packed";
-        categories?: CategorySlug[];
-        citySlug?: string;
-        confirmationMessage: string;
-      };
-
-      try {
-        // Strip any outer XML wrapper the model may add around the JSON.
-        const jsonStr = planMatch[1]
-          .replace(/^[\s\S]*?({)/, "$1")   // drop anything before first {
-          .replace(/}[\s\S]*$/, "}")        // drop anything after last }
-          .trim();
-        input = JSON.parse(jsonStr);
-      } catch {
-        // JSON parse failed — fall through to heuristic
         const lastUserMsg =
           [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
-        if (/\d+\s*day/i.test(lastUserMsg)) {
+        const hasDays = /\d+\s*day/i.test(lastUserMsg) || messages.length >= 2;
+
+        if (hasDays) {
           const prefs = extractPrefsMock(lastUserMsg);
           prefs.citySlug = citySlug;
           const candidates = await getCandidatePlaces(prefs);
@@ -269,55 +231,118 @@ export async function POST(req: NextRequest) {
             const itinerary = await generateItinerary(prefs, candidates);
             const placesById = new Map<string, Place>(candidates.map((p) => [p.id, p]));
             const previewPlaces = buildPreviewCards(itinerary, placesById);
-            const chosenIds = new Set(itinerary.days.flatMap((d) => d.stops.map((s) => s.place_id)));
-            const itineraryPlaces = candidates.filter((c) => chosenIds.has(c.id));
-            return NextResponse.json({
-              reply: `Here's your ${prefs.days}-day Tbilisi itinerary! Review the places below and confirm.`,
-              stage: "preview",
-              previewPlaces,
-              pendingItinerary: itinerary,
-              itineraryPlaces,
-              mock: false,
-            });
+            const chosenIds = new Set(
+              itinerary.days.flatMap((d) => d.stops.map((s) => s.place_id)),
+            );
+            await writer.write(
+              sse({
+                type: "preview",
+                reply: `Here's a ${prefs.days}-day Tbilisi itinerary! Add ANTHROPIC_API_KEY for personalized AI chat.`,
+                stage: "preview",
+                previewPlaces,
+                pendingItinerary: itinerary,
+                itineraryPlaces: candidates.filter((c) => chosenIds.has(c.id)),
+                mock: true,
+              }),
+            );
+            await writer.write(sse({ type: "done" }));
+            await writer.close();
+            return;
           }
         }
-        return NextResponse.json({ reply: visibleReply || "Here's what I found for your trip!" });
+
+        await writer.write(
+          sse({
+            type: "done",
+            text: "Tell me how many days you have and what you enjoy, and I'll build an itinerary! (Add ANTHROPIC_API_KEY for real AI)",
+          }),
+        );
+        await writer.close();
+      } catch (e) {
+        console.error("[chat mock]", e);
+        await writer.write(sse({ type: "error", message: "Failed to generate itinerary" }));
+        await writer.close();
       }
+    })();
 
-      const prefs: TravelPreferences = {
-        citySlug: input.citySlug || citySlug,
-        days: Math.min(7, Math.max(1, input.days)),
-        interests: input.interests,
-        pace: input.pace ?? "balanced",
-        categories: input.categories,
-      };
-
-      const candidates = await getCandidatePlaces(prefs);
-      if (candidates.length === 0) {
-        return NextResponse.json({
-          reply: "I couldn't find places for that destination. Try asking about Tbilisi!",
-        });
-      }
-
-      const itinerary = await generateItinerary(prefs, candidates);
-      const placesById = new Map<string, Place>(candidates.map((p) => [p.id, p]));
-      const previewPlaces = buildPreviewCards(itinerary, placesById);
-      const chosenIds = new Set(itinerary.days.flatMap((d) => d.stops.map((s) => s.place_id)));
-      const itineraryPlaces = candidates.filter((c) => chosenIds.has(c.id));
-
-      return NextResponse.json({
-        reply: input.confirmationMessage || visibleReply,
-        stage: "preview",
-        previewPlaces,
-        pendingItinerary: itinerary,
-        itineraryPlaces,
-        mock: false,
-      });
-    }
-
-    return NextResponse.json({ reply: visibleReply || rawReply });
-  } catch (err) {
-    console.error("[chat]", err);
-    return NextResponse.json({ error: "Failed to process message" }, { status: 500 });
+    return new Response(readable, {
+      headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+    });
   }
+
+  // ── Anthropic streaming ──────────────────────────────────────────────
+  const anthropicMessages = messages
+    .filter((m) => m.role === "user" || m.role === "assistant")
+    .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
+
+  (async () => {
+    try {
+      const stream = client.messages.stream({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 1024,
+        tools: [CREATE_TRIP_PLAN_TOOL],
+        system: CHAT_SYSTEM,
+        messages: anthropicMessages,
+      });
+
+      let toolName = "";
+      let toolInputJson = "";
+      let inToolBlock = false;
+
+      for await (const event of stream) {
+        if (event.type === "content_block_start") {
+          if (event.content_block.type === "tool_use") {
+            inToolBlock = true;
+            toolName = event.content_block.name;
+            toolInputJson = "";
+          }
+        } else if (event.type === "content_block_delta") {
+          const delta = event.delta;
+          if (delta.type === "text_delta") {
+            await writer.write(sse({ type: "token", delta: delta.text }));
+          } else if (delta.type === "input_json_delta" && inToolBlock) {
+            toolInputJson += delta.partial_json;
+          }
+        } else if (event.type === "content_block_stop") {
+          inToolBlock = false;
+        }
+      }
+
+      if (toolName === "create_trip_plan" && toolInputJson) {
+        try {
+          const toolInput = JSON.parse(toolInputJson) as TripPlanInput;
+          const payload = await buildPreview(toolInput, citySlug);
+          if (payload) {
+            await writer.write(sse({ type: "preview", ...payload }));
+          } else {
+            await writer.write(
+              sse({
+                type: "done",
+                text: "I couldn't find places for that destination. Try asking about Tbilisi!",
+              }),
+            );
+          }
+        } catch (e) {
+          console.error("[chat tool parse]", e);
+          await writer.write(sse({ type: "done" }));
+        }
+      } else {
+        await writer.write(sse({ type: "done" }));
+      }
+
+      await writer.close();
+    } catch (err) {
+      console.error("[chat stream]", err);
+      try {
+        await writer.write(sse({ type: "error", message: "Failed to process message" }));
+        await writer.close();
+      } catch {
+        // writer already closed
+      }
+    }
+  })();
+
+  return new Response(readable, {
+    headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" },
+  });
 }

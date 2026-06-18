@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send, Sparkles, Save, Plus } from "lucide-react";
+import { Plus, Save, Send, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { RouteMap } from "@/components/planner/route-map";
 import { ItinerarySidebar } from "@/components/planner/itinerary-sidebar";
 import { PlaceSelectionCards } from "@/components/chat/place-selection-cards";
-import type { AIItinerary, ChatMessage, Place, RoutePlan } from "@/types";
+import type { AIItinerary, ChatMessage, Place, PlacePreviewCard, RoutePlan } from "@/types";
+
+type SseEvent =
+  | { type: "token"; delta: string }
+  | {
+      type: "preview";
+      reply: string;
+      stage: "preview";
+      previewPlaces: PlacePreviewCard[];
+      pendingItinerary: AIItinerary;
+      itineraryPlaces: Place[];
+      mock: boolean;
+    }
+  | { type: "error"; message: string }
+  | { type: "done"; text?: string };
 
 const STARTER: ChatMessage = {
   id: "m-0",
@@ -23,6 +37,7 @@ export function ChatUI() {
   const [messages, setMessages] = useState<ChatMessage[]>([STARTER]);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
+  const [streamingMsg, setStreamingMsg] = useState("");
   const [plan, setPlan] = useState<RoutePlan | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isMock, setIsMock] = useState(false);
@@ -30,25 +45,21 @@ export function ChatUI() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({
-      top: scrollRef.current.scrollHeight,
-      behavior: "smooth",
-    });
-  }, [messages]);
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, streamingMsg]);
 
   async function send() {
     const text = input.trim();
     if (!text || pending) return;
 
-    const userMsg: ChatMessage = {
-      id: `u-${Date.now()}`,
-      role: "user",
-      content: text,
-    };
+    const userMsg: ChatMessage = { id: `u-${Date.now()}`, role: "user", content: text };
     const nextMessages = [...messages, userMsg];
     setMessages(nextMessages);
     setInput("");
     setPending(true);
+    setStreamingMsg("");
+
+    let accumulated = "";
 
     try {
       const res = await fetch("/api/chat", {
@@ -56,40 +67,78 @@ export function ChatUI() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: nextMessages }),
       });
-      const data = await res.json();
 
       if (!res.ok) {
+        const data = await res.json();
         toast.error(data.error ?? "Something went wrong");
         return;
       }
 
-      if (data.stage === "preview") {
-        setMessages((m) => [
-          ...m,
-          {
-            id: `a-${Date.now()}`,
-            role: "assistant" as const,
-            content: data.reply,
-            type: "place-selection" as const,
-            previewPlaces: data.previewPlaces,
-            pendingItinerary: data.pendingItinerary,
-            itineraryPlaces: data.itineraryPlaces,
-          },
-        ]);
-        setIsMock(!!data.mock);
-      } else {
-        setMessages((m) => [
-          ...m,
-          { id: `a-${Date.now()}`, role: "assistant" as const, content: data.reply },
-        ]);
-        if (data.plan) {
-          setPlan(data.plan as RoutePlan);
-          setIsMock(!!data.mock);
-          setSelectedId(null);
+      if (!res.body) {
+        toast.error("No response body");
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop() ?? "";
+
+        for (const raw of events) {
+          if (!raw.startsWith("data: ")) continue;
+          let payload: SseEvent;
+          try {
+            payload = JSON.parse(raw.slice(6)) as SseEvent;
+          } catch {
+            continue;
+          }
+
+          if (payload.type === "token") {
+            accumulated += payload.delta;
+            setStreamingMsg(accumulated);
+          } else if (payload.type === "preview") {
+            setStreamingMsg("");
+            accumulated = "";
+            setMessages((m) => [
+              ...m,
+              {
+                id: `a-${Date.now()}`,
+                role: "assistant" as const,
+                content: payload.reply,
+                type: "place-selection" as const,
+                previewPlaces: payload.previewPlaces,
+                pendingItinerary: payload.pendingItinerary,
+                itineraryPlaces: payload.itineraryPlaces,
+              },
+            ]);
+            setIsMock(payload.mock);
+          } else if (payload.type === "error") {
+            toast.error(payload.message ?? "Error generating response");
+            setStreamingMsg("");
+            accumulated = "";
+          } else if (payload.type === "done") {
+            const finalText = payload.text ?? accumulated;
+            if (finalText.trim()) {
+              setMessages((m) => [
+                ...m,
+                { id: `a-${Date.now()}`, role: "assistant" as const, content: finalText },
+              ]);
+            }
+            setStreamingMsg("");
+            accumulated = "";
+          }
         }
       }
     } catch {
       toast.error("Failed to get a response");
+      setStreamingMsg("");
     } finally {
       setPending(false);
     }
@@ -121,7 +170,6 @@ export function ChatUI() {
       }
       const ts = Date.now();
       if (data.plan) {
-        // Add reply text + a route-plan message (renders inline map)
         setMessages((m) => [
           ...m,
           { id: `a-${ts}`, role: "assistant" as const, content: data.reply },
@@ -150,29 +198,39 @@ export function ChatUI() {
     setSelectedId(null);
     setIsMock(false);
     setConfirming(false);
+    setStreamingMsg("");
   }
 
   function saveTrip() {
     toast.success(t("save"));
   }
 
-  const dots = (
-    <div className="flex">
-      <div className="rounded-2xl bg-muted px-4 py-2 text-sm text-muted-foreground">
-        <span className="inline-flex gap-1">
-          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current" />
-          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:120ms]" />
-          <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:240ms]" />
-        </span>
-      </div>
-    </div>
-  );
-
-  // Index of the latest place-selection message — only that one shows cards.
   const latestPreviewIdx = messages.reduce(
     (best, m, i) => (m.type === "place-selection" ? i : best),
     -1,
   );
+
+  const streamingBubble = streamingMsg ? (
+    <div className="flex items-start">
+      <div className="max-w-[85%] rounded-2xl bg-muted px-4 py-2 text-sm text-foreground">
+        {streamingMsg}
+        <span className="ml-0.5 inline-block h-3 w-0.5 animate-pulse bg-current opacity-60" />
+      </div>
+    </div>
+  ) : null;
+
+  const dots =
+    pending && !streamingMsg ? (
+      <div className="flex">
+        <div className="rounded-2xl bg-muted px-4 py-2 text-sm text-muted-foreground">
+          <span className="inline-flex gap-1">
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:120ms]" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:240ms]" />
+          </span>
+        </div>
+      </div>
+    ) : null;
 
   const messageList = (
     <div className="space-y-3">
@@ -181,7 +239,6 @@ export function ChatUI() {
           key={m.id}
           className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
         >
-          {/* Text bubble — skip for empty route-plan messages */}
           {m.content && (
             <div
               className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm ${
@@ -194,20 +251,14 @@ export function ChatUI() {
             </div>
           )}
 
-          {/* Inline route map — appears right after the confirm reply */}
           {m.type === "route-plan" && plan && (
             <div className="mt-1 w-full overflow-hidden rounded-xl border border-border">
               <div className="relative h-[400px]">
-                <RouteMap
-                  plan={plan}
-                  selectedId={selectedId}
-                  onSelect={setSelectedId}
-                />
+                <RouteMap plan={plan} selectedId={selectedId} onSelect={setSelectedId} />
               </div>
             </div>
           )}
 
-          {/* Place selection cards — only for the latest preview, not while confirming */}
           {m.type === "place-selection" &&
             idx === latestPreviewIdx &&
             m.previewPlaces &&
@@ -228,7 +279,8 @@ export function ChatUI() {
             )}
         </div>
       ))}
-      {pending && dots}
+      {streamingBubble}
+      {dots}
     </div>
   );
 
@@ -249,22 +301,17 @@ export function ChatUI() {
         }}
         className="min-h-[52px] resize-none"
       />
-      <Button
-        onClick={send}
-        disabled={pending || !input.trim()}
-        size={compact ? "sm" : "lg"}
-      >
+      <Button onClick={send} disabled={pending || !input.trim()} size={compact ? "sm" : "lg"}>
         <Send className="size-4" />
         {!compact && <span className="hidden sm:inline">{t("send")}</span>}
       </Button>
     </div>
   );
 
-  // ── Plan view: chat with inline map | itinerary sidebar ──────────────
+  // ── Plan view ────────────────────────────────────────────────────────
   if (plan) {
     return (
       <div className="grid h-[calc(100vh-4rem)] grid-cols-1 md:grid-cols-[1fr_340px]">
-        {/* Left: chat (messages include inline route map) */}
         <div className="flex flex-col overflow-hidden border-b border-border md:border-b-0 md:border-r">
           <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
             <div className="flex items-center gap-2">
@@ -295,19 +342,14 @@ export function ChatUI() {
           {inputBar(true)}
         </div>
 
-        {/* Right: itinerary sidebar */}
         <aside className="hidden overflow-hidden border-l border-border bg-card md:block">
-          <ItinerarySidebar
-            plan={plan}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-          />
+          <ItinerarySidebar plan={plan} selectedId={selectedId} onSelect={setSelectedId} />
         </aside>
       </div>
     );
   }
 
-  // ── Default view: chat + examples sidebar ────────────────────────────
+  // ── Default view ─────────────────────────────────────────────────────
   return (
     <div className="container mx-auto grid h-[calc(100vh-4rem)] grid-rows-[auto_1fr_auto] gap-4 px-4 py-6 md:grid-cols-[1fr_320px] md:grid-rows-[1fr_auto]">
       <div className="flex items-center justify-between md:col-span-2">
@@ -328,10 +370,7 @@ export function ChatUI() {
         </div>
       </div>
 
-      <div
-        ref={scrollRef}
-        className="overflow-y-auto rounded-2xl border border-border bg-card p-4"
-      >
+      <div ref={scrollRef} className="overflow-y-auto rounded-2xl border border-border bg-card p-4">
         {messageList}
       </div>
 
