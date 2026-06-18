@@ -201,8 +201,39 @@ export function ChatUI() {
     setStreamingMsg("");
   }
 
-  function saveTrip() {
-    toast.success(t("save"));
+  async function saveTrip() {
+    if (!plan) {
+      toast.info("Plan your trip first, then save it.");
+      return;
+    }
+
+    const today = new Date();
+    const days = plan.days.map((d) => ({
+      date: new Date(today.getFullYear(), today.getMonth(), today.getDate() + d.day - 1)
+        .toISOString()
+        .slice(0, 10),
+      items: d.stops.map((s) => ({
+        placeId: s.place.id,
+        time: s.arrival,
+        notes: s.reason,
+      })),
+    }));
+
+    try {
+      const res = await fetch("/api/trips", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: plan.title, days }),
+      });
+      if (res.ok) {
+        toast.success("Trip saved! View it in My Trips.");
+      } else {
+        const data = await res.json() as { error?: string };
+        toast.error(data.error ?? "Failed to save trip");
+      }
+    } catch {
+      toast.error("Failed to save trip");
+    }
   }
 
   const latestPreviewIdx = messages.reduce(
