@@ -11,6 +11,7 @@ import { SiteFooter } from "@/components/site/site-footer";
 import { AiChatFab } from "@/components/site/ai-chat-fab";
 import { Providers } from "@/components/providers";
 import { routing } from "@/i18n/routing";
+import { getAdminConfig, buildThemeCss } from "@/lib/get-admin-config";
 import "../globals.css";
 
 const inter = Inter({
@@ -64,6 +65,9 @@ export default async function LocaleLayout({
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
 
+  const adminConfig = await getAdminConfig();
+  const themeCss = adminConfig ? buildThemeCss(adminConfig) : null;
+
   return (
     <html
       lang={locale}
@@ -71,6 +75,9 @@ export default async function LocaleLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
+        {themeCss && (
+          <style dangerouslySetInnerHTML={{ __html: themeCss }} />
+        )}
         <NextIntlClientProvider>
           <Providers>
             <SiteHeader />

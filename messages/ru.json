@@ -147,12 +147,22 @@
     "reservations": "Бронирования",
     "ticketOrders": "Заказы билетов",
     "users": "Пользователи",
+    "media": "Медиа",
+    "theme": "Тема",
+    "cms": "Контент",
+    "database": "База данных",
+    "pricing": "Тарифы",
     "newPlace": "Новое место",
     "newCity": "Новый город",
     "save": "Сохранить",
     "cancel": "Отмена",
     "delete": "Удалить",
-    "edit": "Изменить"
+    "edit": "Изменить",
+    "saveChanges": "Сохранить",
+    "addNew": "Добавить",
+    "confirmDelete": "Удалить этот элемент?",
+    "deleteConfirm": "Удалить",
+    "noData": "Нет данных"
   },
   "auth": {
     "signInTitle": "С возвращением",

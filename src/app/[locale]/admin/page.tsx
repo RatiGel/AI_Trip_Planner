@@ -1,10 +1,32 @@
-import { Building2, CalendarCheck, MapPin, Receipt, Users, Image } from "lucide-react";
 import { setRequestLocale } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
 import { connectDB } from "@/lib/db";
-import { PlaceModel } from "@/lib/models/place";
 import { UserModel } from "@/lib/models/user";
+import { ItineraryModel } from "@/lib/models/itinerary";
 import { ReservationModel } from "@/lib/models/reservation";
+import { PlaceModel } from "@/lib/models/place";
+import { PricingPlanModel } from "@/lib/models/pricing-plan";
+import { KpiCards, type KpiData } from "@/components/admin/analytics/kpi-cards";
+import { TripsBarChart, type MonthlyCount } from "@/components/admin/analytics/trips-bar-chart";
+import { UsersLineChart } from "@/components/admin/analytics/users-line-chart";
+import { CategoriesDonutChart, type CategoryCount } from "@/components/admin/analytics/categories-donut-chart";
+
+const MONTH_ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function buildMonthlyBuckets(
+  raw: { _id: { year: number; month: number }; count: number }[]
+): MonthlyCount[] {
+  const now = new Date();
+  const buckets: MonthlyCount[] = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const label = `${MONTH_ABBR[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
+    const found = raw.find(
+      (r) => r._id.year === d.getFullYear() && r._id.month === d.getMonth() + 1
+    );
+    buckets.push({ month: label, count: found?.count ?? 0 });
+  }
+  return buckets;
+}
 
 export default async function AdminHome({
   params,
@@ -16,78 +38,116 @@ export default async function AdminHome({
 
   await connectDB();
 
-  const [placesCount, usersCount, reservationsCount] = await Promise.all([
-    PlaceModel.countDocuments(),
+  const twelveMonthsAgo = new Date();
+  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 11);
+  twelveMonthsAgo.setDate(1);
+  twelveMonthsAgo.setHours(0, 0, 0, 0);
+
+  const [
+    totalUsers,
+    totalTrips,
+    revenueAgg,
+    activePlansCount,
+    rawTripsMonthly,
+    rawUsersMonthly,
+    rawCategories,
+  ] = await Promise.all([
     UserModel.countDocuments(),
-    ReservationModel.countDocuments(),
+    ItineraryModel.countDocuments(),
+    ReservationModel.aggregate<{ total: number }>([
+      { $match: { paymentStatus: "paid" } },
+      { $group: { _id: null, total: { $sum: "$priceGEL" } } },
+    ]),
+    PricingPlanModel.countDocuments({ active: true }),
+    ItineraryModel.aggregate<{ _id: { year: number; month: number }; count: number }>([
+      { $match: { createdAt: { $gte: twelveMonthsAgo } } },
+      {
+        $group: {
+          _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
+          count: { $sum: 1 },
+        },
+      },
+    ]),
+    UserModel.aggregate<{ _id: { year: number; month: number }; count: number }>([
+      { $match: { createdAt: { $gte: twelveMonthsAgo } } },
+      {
+        $group: {
+          _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
+          count: { $sum: 1 },
+        },
+      },
+    ]),
+    PlaceModel.aggregate<{ _id: string; count: number }>([
+      { $unwind: "$categories" },
+      { $group: { _id: "$categories", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 8 },
+    ]),
   ]);
 
-  const STATS = [
-    { label: "Places", value: placesCount, Icon: MapPin, href: "/admin/places" },
-    { label: "Users", value: usersCount, Icon: Users, href: "/admin/users" },
-    { label: "Reservations", value: reservationsCount, Icon: CalendarCheck, href: "/admin/reservations" },
-    { label: "Media", value: "—", Icon: Image, href: "/admin/media" },
-  ];
+  const kpi: KpiData = {
+    users: totalUsers,
+    trips: totalTrips,
+    revenueGEL: revenueAgg[0]?.total ?? 0,
+    activePlans: activePlansCount,
+  };
+
+  const tripsData = buildMonthlyBuckets(rawTripsMonthly);
+  const usersData = buildMonthlyBuckets(rawUsersMonthly);
+  const categoriesData: CategoryCount[] = rawCategories.map((r) => ({
+    name: r._id,
+    value: r.count,
+  }));
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Platform management overview</p>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {STATS.map(({ label, value, Icon, href }) => (
-          <Link
-            key={label}
-            href={href}
-            className="rounded-2xl border border-border bg-card p-5 transition hover:border-primary/40 hover:bg-accent"
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">{label}</p>
-              <Icon className="size-4 text-primary" />
-            </div>
-            <p className="mt-2 text-3xl font-bold">{value}</p>
-          </Link>
-        ))}
+        <h1 className="text-3xl font-semibold tracking-tight">Analytics</h1>
+        <p className="text-muted-foreground">Platform performance at a glance</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Link href="/admin/places" className="rounded-2xl border border-border bg-card p-5 transition hover:border-primary/40 hover:bg-accent">
-          <div className="flex items-center gap-3">
-            <MapPin className="size-5 text-primary" />
-            <div>
-              <p className="font-medium">Manage Places</p>
-              <p className="text-sm text-muted-foreground">Add, edit or remove listings</p>
+      <KpiCards data={kpi} />
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <TripsBarChart data={tripsData} />
+        <UsersLineChart data={usersData} />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <CategoriesDonutChart data={categoriesData} />
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <h3 className="mb-4 text-sm font-medium text-muted-foreground">
+            Reservation Revenue Breakdown
+          </h3>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Paid Reservations</span>
+              <span className="font-medium tabular-nums">
+                ₾ {kpi.revenueGEL.toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Total Users</span>
+              <span className="font-medium tabular-nums">
+                {kpi.users.toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">AI Trips Generated</span>
+              <span className="font-medium tabular-nums">
+                {kpi.trips.toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Active Pricing Plans</span>
+              <span className="font-medium tabular-nums">{kpi.activePlans}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Place Categories</span>
+              <span className="font-medium tabular-nums">{categoriesData.length}</span>
             </div>
           </div>
-        </Link>
-        <Link href="/admin/users" className="rounded-2xl border border-border bg-card p-5 transition hover:border-primary/40 hover:bg-accent">
-          <div className="flex items-center gap-3">
-            <Users className="size-5 text-primary" />
-            <div>
-              <p className="font-medium">Manage Users</p>
-              <p className="text-sm text-muted-foreground">Edit roles, suspend accounts</p>
-            </div>
-          </div>
-        </Link>
-        <Link href="/admin/reservations" className="rounded-2xl border border-border bg-card p-5 transition hover:border-primary/40 hover:bg-accent">
-          <div className="flex items-center gap-3">
-            <CalendarCheck className="size-5 text-primary" />
-            <div>
-              <p className="font-medium">Reservations</p>
-              <p className="text-sm text-muted-foreground">View and manage bookings</p>
-            </div>
-          </div>
-        </Link>
-        <Link href="/admin/orders" className="rounded-2xl border border-border bg-card p-5 transition hover:border-primary/40 hover:bg-accent">
-          <div className="flex items-center gap-3">
-            <Receipt className="size-5 text-primary" />
-            <div>
-              <p className="font-medium">Ticket Orders</p>
-              <p className="text-sm text-muted-foreground">Track transport bookings</p>
-            </div>
-          </div>
-        </Link>
+        </div>
       </div>
     </div>
   );
