@@ -2,12 +2,20 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CalendarDays, ChevronDown, LogOut, Menu, Sparkles, Ticket, User, X } from "lucide-react";
+import { CalendarDays, ChevronDown, LayoutDashboard, LogOut, Menu, Shield, Sparkles, Ticket, User, X } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { LanguageSwitcher } from "./language-switcher";
 import { ThemeToggle } from "./theme-toggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
@@ -157,67 +165,72 @@ export function SiteHeader() {
           )}
 
           {session?.user ? (
-            <div className="hidden items-center gap-2 md:flex">
-              {(session.user as { role?: string }).role === "business" && (
-                <Link
-                  href="/business"
-                  className="flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-all hover:-translate-y-0.5"
+            <div className="hidden items-center md:flex">
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className="flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3 text-[13px] font-medium outline-none transition-all hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring"
                   style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
                 >
-                  {tNav("myBusiness")}
-                </Link>
-              )}
-              {(["admin", "superadmin"] as string[]).includes(
-                (session.user as { role?: string }).role ?? ""
-              ) && (
-                <Link
-                  href="/admin"
-                  className="flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-all hover:-translate-y-0.5"
-                  style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
-                >
-                  {tNav("admin")}
-                </Link>
-              )}
-              {(session.user as { role?: string }).role === "superadmin" && (
-                <Link
-                  href="/superadmin"
-                  className="flex items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-all hover:-translate-y-0.5"
-                  style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
-                >
-                  {tNav("superadmin")}
-                </Link>
-              )}
-              <Link
-                href="/trips"
-                className="hidden items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-all hover:-translate-y-0.5 lg:flex"
-                style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
-              >
-                <Sparkles className="size-3.5" />
-                My Trips
-              </Link>
-              <Link
-                href="/reservations"
-                className="hidden items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-all hover:-translate-y-0.5 lg:flex"
-                style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
-              >
-                <CalendarDays className="size-3.5" />
-                Reservations
-              </Link>
-              <Link
-                href="/profile"
-                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-all hover:-translate-y-0.5 hover:opacity-80"
-                style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
-              >
-                <User className="size-3.5" />
-                {session.user.name?.split(" ")[0] ?? "Profile"}
-              </Link>
-              <button
-                onClick={() => signOut({ callbackUrl: "/" })}
-                className="rounded-md px-3 py-1.5 text-[13px] transition-colors"
-                style={{ color: "var(--site-text-50)" }}
-              >
-                <LogOut className="size-4" />
-              </button>
+                  <span
+                    className="flex size-7 items-center justify-center rounded-full text-[12px] font-semibold uppercase"
+                    style={{ background: "#E8A020", color: "#1a1a1a" }}
+                  >
+                    {session.user.name?.[0] ?? <User className="size-3.5" />}
+                  </span>
+                  {session.user.name?.split(" ")[0] ?? "Account"}
+                  <ChevronDown className="size-3.5 opacity-60" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="flex flex-col">
+                    <span className="text-sm font-medium">{session.user.name}</span>
+                    {session.user.email && (
+                      <span className="truncate text-xs font-normal text-muted-foreground">
+                        {session.user.email}
+                      </span>
+                    )}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem render={<Link href="/trips" />}>
+                    <Sparkles className="size-4" /> My Trips
+                  </DropdownMenuItem>
+                  <DropdownMenuItem render={<Link href="/reservations" />}>
+                    <CalendarDays className="size-4" /> Reservations
+                  </DropdownMenuItem>
+                  <DropdownMenuItem render={<Link href="/profile" />}>
+                    <User className="size-4" /> Profile
+                  </DropdownMenuItem>
+
+                  {(["business", "admin", "superadmin"] as string[]).includes(
+                    (session.user as { role?: string }).role ?? ""
+                  ) && <DropdownMenuSeparator />}
+
+                  {(session.user as { role?: string }).role === "business" && (
+                    <DropdownMenuItem render={<Link href="/business" />}>
+                      <LayoutDashboard className="size-4" /> {tNav("myBusiness")}
+                    </DropdownMenuItem>
+                  )}
+                  {(["admin", "superadmin"] as string[]).includes(
+                    (session.user as { role?: string }).role ?? ""
+                  ) && (
+                    <DropdownMenuItem render={<Link href="/admin" />}>
+                      <Shield className="size-4" /> {tNav("admin")}
+                    </DropdownMenuItem>
+                  )}
+                  {(session.user as { role?: string }).role === "superadmin" && (
+                    <DropdownMenuItem render={<Link href="/superadmin" />}>
+                      <Shield className="size-4" /> {tNav("superadmin")}
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                  >
+                    <LogOut className="size-4" /> {tNav("logout")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ) : (
             <Link
