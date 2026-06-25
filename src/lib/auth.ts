@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 import { connectDB } from "./db";
 import { UserModel } from "./models/user";
 
+const SUPERADMIN_EMAILS = ["ninikusradze@gmail.com", "ratige12@gmail.com"];
+
 export const { auth, handlers, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   pages: {
@@ -34,20 +36,21 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       await connectDB();
+      const isSuperAdmin = SUPERADMIN_EMAILS.includes((user.email ?? "").toLowerCase());
       if (account?.provider === "google") {
         const existing = await UserModel.findOne({ email: user.email });
         if (!existing) {
           await UserModel.create({
             name: user.name,
             email: user.email,
-            role: user.email === "ninikusradze@gmail.com" ? "superadmin" : "tourist",
+            role: isSuperAdmin ? "superadmin" : "tourist",
             suspended: false,
           });
-        } else if (user.email === "ninikusradze@gmail.com" && existing.role !== "superadmin") {
+        } else if (isSuperAdmin && existing.role !== "superadmin") {
           await UserModel.findByIdAndUpdate(existing._id, { role: "superadmin" });
         }
       } else {
-        if (user.email === "ninikusradze@gmail.com") {
+        if (isSuperAdmin) {
           await UserModel.findOneAndUpdate({ email: user.email }, { role: "superadmin" });
         }
       }
@@ -64,27 +67,25 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           token.id = user.id;
           token.role = "tourist";
         }
-        // Bootstrap: always grant superadmin to the platform owner email
-        if (user.email === "ninikusradze@gmail.com") {
+        if (SUPERADMIN_EMAILS.includes((user.email ?? "").toLowerCase())) {
           token.role = "superadmin";
         }
       } else if (trigger === "update" && (token.id || token.email)) {
-        // Client called session.update() — re-read role from DB so changes like
-        // a tourist→business upgrade take effect without a full re-login.
         await connectDB();
         const dbUser = token.id
           ? await UserModel.findById(token.id as string).lean()
           : await UserModel.findOne({ email: token.email }).lean();
         if (dbUser) token.role = dbUser.role ?? token.role;
-        if (token.email === "ninikusradze@gmail.com") token.role = "superadmin";
+        if (SUPERADMIN_EMAILS.includes(((token.email as string) ?? "").toLowerCase())) {
+          token.role = "superadmin";
+        }
       }
       return token;
     },
     session({ session, token }) {
       if (token.id) session.user.id = token.id as string;
       if (token.role) session.user.role = token.role as string;
-      // Always enforce superadmin for owner — runs on every page load
-      if (session.user.email === "ninikusradze@gmail.com") {
+      if (SUPERADMIN_EMAILS.includes((session.user.email ?? "").toLowerCase())) {
         session.user.role = "superadmin";
       }
       return session;
