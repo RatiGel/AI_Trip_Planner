@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { PlaceModel } from "@/lib/models/place";
+import { PUBLISHED } from "@/lib/places/published";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -9,7 +10,7 @@ export async function GET(req: NextRequest) {
 
   await connectDB();
 
-  const filter: Record<string, unknown> = {};
+  const filter: Record<string, unknown> = { ...PUBLISHED };
   if (city) filter.citySlug = city;
   if (category) filter.categories = category;
 

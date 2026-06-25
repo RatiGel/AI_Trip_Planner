@@ -32,6 +32,7 @@ export default async function EditListingPage({
       </div>
       <ListingForm
         listingId={id}
+        status={place.status ?? "draft"}
         defaultValues={{
           name: place.name ?? "",
           nameKa: place.nameKa ?? "",
@@ -44,7 +45,10 @@ export default async function EditListingPage({
           categories: (place.categories ?? []) as CategorySlug[],
           priceLevel: place.priceLevel ?? 2,
           phone: place.phone ?? "",
+          email: place.email ?? "",
           website: place.website ?? "",
+          socials: place.socials ?? {},
+          openingHours: place.openingHours ?? [],
           reservable: place.reservable ?? false,
         }}
       />

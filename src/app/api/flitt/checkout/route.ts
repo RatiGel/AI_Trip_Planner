@@ -32,12 +32,16 @@ async function resolve(
 ): Promise<{ amount: number; desc: string; businessOwnerId?: string } | { error: string; status: number }> {
   switch (body.purpose) {
     case "listing_fee": {
-      const place = await PlaceModel.findById(body.targetId).lean<{ ownerId?: string; name: string; paid?: boolean }>();
+      const place = await PlaceModel.findById(body.targetId).lean<{ ownerId?: string; name: string; paid?: boolean; status?: string }>();
       if (!place) return { error: "Place not found", status: 404 };
       if (!BUSINESS_ROLES.includes(role)) return { error: "Forbidden", status: 403 };
       if (place.ownerId !== userId && role !== "superadmin")
         return { error: "Not your listing", status: 403 };
       if (place.paid) return { error: "Already paid", status: 409 };
+      // Payment only unlocks publishing AFTER admin approval. Block paying for a
+      // listing still in draft/pending/rejected so the review gate can't be skipped.
+      if (place.status !== "approved")
+        return { error: "Listing must be approved before payment", status: 409 };
       return { amount: LISTING_FEE_TETRI, desc: `Listing fee: ${place.name}`, businessOwnerId: place.ownerId };
     }
     case "reservation": {

@@ -26,12 +26,23 @@ interface Listing {
   reviewCount: number;
   citySlug: string;
   paid: boolean;
+  rejectionReason?: string;
 }
 
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = {
+const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   active: "default",
+  approved: "secondary",
   pending: "secondary",
+  draft: "outline",
   rejected: "destructive",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  active: "Published",
+  approved: "Approved · pay to publish",
+  pending: "Pending review",
+  draft: "Draft",
+  rejected: "Rejected",
 };
 
 export function ListingsTable({ listings: initial }: { listings: Listing[] }) {
@@ -83,15 +94,20 @@ export function ListingsTable({ listings: initial }: { listings: Listing[] }) {
               <TableCell className="text-muted-foreground capitalize">{l.citySlug}</TableCell>
               <TableCell>
                 <Badge variant={STATUS_VARIANT[l.status] ?? "secondary"}>
-                  {l.status}
+                  {STATUS_LABEL[l.status] ?? l.status}
                 </Badge>
+                {l.status === "rejected" && l.rejectionReason && (
+                  <p className="mt-1 max-w-[200px] text-xs text-destructive">
+                    {l.rejectionReason}
+                  </p>
+                )}
               </TableCell>
               <TableCell>{l.viewCount}</TableCell>
               <TableCell>
                 {l.rating > 0 ? `${l.rating.toFixed(1)} (${l.reviewCount})` : "—"}
               </TableCell>
               <TableCell className="text-right space-x-1">
-                {!l.paid && (
+                {l.status === "approved" && !l.paid && (
                   <span className="inline-block align-middle mr-1">
                     <PayButton
                       purpose="listing_fee"

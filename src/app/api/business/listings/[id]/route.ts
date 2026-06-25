@@ -34,10 +34,28 @@ export async function PATCH(
   }
 
   const body = await req.json();
-  const allowed = ["name", "nameKa", "citySlug", "description", "descriptionKa", "categories", "priceLevel", "phone", "website", "reservable", "geo"];
+  const allowed = [
+    "name", "nameKa", "citySlug", "description", "descriptionKa", "categories",
+    "priceLevel", "phone", "email", "website", "socials", "openingHours",
+    "reservable", "geo",
+  ];
   const update: Record<string, unknown> = {};
   for (const key of allowed) {
     if (key in body) update[key] = body[key];
+  }
+
+  // Status transitions an OWNER may trigger — never approve/activate themselves.
+  // submit: draft/rejected → pending. unpublish-to-draft: pending → draft.
+  // Admins/superadmins may set any status via the moderation panel instead.
+  if (isOwner && !isAdminOrSuper && typeof body.status === "string") {
+    if (body.status === "pending" && ["draft", "rejected"].includes(place.status)) {
+      update.status = "pending";
+      update.rejectionReason = "";
+    } else if (body.status === "draft" && place.status === "pending") {
+      update.status = "draft";
+    }
+  } else if (isAdminOrSuper && typeof body.status === "string") {
+    update.status = body.status;
   }
 
   const updated = await PlaceModel.findByIdAndUpdate(id, update, { new: true }).lean();

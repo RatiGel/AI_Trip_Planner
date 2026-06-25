@@ -9,6 +9,7 @@ import { CategoryTabs } from "@/components/site/category-tabs";
 import { connectDB } from "@/lib/db";
 import { CityModel } from "@/lib/models/city";
 import { PlaceModel } from "@/lib/models/place";
+import { PUBLISHED } from "@/lib/places/published";
 import type { City, Place } from "@/types";
 
 export default async function CityPage({
@@ -21,7 +22,7 @@ export default async function CityPage({
   await connectDB();
   const city = (await CityModel.findOne({ slug }).lean()) as unknown as City | null;
   if (!city) notFound();
-  const places = (await PlaceModel.find({ citySlug: slug }).lean()) as unknown as Place[];
+  const places = (await PlaceModel.find({ citySlug: slug, ...PUBLISHED }).lean()) as unknown as Place[];
   return <CityContent city={city} places={places} />;
 }
 

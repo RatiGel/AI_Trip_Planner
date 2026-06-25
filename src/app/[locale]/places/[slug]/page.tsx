@@ -10,6 +10,7 @@ import { PlaceCard } from "@/components/site/place-card";
 import { PayButton } from "@/components/site/pay-button";
 import { connectDB } from "@/lib/db";
 import { PlaceModel } from "@/lib/models/place";
+import { PUBLISHED } from "@/lib/places/published";
 import { serializePlace, serializeDoc } from "@/lib/serialize";
 import type { Place } from "@/types";
 
@@ -29,7 +30,7 @@ export default async function PlacePage({
   // Serialize for the client + normalize service subdoc _id → id.
   const place = serializePlace(placeDoc);
   const similar = serializeDoc<Place[]>(
-    await PlaceModel.find({ citySlug: place.citySlug, slug: { $ne: slug } })
+    await PlaceModel.find({ citySlug: place.citySlug, slug: { $ne: slug }, ...PUBLISHED })
       .limit(3)
       .lean()
   );

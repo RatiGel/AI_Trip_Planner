@@ -5,6 +5,7 @@ import { CategoriesStrip } from "@/components/site/home/categories-strip";
 import { FeaturedPlaces } from "@/components/site/home/featured-places";
 import { NeighborhoodsSection } from "@/components/site/home/neighborhoods-section";
 import { AIPlannerCTA } from "@/components/site/home/ai-planner-cta";
+import { ListBusinessSection } from "@/components/site/home/list-business-section";
 import { mockPlaces } from "@/lib/mock/places";
 
 export default async function HomePage({
@@ -25,6 +26,7 @@ export default async function HomePage({
       <FeaturedPlaces places={featuredPlaces} />
       <NeighborhoodsSection />
       <AIPlannerCTA />
+      <ListBusinessSection />
     </div>
   );
 }

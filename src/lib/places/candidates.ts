@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/db";
 import { PlaceModel } from "@/lib/models/place";
 import { popularityScore } from "@/lib/places/visit-duration";
+import { PUBLISHED } from "@/lib/places/published";
 import type { CategorySlug, Place, TravelPreferences } from "@/types";
 
 function toPlace(doc: Record<string, unknown>): Place {
@@ -15,13 +16,18 @@ export async function getCandidatePlaces(
 ): Promise<Place[]> {
   await connectDB();
 
-  const filter: Record<string, unknown> = { citySlug: prefs.citySlug };
+  // PUBLISHED carries its own $or, so AND it with the category $or rather than
+  // assigning a second top-level $or (which would silently overwrite).
+  const filter: Record<string, unknown> = {
+    citySlug: prefs.citySlug,
+    $and: [PUBLISHED],
+  };
 
-  const orClauses: Record<string, unknown>[] = [];
   if (prefs.categories?.length) {
-    orClauses.push({ categories: { $in: prefs.categories } });
+    (filter.$and as Record<string, unknown>[]).push({
+      $or: [{ categories: { $in: prefs.categories } }],
+    });
   }
-  if (orClauses.length) filter.$or = orClauses;
 
   const docs = await PlaceModel.find(filter).lean();
   const places = docs.map((d) => toPlace(d as Record<string, unknown>));

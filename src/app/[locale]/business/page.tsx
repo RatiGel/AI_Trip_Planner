@@ -27,7 +27,9 @@ export default async function BusinessPage({
   const placeIds = places.map((p: any) => p._id.toString());
   const totalViews = places.reduce((sum: number, p: any) => sum + (p.viewCount ?? 0), 0);
   const activeListings = places.filter((p: any) => p.status === "active").length;
-  const pendingListings = places.filter((p: any) => p.status === "pending").length;
+  const pendingListings = places.filter((p: any) =>
+    ["pending", "approved", "draft"].includes(p.status)
+  ).length;
 
   const reviews = placeIds.length
     ? await ReviewModel.find({ placeId: { $in: placeIds } })

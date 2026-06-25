@@ -14,6 +14,7 @@ import {
   MapPin,
   Palette,
   Receipt,
+  ShieldCheck,
   Tag,
   Users,
 } from "lucide-react";
@@ -25,6 +26,7 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/admin", label: "dashboard", Icon: LayoutDashboard, exact: true },
+  { href: "/admin/moderation", label: "moderation", Icon: ShieldCheck, exact: false },
   { href: "/admin/places", label: "places", Icon: MapPin, exact: false },
   { href: "/admin/cities", label: "cities", Icon: Building2, exact: false },
   { href: "/admin/reservations", label: "reservations", Icon: CalendarCheck, exact: false },

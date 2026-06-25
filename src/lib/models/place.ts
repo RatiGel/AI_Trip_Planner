@@ -10,6 +10,11 @@ const OpeningHoursSchema = new Schema(
   { _id: false }
 );
 
+const SocialsSchema = new Schema(
+  { facebook: String, instagram: String, x: String, tiktok: String, youtube: String },
+  { _id: false }
+);
+
 const ServiceSchema = new Schema({
   name: { type: String, required: true },
   nameKa: String,
@@ -35,13 +40,23 @@ const PlaceSchema = new Schema<PlaceDoc>(
     tags: [String],
     reservable: { type: Boolean, default: false },
     phone: String,
+    email: String,
     website: String,
+    socials: SocialsSchema,
     averageVisitDurationMin: Number,
     popularityScore: { type: Number, min: 0, max: 100 },
     ownerId: { type: String, index: true },
+    /**
+     * Listing lifecycle:
+     *  draft    — owner saved, not submitted
+     *  pending  — submitted, awaiting admin review
+     *  approved — admin approved; owner must pay listing fee to publish
+     *  active   — paid + approved; live on site
+     *  rejected — admin rejected (see rejectionReason)
+     */
     status: {
       type: String,
-      enum: ["pending", "active", "rejected"],
+      enum: ["draft", "pending", "approved", "active", "rejected"],
       default: "active",
       index: true,
     },

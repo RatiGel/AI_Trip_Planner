@@ -25,6 +25,10 @@ const LINKS = {
     { label: "City Card", href: "/tickets" },
     { label: "Accommodation", href: "/hotels" },
   ],
+  "For Business": [
+    { label: "List your business", href: "/list-your-business" },
+    { label: "Business dashboard", href: "/business" },
+  ],
 };
 
 export function SiteFooter() {
@@ -33,7 +37,7 @@ export function SiteFooter() {
   return (
     <footer style={{ background: "#050505", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
       <div className="mx-auto max-w-7xl px-6 pb-8 pt-16 md:px-12">
-        <div className="grid gap-12 md:grid-cols-5">
+        <div className="grid gap-12 md:grid-cols-3 lg:grid-cols-6">
           {/* Brand column */}
           <div className="md:col-span-2">
             <Link href="/" className="font-display mb-5 block text-3xl tracking-[-0.5px] text-white">

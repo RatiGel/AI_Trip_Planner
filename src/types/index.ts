@@ -40,6 +40,20 @@ export interface City {
   placesCount: number;
 }
 
+export interface Socials {
+  facebook?: string;
+  instagram?: string;
+  x?: string;
+  tiktok?: string;
+  youtube?: string;
+}
+
+/**
+ * Listing lifecycle: draft → pending (submitted) → approved (admin OK, awaiting
+ * payment) → active (paid, live). rejected is terminal until edited & resubmitted.
+ */
+export type ListingStatus = "draft" | "pending" | "approved" | "active" | "rejected";
+
 export interface PlaceService {
   id: string;
   name: string;
@@ -66,7 +80,9 @@ export interface Place {
   tags: string[];
   reservable: boolean;
   phone?: string;
+  email?: string;
   website?: string;
+  socials?: Socials;
   /** Typical time a visitor spends here, in minutes. Optional — derived from
    *  category when absent (see lib/places/visit-duration.ts). */
   averageVisitDurationMin?: number;
@@ -74,7 +90,7 @@ export interface Place {
    *  rating * reviewCount when absent. */
   popularityScore?: number;
   ownerId?: string;
-  status?: "pending" | "active" | "rejected";
+  status?: ListingStatus;
   featured?: boolean;
   /** True once the 50 GEL listing publication fee is paid. */
   paid?: boolean;

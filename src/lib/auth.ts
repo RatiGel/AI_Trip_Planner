@@ -53,7 +53,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       }
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         await connectDB();
         const dbUser = await UserModel.findOne({ email: user.email }).lean();
@@ -68,6 +68,13 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         if (user.email === "ninikusradze@gmail.com") {
           token.role = "superadmin";
         }
+      } else if (trigger === "update" && token.email) {
+        // Client called session.update() — re-read role from DB so changes like
+        // a tourist→business upgrade take effect without a full re-login.
+        await connectDB();
+        const dbUser = await UserModel.findOne({ email: token.email }).lean();
+        if (dbUser) token.role = dbUser.role ?? token.role;
+        if (token.email === "ninikusradze@gmail.com") token.role = "superadmin";
       }
       return token;
     },

@@ -17,6 +17,7 @@
     "language": "Language",
     "planner": "Plan Route",
     "myBusiness": "My Business",
+    "listBusiness": "List your business",
     "superadmin": "Super Admin"
   },
   "home": {
@@ -141,6 +142,7 @@
   "admin": {
     "title": "Admin",
     "dashboard": "Dashboard",
+    "moderation": "Moderation",
     "cities": "Cities",
     "places": "Places",
     "categories": "Categories",
@@ -236,6 +238,12 @@
     "nightlife": "Nightlife",
     "culture": "Culture & Art",
     "nature": "Nature & Parks"
+  },
+  "listBusinessSection": {
+    "badge": "For local businesses",
+    "title": "Own a business in Tbilisi? Get discovered.",
+    "description": "List your restaurant, café, tour, shop, or stay and reach travelers planning their trip — on the map, in search, and in AI itineraries.",
+    "cta": "List your business"
   },
   "aiCta": {
     "badge": "Powered by Claude AI",

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CalendarDays, ChevronDown, LogOut, Menu, Route, Sparkles, Ticket, User, X } from "lucide-react";
+import { CalendarDays, ChevronDown, LogOut, Menu, Sparkles, Ticket, User, X } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -145,24 +145,16 @@ export function SiteHeader() {
 
         {/* Right actions */}
         <div className="flex items-center gap-2">
-          <Link
-            href="/planner"
-            className="hidden items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-all hover:-translate-y-0.5 sm:flex"
-            style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
-          >
-            <Route className="size-3.5" />
-            {tNav("planner")}
-          </Link>
-
-          <Link
-            href="/tickets"
-            className="hidden items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-all hover:-translate-y-0.5 sm:flex"
-            style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
-          >
-            <Ticket className="size-3.5" />
-            {t("tickets")}
-          </Link>
-
+          {session?.user && (
+            <Link
+              href="/tickets"
+              className="hidden items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-all hover:-translate-y-0.5 sm:flex"
+              style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
+            >
+              <Ticket className="size-3.5" />
+              {t("tickets")}
+            </Link>
+          )}
 
           {session?.user ? (
             <div className="hidden items-center gap-2 md:flex">

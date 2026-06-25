@@ -45,7 +45,11 @@ export async function POST(req: Request) {
 
   const userId = (session.user as { id?: string }).id!;
   const body = await req.json();
-  const { name, nameKa, citySlug, address, lng, lat, description, descriptionKa, categories, priceLevel, phone, website, reservable } = body;
+  const {
+    name, nameKa, citySlug, address, lng, lat, description, descriptionKa,
+    categories, priceLevel, phone, email, website, socials, openingHours,
+    reservable, draft,
+  } = body;
 
   if (!name || !citySlug) {
     return Response.json({ error: "name and citySlug required" }, { status: 400 });
@@ -54,6 +58,9 @@ export async function POST(req: Request) {
   await connectDB();
 
   const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
+
+  // "draft" → saved but not submitted. Otherwise → pending admin review.
+  const status = draft ? "draft" : "pending";
 
   const place = await PlaceModel.create({
     slug,
@@ -66,13 +73,17 @@ export async function POST(req: Request) {
     categories: categories || [],
     priceLevel: priceLevel || 2,
     phone: phone || "",
+    email: email || "",
     website: website || "",
+    socials: socials || {},
+    openingHours: Array.isArray(openingHours) ? openingHours : [],
     reservable: !!reservable,
     ownerId: userId,
-    status: "pending",
+    status,
+    paid: false,
     images: [],
     viewCount: 0,
   });
 
-  return Response.json({ id: place._id.toString(), slug: place.slug }, { status: 201 });
+  return Response.json({ id: place._id.toString(), slug: place.slug, status }, { status: 201 });
 }
