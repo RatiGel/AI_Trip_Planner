@@ -68,11 +68,13 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         if (user.email === "ninikusradze@gmail.com") {
           token.role = "superadmin";
         }
-      } else if (trigger === "update" && token.email) {
+      } else if (trigger === "update" && (token.id || token.email)) {
         // Client called session.update() — re-read role from DB so changes like
         // a tourist→business upgrade take effect without a full re-login.
         await connectDB();
-        const dbUser = await UserModel.findOne({ email: token.email }).lean();
+        const dbUser = token.id
+          ? await UserModel.findById(token.id as string).lean()
+          : await UserModel.findOne({ email: token.email }).lean();
         if (dbUser) token.role = dbUser.role ?? token.role;
         if (token.email === "ninikusradze@gmail.com") token.role = "superadmin";
       }

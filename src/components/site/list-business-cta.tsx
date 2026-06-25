@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { useLocale } from "next-intl";
 import { toast } from "sonner";
 import { ArrowRight, Loader2 } from "lucide-react";
-import { useRouter, Link } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 
 /**
  * Adaptive call-to-action for the "List your business" landing page.
@@ -14,7 +15,7 @@ import { useRouter, Link } from "@/i18n/navigation";
  */
 export function ListBusinessCTA() {
   const { data: session, status, update } = useSession();
-  const router = useRouter();
+  const locale = useLocale();
   const [loading, setLoading] = useState(false);
 
   const role = (session?.user as { role?: string } | undefined)?.role;
@@ -28,9 +29,12 @@ export function ListBusinessCTA() {
       toast.error("Could not upgrade your account. Try again.");
       return;
     }
-    // Refresh the JWT so the new business role is reflected immediately.
+    // Refresh the JWT so the new business role lands in the session cookie.
     await update();
-    router.push("/business/listings/new" as any);
+    // Hard navigation forces the server to re-read the refreshed cookie before
+    // the /business layout's role check runs — avoids a race where the stale
+    // tourist role bounces the user back to "/".
+    window.location.href = `/${locale}/business/listings/new`;
   }
 
   const btn =
