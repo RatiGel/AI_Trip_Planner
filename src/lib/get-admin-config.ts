@@ -12,11 +12,16 @@ export async function getAdminConfig(): Promise<IAdminConfig | null> {
 }
 
 export function buildThemeCss(config: IAdminConfig): string {
-  const { colors, typography } = config;
-  return `:root {
-  --color-wine: ${colors.wine};
-  --color-gold: ${colors.gold};
-  --admin-font-family: ${typography.fontFamily}, sans-serif;
-  --admin-base-font-size: ${typography.baseFontSizePx}px;
+  try {
+    const colors = config.colors ?? ({} as IAdminConfig["colors"]);
+    const typography = config.typography ?? ({} as IAdminConfig["typography"]);
+    return `:root {
+  --color-wine: ${colors.wine ?? "#B5271D"};
+  --color-gold: ${colors.gold ?? "#E8A020"};
+  --admin-font-family: ${typography.fontFamily ?? "Inter"}, sans-serif;
+  --admin-base-font-size: ${typography.baseFontSizePx ?? 16}px;
 }`;
+  } catch {
+    return "";
+  }
 }
