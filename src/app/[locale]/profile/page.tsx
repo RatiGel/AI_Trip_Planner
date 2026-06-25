@@ -18,9 +18,12 @@ export default async function ProfilePage({
   if (!session?.user) redirect({ href: "/login", locale });
 
   await connectDB();
-  const userId = (session!.user as { id?: string }).id!;
-  const user = await UserModel.findById(userId).lean();
-  const bizRequest = await BusinessRequestModel.findOne({ userId }).lean();
+  const userId = (session!.user as { id?: string }).id ?? "";
+  // findById can throw CastError if token.id is not a valid ObjectId (edge case on first Google sign-in)
+  const user = userId ? await UserModel.findById(userId).catch(() => null) : null;
+  const bizRequest = userId
+    ? await BusinessRequestModel.findOne({ userId }).lean().catch(() => null)
+    : null;
 
   return (
     <ProfileClient

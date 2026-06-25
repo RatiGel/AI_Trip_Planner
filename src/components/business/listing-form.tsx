@@ -132,7 +132,7 @@ export function ListingForm({ listingId, status, defaultValues }: ListingFormPro
       toast.success(
         mode === "draft" ? "Saved as draft" : "Submitted for review"
       );
-      router.push("/business/listings" as any);
+      router.push("/business/listings" as Parameters<typeof router.push>[0]);
     } else {
       const data = await res.json().catch(() => ({}));
       toast.error(data.error ?? "Failed to save");
@@ -363,7 +363,7 @@ export function ListingForm({ listingId, status, defaultValues }: ListingFormPro
             {saving === "submit" ? "Submitting…" : "Submit for review"}
           </Button>
         )}
-        <Button type="button" variant="ghost" onClick={() => router.push("/business/listings" as any)}>
+        <Button type="button" variant="ghost" onClick={() => router.push("/business/listings" as Parameters<typeof router.push>[0])}>
           Cancel
         </Button>
       </div>

@@ -47,7 +47,7 @@ export default async function ReservationsPage({
   if (!session?.user) redirect({ href: "/login", locale });
 
   await connectDB();
-  const userId = (session!.user as { id?: string }).id!;
+  const userId = (session!.user as { id?: string }).id ?? "";
 
   const rawReservations = await ReservationModel.find({ userId })
     .sort({ datetime: -1 })

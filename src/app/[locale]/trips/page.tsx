@@ -24,8 +24,10 @@ export default async function TripsPage({
 
   if (session?.user) {
     await connectDB();
-    const userId = (session.user as { id?: string }).id;
-    const docs = await ItineraryModel.find({ userId }).sort({ createdAt: -1 }).lean();
+    const userId = (session.user as { id?: string }).id ?? "";
+    const docs = userId
+      ? await ItineraryModel.find({ userId }).sort({ createdAt: -1 }).lean()
+      : [];
     trips = docs.map((d) => ({
       id: d._id.toString(),
       title: d.title,

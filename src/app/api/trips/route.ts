@@ -7,12 +7,11 @@ export async function GET() {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const userId = (session.user as { id?: string }).id ?? "";
+  if (!userId) return NextResponse.json([]);
+
   await connectDB();
-  const trips = await ItineraryModel.find({
-    userId: (session.user as { id?: string }).id,
-  })
-    .sort({ createdAt: -1 })
-    .lean();
+  const trips = await ItineraryModel.find({ userId }).sort({ createdAt: -1 }).lean();
   return NextResponse.json(trips);
 }
 
