@@ -451,7 +451,7 @@ export function ChatUI() {
             <div className="flex shrink-0 items-center gap-2 border-b border-[#E8A020]/30 bg-[#E8A020]/10 px-4 py-2 text-xs text-[#92400e] dark:text-[#F5C842]">
               <span className="flex size-1.5 rounded-full bg-[#E8A020]" />
               Preview mode — add{" "}
-              <code className="rounded bg-black/5 px-1 font-mono dark:bg-white/10">ANTHROPIC_API_KEY</code> for real AI
+              <code className="rounded bg-black/5 px-1 font-mono dark:bg-white/10">OPENROUTER_API_KEY</code> for real AI
             </div>
           )}
 

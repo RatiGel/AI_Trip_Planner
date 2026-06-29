@@ -1,8 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { aiClient, hasLLM, ITINERARY_MODEL } from "@/lib/ai/client";
 import { toAICandidate } from "@/lib/places/candidates";
 import type { AIItinerary, Place, TravelPreferences } from "@/types";
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const SYSTEM_PROMPT = `You are an expert local trip planner for tourism in Georgia (the country in the Caucasus).
 
@@ -91,15 +90,15 @@ export async function generateItinerary(
   prefs: TravelPreferences,
   candidates: Place[],
 ): Promise<AIItinerary> {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!hasLLM) {
     return buildFallbackItinerary(prefs, candidates);
   }
 
   const validIds = new Set(candidates.map((c) => c.id));
 
   try {
-    const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+    const response = await aiClient.messages.create({
+      model: ITINERARY_MODEL,
       max_tokens: 2048,
       tools: [ITINERARY_TOOL],
       tool_choice: { type: "any" },

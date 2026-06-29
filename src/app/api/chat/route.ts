@@ -4,6 +4,7 @@ import { connectDB } from "@/lib/db";
 import { PlaceModel } from "@/lib/models/place";
 import { getCandidatePlaces } from "@/lib/places/candidates";
 import { generateItinerary } from "@/lib/ai/route-planner";
+import { aiClient, hasLLM, CHAT_MODEL } from "@/lib/ai/client";
 import { buildRoutePlan } from "@/lib/route/optimize";
 import type {
   AIItinerary,
@@ -15,8 +16,6 @@ import type {
 } from "@/types";
 
 export const runtime = "nodejs";
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const CHAT_SYSTEM = `You are a friendly AI travel assistant for Georgia (the country in the Caucasus), specializing in Tbilisi.
 
@@ -216,7 +215,7 @@ export async function POST(req: NextRequest) {
   const writer = writable.getWriter();
 
   // ── No API key: heuristic mock ───────────────────────────────────────
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!hasLLM) {
     (async () => {
       try {
         const lastUserMsg =
@@ -237,7 +236,7 @@ export async function POST(req: NextRequest) {
             await writer.write(
               sse({
                 type: "preview",
-                reply: `Here's a ${prefs.days}-day Tbilisi itinerary! Add ANTHROPIC_API_KEY for personalized AI chat.`,
+                reply: `Here's a ${prefs.days}-day Tbilisi itinerary! Add OPENROUTER_API_KEY for personalized AI chat.`,
                 stage: "preview",
                 previewPlaces,
                 pendingItinerary: itinerary,
@@ -254,7 +253,7 @@ export async function POST(req: NextRequest) {
         await writer.write(
           sse({
             type: "done",
-            text: "Tell me how many days you have and what you enjoy, and I'll build an itinerary! (Add ANTHROPIC_API_KEY for real AI)",
+            text: "Tell me how many days you have and what you enjoy, and I'll build an itinerary! (Add OPENROUTER_API_KEY for real AI)",
           }),
         );
         await writer.close();
@@ -277,8 +276,8 @@ export async function POST(req: NextRequest) {
 
   (async () => {
     try {
-      const stream = client.messages.stream({
-        model: "claude-haiku-4-5-20251001",
+      const stream = aiClient.messages.stream({
+        model: CHAT_MODEL,
         max_tokens: 1024,
         tools: [CREATE_TRIP_PLAN_TOOL],
         system: CHAT_SYSTEM,

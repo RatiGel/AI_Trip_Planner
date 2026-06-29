@@ -72,7 +72,7 @@ export function PlannerView() {
         <aside className="overflow-hidden border-t border-border bg-card md:col-span-2 lg:col-span-1 lg:col-start-3 lg:row-start-1 lg:border-l lg:border-t-0">
           {isMock && (
             <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-400">
-              Preview mode — add <code className="font-mono">ANTHROPIC_API_KEY</code> for real AI planning
+              Preview mode — add <code className="font-mono">OPENROUTER_API_KEY</code> for real AI planning
             </div>
           )}
           <ItinerarySidebar
