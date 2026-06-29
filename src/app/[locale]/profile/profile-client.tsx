@@ -34,9 +34,13 @@ export function ProfileClient({
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    businessName: string;
+    businessType: string | null;
+    description: string;
+  }>({
     businessName: "",
-    businessType: "",
+    businessType: null,
     description: "",
   });
 
@@ -130,7 +134,7 @@ export function ProfileClient({
                 <Label>Business type</Label>
                 <Select
                   value={form.businessType}
-                  onValueChange={(v) => setForm((f) => ({ ...f, businessType: v ?? f.businessType }))}
+                  onValueChange={(v) => setForm((f) => ({ ...f, businessType: (v as string) ?? null }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select type" />
