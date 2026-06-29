@@ -19,8 +19,8 @@ export function ItinerarySidebar({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-border p-4">
-        <h2 className="text-lg font-semibold tracking-tight">{plan.title}</h2>
+      <div className="border-b border-border bg-gradient-to-r from-[#FFF7ED]/60 to-transparent p-4 dark:from-[#2a1a10]/30">
+        <h2 className="font-display text-lg tracking-tight">{plan.title}</h2>
         <p className="mt-0.5 text-xs text-muted-foreground">
           {t("totalOverview", {
             days: plan.days.length,
@@ -54,10 +54,10 @@ export function ItinerarySidebar({
                   <li key={`${day.day}-${stop.place.id}`}>
                     <button
                       onClick={() => onSelect(stop.place.id)}
-                      className={`w-full rounded-lg border p-3 text-left transition ${
+                      className={`w-full cursor-pointer rounded-xl border p-3 text-left transition-all duration-200 ${
                         isSelected
-                          ? "border-primary ring-2 ring-primary/30"
-                          : "border-border hover:border-primary/50 hover:bg-accent"
+                          ? "border-[#E8A020]/60 bg-[#E8A020]/[0.06] ring-2 ring-[#E8A020]/25"
+                          : "border-border hover:-translate-y-0.5 hover:border-[#E8A020]/40 hover:shadow-sm"
                       }`}
                     >
                       <div className="flex items-start gap-2.5">

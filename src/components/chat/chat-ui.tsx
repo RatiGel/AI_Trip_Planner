@@ -242,48 +242,58 @@ export function ChatUI() {
   );
 
   const streamingBubble = streamingMsg ? (
-    <div className="flex items-start">
-      <div className="max-w-[85%] rounded-2xl bg-muted px-4 py-2 text-sm text-foreground">
+    <div className="flex items-start gap-2.5">
+      <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-sm">
+        <Sparkles className="size-3.5" />
+      </span>
+      <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-border/60 bg-card px-4 py-2.5 text-sm leading-relaxed text-foreground shadow-sm">
         {streamingMsg}
-        <span className="ml-0.5 inline-block h-3 w-0.5 animate-pulse bg-current opacity-60" />
+        <span className="ml-0.5 inline-block h-3.5 w-0.5 animate-pulse bg-[#B5271D] align-middle" />
       </div>
     </div>
   ) : null;
 
   const dots =
     pending && !streamingMsg ? (
-      <div className="flex">
-        <div className="rounded-2xl bg-muted px-4 py-2 text-sm text-muted-foreground">
+      <div className="flex items-start gap-2.5">
+        <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-sm">
+          <Sparkles className="size-3.5" />
+        </span>
+        <div className="rounded-2xl rounded-tl-sm border border-border/60 bg-card px-4 py-3 shadow-sm">
           <span className="inline-flex gap-1">
-            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current" />
-            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:120ms]" />
-            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:240ms]" />
+            <span className="size-1.5 animate-bounce rounded-full bg-[#B5271D]/70" />
+            <span className="size-1.5 animate-bounce rounded-full bg-[#B5271D]/70 [animation-delay:120ms]" />
+            <span className="size-1.5 animate-bounce rounded-full bg-[#B5271D]/70 [animation-delay:240ms]" />
           </span>
         </div>
       </div>
     ) : null;
 
   const messageList = (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {messages.map((m, idx) => (
         <div
           key={m.id}
           className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
         >
-          {m.content && (
-            <div
-              className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm ${
-                m.role === "user"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-foreground"
-              }`}
-            >
+          {m.content && m.role === "assistant" && (
+            <div className="flex max-w-[88%] items-start gap-2.5">
+              <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-sm">
+                <Sparkles className="size-3.5" />
+              </span>
+              <div className="rounded-2xl rounded-tl-sm border border-border/60 bg-card px-4 py-2.5 text-sm leading-relaxed text-foreground shadow-sm">
+                {m.content}
+              </div>
+            </div>
+          )}
+          {m.content && m.role === "user" && (
+            <div className="max-w-[80%] rounded-2xl rounded-br-sm bg-gradient-to-br from-[#E8A020] to-[#B5271D] px-4 py-2.5 text-sm font-medium leading-relaxed text-white shadow-md">
               {m.content}
             </div>
           )}
 
           {m.type === "route-plan" && plan && (
-            <div className="mt-1 w-full overflow-hidden rounded-xl border border-border">
+            <div className="mt-1 w-full overflow-hidden rounded-2xl border border-border shadow-sm">
               <div className="relative h-[400px]">
                 <RouteMap plan={plan} selectedId={selectedId} onSelect={setSelectedId} />
               </div>
@@ -317,25 +327,34 @@ export function ChatUI() {
 
   const inputBar = (compact: boolean) => (
     <div
-      className={`flex items-end gap-2 ${compact ? "border-t border-border p-3" : "md:col-span-2"}`}
+      className={`flex items-end gap-2 ${compact ? "border-t border-border bg-card/50 p-3" : "md:col-span-2"}`}
     >
-      <Textarea
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder={t("placeholder")}
-        rows={2}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            send();
-          }
-        }}
-        className="min-h-[52px] resize-none"
-      />
-      <Button onClick={send} disabled={pending || !input.trim()} size={compact ? "sm" : "lg"}>
+      <div className="relative flex flex-1 items-end rounded-2xl border border-border bg-background shadow-sm transition-colors focus-within:border-[#E8A020]/60 focus-within:ring-2 focus-within:ring-[#E8A020]/20">
+        <Textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder={t("placeholder")}
+          rows={compact ? 1 : 2}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              send();
+            }
+          }}
+          className="min-h-[48px] resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
+        />
+      </div>
+      <button
+        onClick={send}
+        disabled={pending || !input.trim()}
+        aria-label={t("send")}
+        className={`flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-[#E8A020] to-[#B5271D] font-semibold text-white shadow-md transition-all duration-200 hover:shadow-lg hover:brightness-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:shadow-md ${
+          compact ? "size-11" : "h-12 px-5"
+        }`}
+      >
         <Send className="size-4" />
         {!compact && <span className="hidden sm:inline">{t("send")}</span>}
-      </Button>
+      </button>
     </div>
   );
 
@@ -344,9 +363,11 @@ export function ChatUI() {
     return (
       <div className="grid h-[calc(100vh-4rem)] grid-cols-1 md:grid-cols-[1fr_340px]">
         <div className="flex flex-col overflow-hidden border-b border-border md:border-b-0 md:border-r">
-          <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
+          <div className="flex shrink-0 items-center justify-between border-b border-border bg-gradient-to-r from-[#FFF7ED]/60 to-transparent px-4 py-3 dark:from-[#2a1a10]/30">
             <div className="flex items-center gap-2">
-              <Sparkles className="size-4 text-primary" />
+              <span className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-sm">
+                <Sparkles className="size-4" />
+              </span>
               <span className="text-sm font-semibold">{t("title")}</span>
             </div>
             <div className="flex gap-1.5">
@@ -360,9 +381,10 @@ export function ChatUI() {
           </div>
 
           {isMock && (
-            <div className="shrink-0 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-400">
+            <div className="flex shrink-0 items-center gap-2 border-b border-[#E8A020]/30 bg-[#E8A020]/10 px-4 py-2 text-xs text-[#92400e] dark:text-[#F5C842]">
+              <span className="flex size-1.5 rounded-full bg-[#E8A020]" />
               Preview mode — add{" "}
-              <code className="font-mono">ANTHROPIC_API_KEY</code> for real AI
+              <code className="rounded bg-black/5 px-1 font-mono dark:bg-white/10">ANTHROPIC_API_KEY</code> for real AI
             </div>
           )}
 
@@ -381,39 +403,82 @@ export function ChatUI() {
   }
 
   // ── Default view ─────────────────────────────────────────────────────
+  const onlyStarter = messages.length === 1;
+
   return (
-    <div className="container mx-auto grid h-[calc(100vh-4rem)] grid-rows-[auto_1fr_auto] gap-4 px-4 py-6 md:grid-cols-[1fr_320px] md:grid-rows-[1fr_auto]">
-      <div className="flex items-center justify-between md:col-span-2">
+    <div className="container mx-auto grid h-[calc(100vh-4rem)] grid-rows-[auto_1fr_auto] gap-4 px-4 py-6 md:grid-cols-[1fr_320px] md:grid-rows-[auto_1fr_auto]">
+      <div className="flex items-end justify-between gap-3 md:col-span-2">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-            <Sparkles className="size-5 text-primary" />
+          <h1 className="flex items-center gap-2.5 font-display text-[28px] leading-tight tracking-tight">
+            <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-md">
+              <Sparkles className="size-5" />
+            </span>
             {t("title")}
           </h1>
-          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={newChat}>
             <Plus className="size-4" /> {t("newChat")}
           </Button>
-          <Button size="sm" onClick={saveTrip}>
+          <Button
+            size="sm"
+            onClick={saveTrip}
+            className="bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white hover:brightness-105"
+          >
             <Save className="size-4" /> {t("save")}
           </Button>
         </div>
       </div>
 
-      <div ref={scrollRef} className="overflow-y-auto rounded-2xl border border-border bg-card p-4">
-        {messageList}
+      <div
+        ref={scrollRef}
+        className="overflow-y-auto rounded-2xl border border-border bg-gradient-to-b from-card to-[#FFF7ED]/30 p-5 dark:to-transparent"
+      >
+        {onlyStarter ? (
+          <div className="flex h-full flex-col items-center justify-center gap-6 py-8 text-center">
+            <span className="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-lg shadow-[#B5271D]/20">
+              <Sparkles className="size-8" />
+            </span>
+            <div className="max-w-md space-y-1.5">
+              <h2 className="font-display text-2xl tracking-tight">{t("title")}</h2>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {STARTER.content}
+              </p>
+            </div>
+            <div className="grid w-full max-w-md gap-2 sm:grid-cols-3">
+              {[t("example1"), t("example2"), t("example3")].map((ex) => (
+                <button
+                  key={ex}
+                  onClick={() => setInput(ex)}
+                  className="group cursor-pointer rounded-xl border border-border bg-card p-3 text-left text-xs font-medium leading-snug shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#E8A020]/50 hover:shadow-md"
+                >
+                  <span className="mb-1.5 flex size-6 items-center justify-center rounded-lg bg-[#E8A020]/15 text-[#B5271D] transition-colors group-hover:bg-[#E8A020]/25 dark:text-[#F5C842]">
+                    <Sparkles className="size-3.5" />
+                  </span>
+                  {ex}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          messageList
+        )}
       </div>
 
-      <aside className="hidden flex-col gap-3 overflow-y-auto rounded-2xl border border-border bg-card p-4 md:col-start-2 md:row-start-1 md:flex">
-        <p className="text-sm font-medium">{t("examples")}</p>
+      <aside className="hidden flex-col gap-3 overflow-y-auto rounded-2xl border border-border bg-card p-4 md:col-start-2 md:row-span-2 md:row-start-1 md:flex">
+        <p className="flex items-center gap-1.5 text-sm font-semibold">
+          <Sparkles className="size-4 text-[#E8A020]" />
+          {t("examples")}
+        </p>
         <div className="space-y-2">
           {[t("example1"), t("example2"), t("example3")].map((ex) => (
             <button
               key={ex}
               onClick={() => setInput(ex)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2 text-left text-xs hover:bg-accent"
+              className="group flex w-full cursor-pointer items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 text-left text-xs leading-snug transition-all duration-200 hover:-translate-y-0.5 hover:border-[#E8A020]/50 hover:shadow-sm"
             >
+              <span className="text-muted-foreground/40 transition-colors group-hover:text-[#E8A020]">→</span>
               {ex}
             </button>
           ))}
