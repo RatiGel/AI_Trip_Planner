@@ -31,13 +31,13 @@ export function RouteStatsBar({ stats }: { stats: RouteStats }) {
       {items.map(({ icon: Icon, label, value }) => (
         <div
           key={label}
-          className="rounded-lg border border-border bg-background p-2"
+          className="rounded-xl border border-border bg-background/60 p-2.5 transition-colors hover:border-[#E8A020]/40"
         >
           <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-            <Icon className="size-3" />
+            <Icon className="size-3 text-[#E8A020]" />
             {label}
           </div>
-          <div className="mt-0.5 text-sm font-semibold">{value}</div>
+          <div className="mt-0.5 text-sm font-semibold tabular-nums">{value}</div>
         </div>
       ))}
     </div>

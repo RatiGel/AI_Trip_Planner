@@ -79,7 +79,7 @@ export function PlaceSelectionCards({
   }
 
   return (
-    <div className="mt-2 w-full max-w-[540px] overflow-hidden rounded-2xl border border-[#E8A020]/25 bg-card shadow-[0_8px_30px_-12px_rgba(181,39,29,0.18)]">
+    <div className="chat-rise mt-2 w-full max-w-[540px] overflow-hidden rounded-2xl border border-[#E8A020]/25 bg-card shadow-[0_8px_30px_-12px_rgba(181,39,29,0.18)]">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 border-b border-border/60 bg-gradient-to-r from-[#FFF7ED] to-[#FDF2F0] px-4 py-3 dark:from-[#2a1a10]/40 dark:to-[#2a1212]/40">
         <div className="flex items-center gap-2">

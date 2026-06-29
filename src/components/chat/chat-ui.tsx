@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus, Save, Send, Sparkles } from "lucide-react";
+import { Download, Plus, Save, Send, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RouteMap } from "@/components/planner/route-map";
 import { ItinerarySidebar } from "@/components/planner/itinerary-sidebar";
 import { PlaceSelectionCards } from "@/components/chat/place-selection-cards";
+import { downloadKml } from "@/lib/kml";
 import type { AIItinerary, ChatMessage, Place, PlacePreviewCard, RoutePlan } from "@/types";
 
 type SseEvent =
@@ -191,6 +192,15 @@ export function ChatUI() {
     }
   }
 
+  function exportKml() {
+    if (!plan) {
+      toast.info("Plan your trip first, then download it.");
+      return;
+    }
+    downloadKml(plan);
+    toast.success("KML downloaded — import it into Google My Maps.");
+  }
+
   function newChat() {
     setMessages([STARTER]);
     setInput("");
@@ -274,7 +284,7 @@ export function ChatUI() {
       {messages.map((m, idx) => (
         <div
           key={m.id}
-          className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
+          className={`chat-rise flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
         >
           {m.content && m.role === "assistant" && (
             <div className="flex max-w-[88%] items-start gap-2.5">
@@ -374,6 +384,9 @@ export function ChatUI() {
               <Button variant="ghost" size="sm" onClick={newChat} title={t("newChat")}>
                 <Plus className="size-3.5" />
               </Button>
+              <Button variant="ghost" size="sm" onClick={exportKml} title={t("downloadKml")}>
+                <Download className="size-3.5" />
+              </Button>
               <Button variant="ghost" size="sm" onClick={saveTrip} title={t("save")}>
                 <Save className="size-3.5" />
               </Button>
@@ -405,8 +418,71 @@ export function ChatUI() {
   // ── Default view ─────────────────────────────────────────────────────
   const onlyStarter = messages.length === 1;
 
+  // Empty state: full-width centered hero, no side rail, no dead space.
+  if (onlyStarter) {
+    return (
+      <div className="relative flex h-[calc(100vh-4rem)] flex-col">
+        <div className="chat-texture pointer-events-none absolute inset-0 opacity-[0.5] [mask-image:radial-gradient(ellipse_at_center,black,transparent_72%)]" />
+        <div className="relative flex flex-1 flex-col items-center justify-center px-4">
+          <div className="chat-rise flex w-full max-w-xl flex-col items-center gap-7 text-center">
+            <span className="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-lg shadow-[#B5271D]/25">
+              <Sparkles className="size-8" />
+            </span>
+            <div className="space-y-2">
+              <h1 className="font-display text-4xl tracking-tight">{t("title")}</h1>
+              <p className="mx-auto max-w-md text-[15px] leading-relaxed text-muted-foreground">
+                {STARTER.content}
+              </p>
+            </div>
+
+            <div className="relative flex w-full items-end gap-2 rounded-2xl border border-border bg-card p-2 shadow-lg shadow-black/[0.03] transition-colors focus-within:border-[#E8A020]/60 focus-within:ring-2 focus-within:ring-[#E8A020]/20">
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={t("placeholder")}
+                rows={1}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    send();
+                  }
+                }}
+                className="min-h-[44px] resize-none border-0 bg-transparent text-[15px] shadow-none focus-visible:ring-0"
+              />
+              <button
+                onClick={send}
+                disabled={pending || !input.trim()}
+                aria-label={t("send")}
+                className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-md transition-all duration-200 hover:shadow-lg hover:brightness-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Send className="size-4" />
+              </button>
+            </div>
+
+            <div className="grid w-full gap-2 sm:grid-cols-3">
+              {[t("example1"), t("example2"), t("example3")].map((ex, i) => (
+                <button
+                  key={ex}
+                  onClick={() => setInput(ex)}
+                  style={{ animationDelay: `${80 + i * 60}ms` }}
+                  className="chat-rise group cursor-pointer rounded-xl border border-border bg-card/80 p-3 text-left text-xs font-medium leading-snug shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-[#E8A020]/50 hover:shadow-md"
+                >
+                  <span className="mb-1.5 flex size-6 items-center justify-center rounded-lg bg-[#E8A020]/15 text-[#B5271D] transition-colors group-hover:bg-[#E8A020]/25 dark:text-[#F5C842]">
+                    <Sparkles className="size-3.5" />
+                  </span>
+                  {ex}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Conversation in progress (pre-plan): chat column + suggestions rail.
   return (
-    <div className="container mx-auto grid h-[calc(100vh-4rem)] grid-rows-[auto_1fr_auto] gap-4 px-4 py-6 md:grid-cols-[1fr_320px] md:grid-rows-[auto_1fr_auto]">
+    <div className="container mx-auto grid h-[calc(100vh-4rem)] grid-rows-[auto_1fr_auto] gap-4 px-4 py-6 md:grid-cols-[1fr_300px] md:grid-rows-[auto_1fr_auto]">
       <div className="flex items-end justify-between gap-3 md:col-span-2">
         <div>
           <h1 className="flex items-center gap-2.5 font-display text-[28px] leading-tight tracking-tight">
@@ -433,37 +509,9 @@ export function ChatUI() {
 
       <div
         ref={scrollRef}
-        className="overflow-y-auto rounded-2xl border border-border bg-gradient-to-b from-card to-[#FFF7ED]/30 p-5 dark:to-transparent"
+        className="chat-texture overflow-y-auto rounded-2xl border border-border bg-gradient-to-b from-card to-[#FFF7ED]/30 bg-fixed p-5 dark:to-transparent"
       >
-        {onlyStarter ? (
-          <div className="flex h-full flex-col items-center justify-center gap-6 py-8 text-center">
-            <span className="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-lg shadow-[#B5271D]/20">
-              <Sparkles className="size-8" />
-            </span>
-            <div className="max-w-md space-y-1.5">
-              <h2 className="font-display text-2xl tracking-tight">{t("title")}</h2>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                {STARTER.content}
-              </p>
-            </div>
-            <div className="grid w-full max-w-md gap-2 sm:grid-cols-3">
-              {[t("example1"), t("example2"), t("example3")].map((ex) => (
-                <button
-                  key={ex}
-                  onClick={() => setInput(ex)}
-                  className="group cursor-pointer rounded-xl border border-border bg-card p-3 text-left text-xs font-medium leading-snug shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#E8A020]/50 hover:shadow-md"
-                >
-                  <span className="mb-1.5 flex size-6 items-center justify-center rounded-lg bg-[#E8A020]/15 text-[#B5271D] transition-colors group-hover:bg-[#E8A020]/25 dark:text-[#F5C842]">
-                    <Sparkles className="size-3.5" />
-                  </span>
-                  {ex}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          messageList
-        )}
+        {messageList}
       </div>
 
       <aside className="hidden flex-col gap-3 overflow-y-auto rounded-2xl border border-border bg-card p-4 md:col-start-2 md:row-span-2 md:row-start-1 md:flex">

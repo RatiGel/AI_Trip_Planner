@@ -144,6 +144,37 @@
   font-family: var(--font-display), "Georgia", serif;
 }
 
+/* ── Chat / planner motion + texture ─────────────────────────────── */
+@keyframes chat-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-rise {
+  animation: chat-rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Subtle topographic dot field — evokes a map without competing. */
+.chat-texture {
+  background-image: radial-gradient(
+    color-mix(in oklch, var(--color-gold) 20%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-rise {
+    animation: none;
+  }
+}
+
 /* Site theme tokens — dark by default, overridden by .light class */
 :root,
 :root.dark {
