@@ -255,10 +255,7 @@ export function ChatUI() {
   );
 
   const streamingBubble = streamingMsg ? (
-    <div className="flex items-start gap-2.5">
-      <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-sm">
-        <Sparkles className="size-3.5" />
-      </span>
+    <div className="flex items-start">
       <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-border/60 bg-card px-4 py-2.5 text-sm leading-relaxed text-foreground shadow-sm">
         {streamingMsg}
         <span className="ml-0.5 inline-block h-3.5 w-0.5 animate-pulse bg-[#B5271D] align-middle" />
@@ -268,10 +265,7 @@ export function ChatUI() {
 
   const dots =
     pending && !streamingMsg ? (
-      <div className="flex items-start gap-2.5">
-        <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-sm">
-          <Sparkles className="size-3.5" />
-        </span>
+      <div className="flex items-start">
         <div className="rounded-2xl rounded-tl-sm border border-border/60 bg-card px-4 py-3 shadow-sm">
           <span className="inline-flex gap-1">
             <span className="size-1.5 animate-bounce rounded-full bg-[#B5271D]/70" />
@@ -290,10 +284,7 @@ export function ChatUI() {
           className={`chat-rise flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
         >
           {m.content && m.role === "assistant" && (
-            <div className="flex max-w-[88%] items-start gap-2.5">
-              <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-sm">
-                <Sparkles className="size-3.5" />
-              </span>
+            <div className="max-w-[88%]">
               <div className="rounded-2xl rounded-tl-sm border border-border/60 bg-card px-4 py-2.5 text-sm leading-relaxed text-foreground shadow-sm">
                 {m.content}
               </div>

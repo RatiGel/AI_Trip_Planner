@@ -12,7 +12,7 @@ Rules:
 - Choose places that match the traveller's stated interests.
 - Prefer variety within each day: mix sights, food, and an evening spot.
 - Distribute stops: relaxed ~3/day, balanced ~4/day, packed ~5-6/day.
-- Give each stop a short specific reason (one sentence) explaining why it fits this traveller.
+- Give each stop a short specific reason (one sentence) explaining why it fits this traveller. Plain text, no emoji or icons.
 - Do not reuse the same place across days.
 
 Call the submit_itinerary tool to return your plan.`;
