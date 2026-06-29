@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Download, Plus, Save, Send, Sparkles } from "lucide-react";
+import { Check, ExternalLink, Plus, Save, Send, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RouteMap } from "@/components/planner/route-map";
 import { ItinerarySidebar } from "@/components/planner/itinerary-sidebar";
 import { PlaceSelectionCards } from "@/components/chat/place-selection-cards";
-import { downloadKml } from "@/lib/kml";
+import { dayMapUrl } from "@/lib/google-maps";
 import type { AIItinerary, ChatMessage, Place, PlacePreviewCard, RoutePlan } from "@/types";
 
 type SseEvent =
@@ -35,6 +35,7 @@ const STARTER: ChatMessage = {
 
 export function ChatUI() {
   const t = useTranslations("chat");
+  const tp = useTranslations("planner");
   const [messages, setMessages] = useState<ChatMessage[]>([STARTER]);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
@@ -43,6 +44,8 @@ export function ChatUI() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isMock, setIsMock] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -178,6 +181,7 @@ export function ChatUI() {
         ]);
         setPlan(data.plan as RoutePlan);
         setSelectedId(null);
+        setSaved(false);
       } else {
         setMessages((m) => [
           ...m,
@@ -192,15 +196,6 @@ export function ChatUI() {
     }
   }
 
-  function exportKml() {
-    if (!plan) {
-      toast.info("Plan your trip first, then download it.");
-      return;
-    }
-    downloadKml(plan);
-    toast.success("KML downloaded — import it into Google My Maps.");
-  }
-
   function newChat() {
     setMessages([STARTER]);
     setInput("");
@@ -209,6 +204,7 @@ export function ChatUI() {
     setIsMock(false);
     setConfirming(false);
     setStreamingMsg("");
+    setSaved(false);
   }
 
   async function saveTrip() {
@@ -216,6 +212,8 @@ export function ChatUI() {
       toast.info("Plan your trip first, then save it.");
       return;
     }
+    if (saving || saved) return;
+    setSaving(true);
 
     const today = new Date();
     const days = plan.days.map((d) => ({
@@ -236,13 +234,18 @@ export function ChatUI() {
         body: JSON.stringify({ title: plan.title, days }),
       });
       if (res.ok) {
+        setSaved(true);
         toast.success("Trip saved! View it in My Trips.");
+      } else if (res.status === 401) {
+        toast.error("Sign in to save your trip.");
       } else {
-        const data = await res.json() as { error?: string };
+        const data = (await res.json()) as { error?: string };
         toast.error(data.error ?? "Failed to save trip");
       }
     } catch {
       toast.error("Failed to save trip");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -303,9 +306,63 @@ export function ChatUI() {
           )}
 
           {m.type === "route-plan" && plan && (
-            <div className="mt-1 w-full overflow-hidden rounded-2xl border border-border shadow-sm">
-              <div className="relative h-[400px]">
-                <RouteMap plan={plan} selectedId={selectedId} onSelect={setSelectedId} />
+            <div className="mt-1 w-full space-y-3">
+              <div className="overflow-hidden rounded-2xl border border-border shadow-sm">
+                <div className="relative h-[400px]">
+                  <RouteMap plan={plan} selectedId={selectedId} onSelect={setSelectedId} />
+                </div>
+              </div>
+
+              {/* Itinerary actions: save + open each day in Google Maps */}
+              <div className="rounded-2xl border border-[#E8A020]/25 bg-card p-3 shadow-sm">
+                <button
+                  onClick={saveTrip}
+                  disabled={saving || saved}
+                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#E8A020] to-[#B5271D] px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:shadow-lg hover:brightness-105 active:scale-[0.99] disabled:cursor-default disabled:opacity-80"
+                >
+                  {saved ? (
+                    <>
+                      <Check className="size-4" strokeWidth={3} /> {t("savedTrip")}
+                    </>
+                  ) : saving ? (
+                    <>
+                      <span className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                      {t("saving")}
+                    </>
+                  ) : (
+                    <>
+                      <Save className="size-4" /> {t("save")}
+                    </>
+                  )}
+                </button>
+
+                <div className="mt-3">
+                  <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                    <ExternalLink className="size-3.5 text-[#E8A020]" />
+                    {t("openInGoogleMaps")}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {plan.days.map((day) => {
+                      const url = dayMapUrl(day, plan.mode);
+                      if (!url) return null;
+                      return (
+                        <a
+                          key={day.day}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium transition-all duration-200 hover:-translate-y-0.5 hover:border-[#E8A020]/50 hover:shadow-sm"
+                        >
+                          <span
+                            className="size-2 rounded-full"
+                            style={{ background: day.color }}
+                          />
+                          {tp("dayN", { n: day.day })}
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -383,9 +440,6 @@ export function ChatUI() {
             <div className="flex gap-1.5">
               <Button variant="ghost" size="sm" onClick={newChat} title={t("newChat")}>
                 <Plus className="size-3.5" />
-              </Button>
-              <Button variant="ghost" size="sm" onClick={exportKml} title={t("downloadKml")}>
-                <Download className="size-3.5" />
               </Button>
               <Button variant="ghost" size="sm" onClick={saveTrip} title={t("save")}>
                 <Save className="size-3.5" />
