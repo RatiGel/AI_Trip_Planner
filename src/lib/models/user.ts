@@ -10,6 +10,8 @@ export interface IUser {
   suspended: boolean;
   warnings: number;
   createdAt: Date;
+  resetTokenHash?: string;
+  resetTokenExpiry?: Date;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -25,6 +27,8 @@ const UserSchema = new Schema<IUser>(
     },
     suspended: { type: Boolean, default: false },
     warnings: { type: Number, default: 0 },
+    resetTokenHash: { type: String, index: true, sparse: true },
+    resetTokenExpiry: { type: Date },
   },
   { timestamps: true }
 );
