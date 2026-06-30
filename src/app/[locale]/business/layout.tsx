@@ -19,7 +19,7 @@ const NAV = [
   { href: "/business/billing", label: "Billing", Icon: CreditCard },
 ];
 
-const ALLOWED_ROLES = ["business", "admin", "superadmin"];
+const ALLOWED_ROLES = ["business", "admin"];
 
 export default async function BusinessLayout({
   children,

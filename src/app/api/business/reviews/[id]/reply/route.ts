@@ -9,7 +9,7 @@ export async function PATCH(
 ) {
   const session = await auth();
   const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session?.user || !["business", "admin", "superadmin"].includes(role ?? "")) {
+  if (!session?.user || !["business", "admin"].includes(role ?? "")) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -28,7 +28,7 @@ export async function PATCH(
 
   const place = await PlaceModel.findById(review.placeId);
   const isOwner = (place as any)?.ownerId === userId;
-  const isAdminOrSuper = ["admin", "superadmin"].includes(role ?? "");
+  const isAdminOrSuper = ["admin"].includes(role ?? "");
   if (!isOwner && !isAdminOrSuper) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }

@@ -168,7 +168,20 @@
     "addNew": "Добавить",
     "confirmDelete": "Удалить этот элемент?",
     "deleteConfirm": "Удалить",
-    "noData": "Нет данных"
+    "noData": "Нет данных",
+    "businesses": "Бизнесы",
+    "content": "Контент",
+    "reports": "Отчёты",
+    "security": "Безопасность",
+    "signOut": "Выйти",
+    "grpOverview": "Обзор",
+    "grpCatalog": "Каталог",
+    "grpModeration": "Модерация",
+    "grpBusinesses": "Бизнесы",
+    "grpMarketing": "Маркетинг",
+    "grpPlatform": "Платформа",
+    "landing": "Главная",
+    "deals": "Акции"
   },
   "auth": {
     "signInTitle": "С возвращением",

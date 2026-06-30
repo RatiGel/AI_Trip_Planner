@@ -5,7 +5,7 @@ import { PlaceModel } from "@/lib/models/place";
 async function requireBusiness() {
   const session = await auth();
   const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session?.user || !["business", "admin", "superadmin"].includes(role ?? "")) {
+  if (!session?.user || !["business", "admin"].includes(role ?? "")) {
     return null;
   }
   return session;
@@ -28,7 +28,7 @@ export async function PATCH(
   if (!place) return Response.json({ error: "Not found" }, { status: 404 });
 
   const isOwner = place.ownerId === userId;
-  const isAdminOrSuper = ["admin", "superadmin"].includes(role ?? "");
+  const isAdminOrSuper = ["admin"].includes(role ?? "");
   if (!isOwner && !isAdminOrSuper) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -79,7 +79,7 @@ export async function DELETE(
   if (!place) return Response.json({ error: "Not found" }, { status: 404 });
 
   const isOwner = place.ownerId === userId;
-  const isAdminOrSuper = ["admin", "superadmin"].includes(role ?? "");
+  const isAdminOrSuper = ["admin"].includes(role ?? "");
   if (!isOwner && !isAdminOrSuper) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }

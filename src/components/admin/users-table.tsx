@@ -12,7 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
-export interface SuperAdminUser {
+export interface AdminUser {
   id: string;
   name: string;
   email: string;
@@ -23,26 +23,25 @@ export interface SuperAdminUser {
 }
 
 const ROLE_VARIANT: Record<string, "default" | "secondary" | "destructive"> = {
-  superadmin: "default",
   admin: "default",
   business: "secondary",
   tourist: "secondary",
 };
 
-export function SuperAdminUsersTable({ users: initial }: { users: SuperAdminUser[] }) {
+export function UsersTable({ users: initial }: { users: AdminUser[] }) {
   const [users, setUsers] = useState(initial);
   const [editId, setEditId] = useState<string | null>(null);
   const [editState, setEditState] = useState({ name: "", email: "", role: "tourist" });
   const [loading, setLoading] = useState(false);
 
-  function startEdit(user: SuperAdminUser) {
+  function startEdit(user: AdminUser) {
     setEditId(user.id);
     setEditState({ name: user.name, email: user.email, role: user.role });
   }
 
   async function saveEdit(id: string) {
     setLoading(true);
-    const res = await fetch(`/api/superadmin/users/${id}`, {
+    const res = await fetch(`/api/admin/users/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(editState),
@@ -58,8 +57,8 @@ export function SuperAdminUsersTable({ users: initial }: { users: SuperAdminUser
     toast.success("User updated");
   }
 
-  async function toggleSuspend(user: SuperAdminUser) {
-    const res = await fetch(`/api/superadmin/users/${user.id}`, {
+  async function toggleSuspend(user: AdminUser) {
+    const res = await fetch(`/api/admin/users/${user.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ suspended: !user.suspended }),
@@ -74,7 +73,7 @@ export function SuperAdminUsersTable({ users: initial }: { users: SuperAdminUser
 
   async function deleteUser(id: string, name: string) {
     if (!confirm(`Delete user "${name}"? Cannot be undone.`)) return;
-    const res = await fetch(`/api/superadmin/users/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
     if (res.ok) {
       setUsers((prev) => prev.filter((u) => u.id !== id));
       toast.success("User deleted");
@@ -111,7 +110,7 @@ export function SuperAdminUsersTable({ users: initial }: { users: SuperAdminUser
                   <Select value={editState.role} onValueChange={(v) => setEditState((s) => ({ ...s, role: v ?? s.role }))}>
                     <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {["tourist", "business", "admin", "superadmin"].map((r) => (
+                      {["tourist", "business", "admin"].map((r) => (
                         <SelectItem key={r} value={r}>{r}</SelectItem>
                       ))}
                     </SelectContent>

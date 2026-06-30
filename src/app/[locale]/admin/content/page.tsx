@@ -1,9 +1,9 @@
 import { setRequestLocale } from "next-intl/server";
 import { connectDB } from "@/lib/db";
 import { ReportModel } from "@/lib/models/report";
-import { ContentModeration } from "@/components/superadmin/content-moderation";
+import { ContentModeration } from "@/components/admin/content-moderation";
 
-export default async function SuperAdminContentPage({
+export default async function AdminContentPage({
   params,
 }: {
   params: Promise<{ locale: string }>;

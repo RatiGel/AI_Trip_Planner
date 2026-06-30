@@ -5,6 +5,10 @@ import { ItineraryModel } from "@/lib/models/itinerary";
 import { ReservationModel } from "@/lib/models/reservation";
 import { PlaceModel } from "@/lib/models/place";
 import { PricingPlanModel } from "@/lib/models/pricing-plan";
+import { BusinessRequestModel } from "@/lib/models/business-request";
+import { ReportModel } from "@/lib/models/report";
+import { Link } from "@/i18n/navigation";
+import { AlertCircle, Building2, FileText } from "lucide-react";
 import { KpiCards, type KpiData } from "@/components/admin/analytics/kpi-cards";
 import { TripsBarChart, type MonthlyCount } from "@/components/admin/analytics/trips-bar-chart";
 import { UsersLineChart } from "@/components/admin/analytics/users-line-chart";
@@ -51,6 +55,9 @@ export default async function AdminHome({
     rawTripsMonthly,
     rawUsersMonthly,
     rawCategories,
+    totalListings,
+    pendingRequests,
+    pendingReports,
   ] = await Promise.all([
     UserModel.countDocuments(),
     ItineraryModel.countDocuments(),
@@ -83,7 +90,16 @@ export default async function AdminHome({
       { $sort: { count: -1 } },
       { $limit: 8 },
     ]),
+    PlaceModel.countDocuments(),
+    BusinessRequestModel.countDocuments({ status: "pending" }),
+    ReportModel.countDocuments({ status: "pending" }),
   ]);
+
+  const platformStats = [
+    { label: "Total Listings", value: totalListings, icon: FileText, href: "/admin/reports" as const, alert: false },
+    { label: "Pending Business Requests", value: pendingRequests, icon: Building2, href: "/admin/businesses" as const, alert: pendingRequests > 0 },
+    { label: "Pending Reports", value: pendingReports, icon: AlertCircle, href: "/admin/content" as const, alert: pendingReports > 0 },
+  ];
 
   const kpi: KpiData = {
     users: totalUsers,
@@ -107,6 +123,26 @@ export default async function AdminHome({
       </div>
 
       <KpiCards data={kpi} />
+
+      <div className="grid gap-4 md:grid-cols-3">
+        {platformStats.map(({ label, value, icon: Icon, href, alert }) => (
+          <Link key={label} href={href} className="group block">
+            <div
+              className={`rounded-2xl border p-5 transition-colors group-hover:bg-accent ${
+                alert ? "border-amber-400 dark:border-amber-600" : "border-border bg-card"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">{label}</p>
+                <Icon className={`size-4 ${alert ? "text-amber-500" : "text-muted-foreground"}`} />
+              </div>
+              <p className={`mt-1 text-2xl font-semibold ${alert ? "text-amber-500" : ""}`}>
+                {value.toLocaleString()}
+              </p>
+            </div>
+          </Link>
+        ))}
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <TripsBarChart data={tripsData} />

@@ -1,7 +1,7 @@
 import { setRequestLocale } from "next-intl/server";
 import { connectDB } from "@/lib/db";
 import { UserModel } from "@/lib/models/user";
-import { SuperAdminUsersTable } from "@/components/superadmin/users-table";
+import { UsersTable } from "@/components/admin/users-table";
 
 export default async function AdminUsersPage({
   params,
@@ -33,7 +33,7 @@ export default async function AdminUsersPage({
         <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
         <p className="text-sm text-muted-foreground">{users.length} registered users</p>
       </div>
-      <SuperAdminUsersTable users={users} />
+      <UsersTable users={users} />
     </div>
   );
 }

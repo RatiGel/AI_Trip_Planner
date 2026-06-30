@@ -2,9 +2,9 @@ import { setRequestLocale } from "next-intl/server";
 import { connectDB } from "@/lib/db";
 import { BusinessRequestModel } from "@/lib/models/business-request";
 import { UserModel } from "@/lib/models/user";
-import { BusinessesApproval } from "@/components/superadmin/businesses-approval";
+import { BusinessesApproval } from "@/components/admin/businesses-approval";
 
-export default async function SuperAdminBusinessesPage({
+export default async function AdminBusinessesPage({
   params,
 }: {
   params: Promise<{ locale: string }>;

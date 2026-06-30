@@ -5,7 +5,7 @@ import { PlaceModel } from "@/lib/models/place";
 
 export async function GET() {
   const session = await auth();
-  if ((session?.user as { role?: string } | undefined)?.role !== "superadmin") {
+  if ((session?.user as { role?: string } | undefined)?.role !== "admin") {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 

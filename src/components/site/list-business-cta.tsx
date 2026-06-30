@@ -19,7 +19,7 @@ export function ListBusinessCTA() {
   const [loading, setLoading] = useState(false);
 
   const role = (session?.user as { role?: string } | undefined)?.role;
-  const isBusiness = ["business", "admin", "superadmin"].includes(role ?? "");
+  const isBusiness = ["business", "admin"].includes(role ?? "");
 
   async function becomeBusiness() {
     setLoading(true);

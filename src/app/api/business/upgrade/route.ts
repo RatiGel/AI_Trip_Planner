@@ -18,7 +18,7 @@ export async function POST() {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (["business", "admin", "superadmin"].includes(role ?? "")) {
+  if (["business", "admin"].includes(role ?? "")) {
     return Response.json({ ok: true, role });
   }
 

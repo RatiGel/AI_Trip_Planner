@@ -22,7 +22,7 @@ export function ContentModeration({ reports: initial }: { reports: Report[] }) {
 
   async function act(id: string, action: "remove" | "dismiss" | "warn") {
     setLoading(id);
-    const res = await fetch(`/api/superadmin/content/${id}`, {
+    const res = await fetch(`/api/admin/content/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action }),

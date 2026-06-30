@@ -17,8 +17,8 @@ export async function GET() {
   await connectDB();
   await UserModel.findOneAndUpdate(
     { email: ADMIN_EMAIL },
-    { role: "superadmin" }
+    { role: "admin" }
   );
 
-  return Response.json({ ok: true, message: `Set superadmin for ${ADMIN_EMAIL}. Now sign out and back in.` });
+  return Response.json({ ok: true, message: `Set admin for ${ADMIN_EMAIL}. Now sign out and back in.` });
 }

@@ -200,7 +200,7 @@ export function SiteHeader() {
                     <User className="size-4" /> Profile
                   </DropdownMenuItem>
 
-                  {(["business", "admin", "superadmin"] as string[]).includes(
+                  {(["business", "admin"] as string[]).includes(
                     (session.user as { role?: string }).role ?? ""
                   ) && <DropdownMenuSeparator />}
 
@@ -209,16 +209,11 @@ export function SiteHeader() {
                       <LayoutDashboard className="size-4" /> {tNav("myBusiness")}
                     </DropdownMenuItem>
                   )}
-                  {(["admin", "superadmin"] as string[]).includes(
+                  {(["admin"] as string[]).includes(
                     (session.user as { role?: string }).role ?? ""
                   ) && (
                     <DropdownMenuItem render={<Link href="/admin" />}>
                       <Shield className="size-4" /> {tNav("admin")}
-                    </DropdownMenuItem>
-                  )}
-                  {(session.user as { role?: string }).role === "superadmin" && (
-                    <DropdownMenuItem render={<Link href="/superadmin" />}>
-                      <Shield className="size-4" /> {tNav("superadmin")}
                     </DropdownMenuItem>
                   )}
 

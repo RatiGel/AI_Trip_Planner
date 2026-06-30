@@ -10,7 +10,7 @@ import { TicketModel } from "@/lib/models/ticket";
 const LISTING_FEE_TETRI = 5000; // 50 GEL
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-const BUSINESS_ROLES = ["business", "admin", "superadmin"];
+const BUSINESS_ROLES = ["business", "admin"];
 
 interface Body {
   purpose: PaymentPurpose;
@@ -35,7 +35,7 @@ async function resolve(
       const place = await PlaceModel.findById(body.targetId).lean<{ ownerId?: string; name: string; paid?: boolean; status?: string }>();
       if (!place) return { error: "Place not found", status: 404 };
       if (!BUSINESS_ROLES.includes(role)) return { error: "Forbidden", status: 403 };
-      if (place.ownerId !== userId && role !== "superadmin")
+      if (place.ownerId !== userId && role !== "admin")
         return { error: "Not your listing", status: 403 };
       if (place.paid) return { error: "Already paid", status: 409 };
       // Payment only unlocks publishing AFTER admin approval. Block paying for a

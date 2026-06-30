@@ -5,10 +5,16 @@ import bcrypt from "bcryptjs";
 import { connectDB } from "./db";
 import { UserModel } from "./models/user";
 
-const SUPERADMIN_EMAILS = ["ninikusradze@gmail.com", "ratige12@gmail.com"];
+// Site owners — bootstrapped to the "admin" role on sign-in.
+const OWNER_EMAILS = ["ninikusradze@gmail.com", "ratige12@gmail.com"];
 
-function isSuperAdminEmail(email?: string | null) {
-  return SUPERADMIN_EMAILS.includes((email ?? "").toLowerCase());
+function isOwnerEmail(email?: string | null) {
+  return OWNER_EMAILS.includes((email ?? "").toLowerCase());
+}
+
+// Legacy "superadmin" tokens/records are folded into "admin".
+function normalizeRole(role?: string | null) {
+  return role === "superadmin" ? "admin" : role ?? "tourist";
 }
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
@@ -50,7 +56,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             await UserModel.create({
               name: user.name?.trim() || email.split("@")[0],
               email,
-              role: isSuperAdminEmail(email) ? "superadmin" : "tourist",
+              role: isOwnerEmail(email) ? "admin" : "tourist",
               suspended: false,
             });
           } catch (err: unknown) {
@@ -58,12 +64,12 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             const code = (err as { code?: number }).code;
             if (code !== 11000) throw err;
           }
-        } else if (isSuperAdminEmail(email) && existing.role !== "superadmin") {
-          await UserModel.findByIdAndUpdate(existing._id, { role: "superadmin" });
+        } else if (isOwnerEmail(email) && existing.role !== "admin") {
+          await UserModel.findByIdAndUpdate(existing._id, { role: "admin" });
         }
       } else {
-        if (isSuperAdminEmail(email)) {
-          await UserModel.findOneAndUpdate({ email }, { role: "superadmin" });
+        if (isOwnerEmail(email)) {
+          await UserModel.findOneAndUpdate({ email }, { role: "admin" });
         }
       }
       return true;
@@ -76,14 +82,14 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         const dbUser = await UserModel.findOne({ email }).lean();
         if (dbUser) {
           token.id = dbUser._id.toString();
-          token.role = dbUser.role ?? "tourist";
+          token.role = normalizeRole(dbUser.role);
         } else {
           // Fallback: store Google OAuth id temporarily; pages must handle non-ObjectId ids
           token.id = user.id;
           token.role = "tourist";
         }
-        if (isSuperAdminEmail(email)) {
-          token.role = "superadmin";
+        if (isOwnerEmail(email)) {
+          token.role = "admin";
         }
       } else if (trigger === "update" && token.email) {
         // Client called session.update() — re-read role from DB.
@@ -94,22 +100,22 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           const dbUser = await UserModel.findOne({ email }).lean();
           if (dbUser) {
             token.id = dbUser._id.toString();
-            token.role = dbUser.role ?? token.role;
+            token.role = normalizeRole(dbUser.role ?? (token.role as string));
           }
         } catch {
           // Non-critical: role stays as-is in the token
         }
-        if (isSuperAdminEmail(email)) {
-          token.role = "superadmin";
+        if (isOwnerEmail(email)) {
+          token.role = "admin";
         }
       }
       return token;
     },
     session({ session, token }) {
       if (token.id) session.user.id = token.id as string;
-      if (token.role) session.user.role = token.role as string;
-      if (isSuperAdminEmail(session.user.email)) {
-        session.user.role = "superadmin";
+      if (token.role) session.user.role = normalizeRole(token.role as string);
+      if (isOwnerEmail(session.user.email)) {
+        session.user.role = "admin";
       }
       return session;
     },

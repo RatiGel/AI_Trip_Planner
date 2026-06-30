@@ -5,7 +5,7 @@ import { PlaceModel } from "@/lib/models/place";
 async function requireBusiness() {
   const session = await auth();
   const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session?.user || !["business", "admin", "superadmin"].includes(role ?? "")) {
+  if (!session?.user || !["business", "admin"].includes(role ?? "")) {
     return null;
   }
   return session;

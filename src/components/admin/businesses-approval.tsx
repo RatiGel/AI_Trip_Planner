@@ -28,7 +28,7 @@ export function BusinessesApproval({ requests: initial }: { requests: BusinessRe
 
   async function approve(id: string) {
     setLoading(true);
-    const res = await fetch(`/api/superadmin/businesses/${id}/approve`, { method: "PATCH" });
+    const res = await fetch(`/api/admin/businesses/${id}/approve`, { method: "PATCH" });
     setLoading(false);
     if (res.ok) {
       setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "approved" } : r));
@@ -40,7 +40,7 @@ export function BusinessesApproval({ requests: initial }: { requests: BusinessRe
 
   async function reject(id: string) {
     setLoading(true);
-    const res = await fetch(`/api/superadmin/businesses/${id}/reject`, {
+    const res = await fetch(`/api/admin/businesses/${id}/reject`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reason: rejectReason }),

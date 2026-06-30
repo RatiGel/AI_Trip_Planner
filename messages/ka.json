@@ -168,7 +168,20 @@
     "addNew": "დამატება",
     "confirmDelete": "დარწმუნებული ხართ წაშლაში?",
     "deleteConfirm": "წაშლა",
-    "noData": "მონაცემები არ მოიძებნა"
+    "noData": "მონაცემები არ მოიძებნა",
+    "businesses": "ბიზნესები",
+    "content": "კონტენტი",
+    "reports": "ანგარიშები",
+    "security": "უსაფრთხოება",
+    "signOut": "გასვლა",
+    "grpOverview": "მიმოხილვა",
+    "grpCatalog": "კატალოგი",
+    "grpModeration": "მოდერაცია",
+    "grpBusinesses": "ბიზნესები",
+    "grpMarketing": "მარკეტინგი",
+    "grpPlatform": "პლატფორმა",
+    "landing": "მთავარი გვერდი",
+    "deals": "შეთავაზებები"
   },
   "auth": {
     "signInTitle": "კეთილი იყოს თქვენი დაბრუნება",

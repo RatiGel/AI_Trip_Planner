@@ -6,7 +6,7 @@ export interface IUser {
   email: string;
   password: string;
   avatar?: string;
-  role: "tourist" | "business" | "admin" | "superadmin";
+  role: "tourist" | "business" | "admin";
   suspended: boolean;
   warnings: number;
   createdAt: Date;
@@ -20,7 +20,7 @@ const UserSchema = new Schema<IUser>(
     avatar: { type: String },
     role: {
       type: String,
-      enum: ["tourist", "business", "admin", "superadmin"],
+      enum: ["tourist", "business", "admin"],
       default: "tourist",
     },
     suspended: { type: Boolean, default: false },

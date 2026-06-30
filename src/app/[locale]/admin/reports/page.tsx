@@ -2,9 +2,9 @@ import { setRequestLocale } from "next-intl/server";
 import { connectDB } from "@/lib/db";
 import { UserModel } from "@/lib/models/user";
 import { PlaceModel } from "@/lib/models/place";
-import { PlatformCharts } from "@/components/superadmin/platform-charts";
+import { PlatformCharts } from "@/components/admin/platform-charts";
 
-export default async function SuperAdminReportsPage({
+export default async function AdminReportsPage({
   params,
 }: {
   params: Promise<{ locale: string }>;

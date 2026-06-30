@@ -3,9 +3,9 @@ import { connectDB } from "@/lib/db";
 import { UserModel } from "@/lib/models/user";
 import { AuditLogModel } from "@/lib/models/audit-log";
 
-async function requireSuperAdmin() {
+async function requireAdminSession() {
   const session = await auth();
-  if ((session?.user as { role?: string } | undefined)?.role !== "superadmin") return null;
+  if ((session?.user as { role?: string } | undefined)?.role !== "admin") return null;
   return session;
 }
 
@@ -23,7 +23,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminSession();
   if (!session) return Response.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
@@ -55,7 +55,7 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireSuperAdmin();
+  const session = await requireAdminSession();
   if (!session) return Response.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;

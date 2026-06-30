@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { AdminBreadcrumbs } from "@/components/admin/breadcrumbs";
 
-const ALLOWED_ROLES = ["admin", "superadmin"];
+const ALLOWED_ROLES = ["admin"];
 
 export default async function AdminLayout({
   children,

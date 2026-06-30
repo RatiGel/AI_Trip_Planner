@@ -6,7 +6,7 @@ export async function requireAdmin(): Promise<
 > {
   const session = await auth();
   const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!role || !["admin", "superadmin"].includes(role)) {
+  if (role !== "admin") {
     return {
       ok: false,
       response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),

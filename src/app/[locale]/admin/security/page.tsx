@@ -1,9 +1,9 @@
 import { setRequestLocale } from "next-intl/server";
 import { connectDB } from "@/lib/db";
 import { AuditLogModel } from "@/lib/models/audit-log";
-import { AuditLogTable } from "@/components/superadmin/audit-log-table";
+import { AuditLogTable } from "@/components/admin/audit-log-table";
 
-export default async function SuperAdminSecurityPage({
+export default async function AdminSecurityPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
