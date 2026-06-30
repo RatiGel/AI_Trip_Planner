@@ -31,7 +31,8 @@ export function dayDirectionsUrl(
   const destination = coord(stops[stops.length - 1]);
   const waypoints = stops.slice(1, -1).map(coord).join("|");
 
-  const travelmode = mode === "driving" ? "driving" : "walking";
+  const travelmode =
+    mode === "driving" ? "driving" : mode === "transit" ? "transit" : "walking";
 
   const params = new URLSearchParams({
     api: "1",

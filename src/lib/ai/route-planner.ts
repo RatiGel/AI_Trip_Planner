@@ -99,7 +99,7 @@ export async function generateItinerary(
   try {
     const response = await aiClient.messages.create({
       model: ITINERARY_MODEL,
-      max_tokens: 2048,
+      max_tokens: 1024,
       tools: [ITINERARY_TOOL],
       tool_choice: { type: "any" },
       system: SYSTEM_PROMPT,

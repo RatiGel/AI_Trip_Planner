@@ -86,7 +86,8 @@
     "selectAll": "Select all",
     "deselectAll": "Deselect all",
     "confirmSelection": "Confirm {count} places →",
-    "building": "Building your itinerary…"
+    "building": "Building your itinerary…",
+    "editSelection": "Edit selection"
   },
   "map": {
     "title": "Map",
@@ -310,7 +311,11 @@
     "dayN": "Day {n}",
     "totalOverview": "{days} days · {distance} · ~{time} total",
     "travelLeg": "travel",
-    "mayBeClosed": "May be closed"
+    "mayBeClosed": "May be closed",
+    "sunsetAt": "Sunset {time}",
+    "meal_lunch": "Lunch break",
+    "meal_dinner": "Dinner",
+    "goldenHour": "golden hour"
   },
   "payment": {
     "successTitle": "Payment successful",

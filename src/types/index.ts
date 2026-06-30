@@ -115,6 +115,12 @@ export interface Place {
 
 export type TripPace = "relaxed" | "balanced" | "packed";
 
+export type TransportMode = "walk" | "car" | "taxi" | "public";
+
+export type Budget = "low" | "mid" | "high";
+
+export type WalkingTolerance = "low" | "medium" | "high";
+
 /** Raw preferences submitted by the user. */
 export interface TravelPreferences {
   citySlug: string;
@@ -126,6 +132,31 @@ export interface TravelPreferences {
   pace?: TripPace;
   /** Wall-clock the traveller wants to start each day, e.g. "09:00". */
   dayStart?: string;
+  /** ISO date of the (first) trip day, "YYYY-MM-DD". Drives sunset timing. */
+  dateISO?: string;
+  /** Free-text starting point, e.g. "Rustaveli metro" or a hotel name. */
+  startLocation?: string;
+  /** How the traveller gets around — affects travel-time estimates. */
+  transport?: TransportMode;
+  /** Spending level — filters candidate places by price. */
+  budget?: Budget;
+  /** Tolerance for walking between stops. */
+  walkingTolerance?: WalkingTolerance;
+  /** Number of people travelling. */
+  travelers?: number;
+}
+
+/**
+ * Routing context captured at preview time and replayed at confirm time so the
+ * final itinerary can be optimised without re-asking the user. Carried in the
+ * SSE preview payload → ChatMessage → confirm request body.
+ */
+export interface TripContext {
+  dateISO?: string;
+  transport?: TransportMode;
+  /** Resolved start coordinates (geocoded once at preview time). */
+  startGeo?: Geo;
+  walkingTolerance?: WalkingTolerance;
 }
 
 /** A single stop as chosen by the AI — place_id + reason only. */
@@ -160,7 +191,25 @@ export interface RouteStop {
   travelFromPrevMeters: number;
   /** True when this stop is likely closed at the scheduled arrival. */
   closedWarning?: boolean;
+  /** True when scheduled near sunset (viewpoint timed for golden hour). */
+  sunsetTimed?: boolean;
 }
+
+/** A non-place block inserted into a day's schedule (e.g. a meal). */
+export interface RouteBreak {
+  /** Which meal this break represents. */
+  type: "lunch" | "dinner";
+  /** "HH:MM" start. */
+  arrival: string;
+  /** "HH:MM" end. */
+  departure: string;
+  durationMin: number;
+}
+
+/** Either a real place stop or a synthetic break, in schedule order. */
+export type RouteItem =
+  | ({ kind: "stop" } & RouteStop)
+  | ({ kind: "break" } & RouteBreak);
 
 export interface RouteStats {
   totalDistanceMeters: number;
@@ -175,7 +224,12 @@ export interface RouteDay {
   day: number;
   /** Hex colour assigned to this day's markers + polyline. */
   color: string;
+  /** Real place stops only — used for the map + Google Maps export. */
   stops: RouteStop[];
+  /** Full schedule incl. synthetic meal breaks, in time order. For display. */
+  items: RouteItem[];
+  /** Computed sunset "HH:MM" for the trip date, if a date was given. */
+  sunset?: string;
   stats: RouteStats;
 }
 
@@ -185,7 +239,7 @@ export interface RoutePlan {
   /** Aggregate across all days. */
   totals: RouteStats;
   /** Travel mode used for distance/time estimates. */
-  mode: "walking" | "driving" | "straight-line";
+  mode: "walking" | "driving" | "transit" | "straight-line";
 }
 
 export interface PlacePreviewCard {
@@ -209,6 +263,7 @@ export interface ChatMessage {
   previewPlaces?: PlacePreviewCard[];
   pendingItinerary?: AIItinerary;
   itineraryPlaces?: Place[];
+  tripContext?: TripContext;
   itinerary?: SavedItinerary;
 }
 

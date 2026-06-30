@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ExternalLink, Plus, Save, Send, Sparkles } from "lucide-react";
+import { Check, ExternalLink, Pencil, Plus, Save, Send, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,14 @@ import { RouteMap } from "@/components/planner/route-map";
 import { ItinerarySidebar } from "@/components/planner/itinerary-sidebar";
 import { PlaceSelectionCards } from "@/components/chat/place-selection-cards";
 import { dayMapUrl } from "@/lib/google-maps";
-import type { AIItinerary, ChatMessage, Place, PlacePreviewCard, RoutePlan } from "@/types";
+import type {
+  AIItinerary,
+  ChatMessage,
+  Place,
+  PlacePreviewCard,
+  RoutePlan,
+  TripContext,
+} from "@/types";
 
 type SseEvent =
   | { type: "token"; delta: string }
@@ -21,6 +28,7 @@ type SseEvent =
       previewPlaces: PlacePreviewCard[];
       pendingItinerary: AIItinerary;
       itineraryPlaces: Place[];
+      tripContext?: TripContext;
       mock: boolean;
     }
   | { type: "error"; message: string }
@@ -30,7 +38,7 @@ const STARTER: ChatMessage = {
   id: "m-0",
   role: "assistant",
   content:
-    "Hi! Tell me about your trip — how many days, what you love (museums, nightlife, coffee, hiking…). I'll build a personalized itinerary from real curated places.",
+    "Hi! I'll help plan your Tbilisi trip. Tell me how many days you have and when you're coming, and I'll ask a few questions to tailor it to you.",
 };
 
 export function ChatUI() {
@@ -46,6 +54,7 @@ export function ChatUI() {
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [lastSelectedIds, setLastSelectedIds] = useState<string[] | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -120,6 +129,7 @@ export function ChatUI() {
                 previewPlaces: payload.previewPlaces,
                 pendingItinerary: payload.pendingItinerary,
                 itineraryPlaces: payload.itineraryPlaces,
+                tripContext: payload.tripContext,
               },
             ]);
             setIsMock(payload.mock);
@@ -152,10 +162,12 @@ export function ChatUI() {
     selectedIds: string[],
     filteredItinerary: AIItinerary,
     selectedPlaces: Place[],
+    tripContext?: TripContext,
   ) {
     if (pending) return;
     setConfirming(true);
     setPending(true);
+    setLastSelectedIds(selectedIds);
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -165,6 +177,7 @@ export function ChatUI() {
           selectedPlaceIds: selectedIds,
           pendingItinerary: filteredItinerary,
           itineraryPlaces: selectedPlaces,
+          tripContext,
         }),
       });
       const data = await res.json();
@@ -205,6 +218,21 @@ export function ChatUI() {
     setConfirming(false);
     setStreamingMsg("");
     setSaved(false);
+    setLastSelectedIds(null);
+  }
+
+  /**
+   * Return from the built itinerary to the attraction-selection cards so the
+   * user can add/remove places and rebuild. The latest place-selection message
+   * is still in the history; clearing `plan` re-renders its cards (with the
+   * previously confirmed choices preserved). Drop the trailing route-plan
+   * messages so the view is clean.
+   */
+  function editSelection() {
+    setPlan(null);
+    setSelectedId(null);
+    setSaved(false);
+    setMessages((m) => m.filter((msg) => msg.type !== "route-plan"));
   }
 
   async function saveTrip() {
@@ -367,11 +395,13 @@ export function ChatUI() {
                 places={m.previewPlaces}
                 pendingItinerary={m.pendingItinerary}
                 pending={pending}
+                initialSelectedIds={lastSelectedIds ?? undefined}
                 onConfirm={(ids, filtered) =>
                   handleConfirm(
                     ids,
                     filtered,
                     (m.itineraryPlaces ?? []).filter((p) => ids.includes(p.id)),
+                    m.tripContext,
                   )
                 }
               />
@@ -429,6 +459,9 @@ export function ChatUI() {
               <span className="text-sm font-semibold">{t("title")}</span>
             </div>
             <div className="flex gap-1.5">
+              <Button variant="ghost" size="sm" onClick={editSelection} title={t("editSelection")}>
+                <Pencil className="size-3.5" />
+              </Button>
               <Button variant="ghost" size="sm" onClick={newChat} title={t("newChat")}>
                 <Plus className="size-3.5" />
               </Button>

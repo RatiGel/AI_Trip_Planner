@@ -86,7 +86,8 @@
     "selectAll": "Выбрать все",
     "deselectAll": "Снять все",
     "confirmSelection": "Подтвердить {count} мест →",
-    "building": "Строим маршрут…"
+    "building": "Строим маршрут…",
+    "editSelection": "Изменить выбор"
   },
   "map": {
     "title": "Карта",
@@ -310,7 +311,11 @@
     "dayN": "День {n}",
     "totalOverview": "{days} дн. · {distance} · ~{time} всего",
     "travelLeg": "в пути",
-    "mayBeClosed": "Может быть закрыто"
+    "mayBeClosed": "Может быть закрыто",
+    "sunsetAt": "Закат {time}",
+    "meal_lunch": "Обеденный перерыв",
+    "meal_dinner": "Ужин",
+    "goldenHour": "золотой час"
   },
   "payment": {
     "successTitle": "Платёж выполнен",

@@ -32,20 +32,27 @@ export function PlaceSelectionCards({
   places,
   pendingItinerary,
   pending,
+  initialSelectedIds,
   onConfirm,
 }: {
   places: PlacePreviewCard[];
   pendingItinerary: AIItinerary;
   pending: boolean;
+  /** Pre-select these IDs instead of all (used when re-editing a built plan). */
+  initialSelectedIds?: string[];
   onConfirm: (selectedIds: string[], filteredItinerary: AIItinerary) => void;
 }) {
   const tc = useTranslations("chat");
   const tp = useTranslations("planner");
   const locale = useLocale();
 
-  const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(places.map((p) => p.placeId)),
-  );
+  const [selected, setSelected] = useState<Set<string>>(() => {
+    if (initialSelectedIds?.length) {
+      const valid = new Set(places.map((p) => p.placeId));
+      return new Set(initialSelectedIds.filter((id) => valid.has(id)));
+    }
+    return new Set(places.map((p) => p.placeId));
+  });
   const [broken, setBroken] = useState<Set<string>>(() => new Set());
 
   const days = [...new Set(places.map((p) => p.day))].sort((a, b) => a - b);

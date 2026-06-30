@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Clock } from "lucide-react";
+import { AlertTriangle, Clock, Sunset, Utensils } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { RouteStatsBar, fmtDistance, fmtDuration } from "./route-stats";
 import type { RoutePlan } from "@/types";
@@ -41,12 +41,37 @@ export function ItinerarySidebar({
               <h3 className="text-sm font-semibold">
                 {t("dayN", { n: day.day })}
               </h3>
+              {day.sunset && (
+                <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium text-[#B5271D] dark:text-[#F5C842]">
+                  <Sunset className="size-3" />
+                  {t("sunsetAt", { time: day.sunset })}
+                </span>
+              )}
             </div>
 
             <RouteStatsBar stats={day.stats} />
 
             <ol className="space-y-2">
-              {day.stops.map((stop) => {
+              {day.items.map((item, i) => {
+                if (item.kind === "break") {
+                  return (
+                    <li key={`${day.day}-meal-${i}`}>
+                      <div className="flex items-center gap-2.5 rounded-xl border border-dashed border-[#E8A020]/40 bg-[#E8A020]/[0.04] p-2.5">
+                        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#E8A020]/15 text-[#B5271D] dark:text-[#F5C842]">
+                          <Utensils className="size-3" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium">{t(`meal_${item.type}`)}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {item.arrival}–{item.departure}
+                          </p>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                }
+
+                const stop = item;
                 const isSelected = selectedId === stop.place.id;
                 const name =
                   locale === "ka" ? stop.place.nameKa : stop.place.name;
@@ -82,6 +107,12 @@ export function ItinerarySidebar({
                             {stop.travelFromPrevMin > 0 && (
                               <span>
                                 +{fmtDuration(stop.travelFromPrevMin)} {t("travelLeg")}
+                              </span>
+                            )}
+                            {stop.sunsetTimed && (
+                              <span className="inline-flex items-center gap-1 text-[#B5271D] dark:text-[#F5C842]">
+                                <Sunset className="size-3" />
+                                {t("goldenHour")}
                               </span>
                             )}
                             {stop.closedWarning && (

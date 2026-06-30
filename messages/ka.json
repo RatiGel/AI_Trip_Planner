@@ -86,7 +86,8 @@
     "selectAll": "ყველის არჩევა",
     "deselectAll": "ყველის გაუქმება",
     "confirmSelection": "{count} ადგილის დადასტურება →",
-    "building": "იგეგმება მარშრუტი…"
+    "building": "იგეგმება მარშრუტი…",
+    "editSelection": "არჩევანის რედაქტირება"
   },
   "map": {
     "title": "რუკა",
@@ -200,17 +201,17 @@
   },
   "header": {
     "planMyTrip": "მოგზაურობის დაგეგმვა",
-    "discover": "აღმოჩენა",
+    "discover": "აღმოაჩინე",
     "discoverSightseeing": "ღირსშესანიშნაობები",
     "discoverMuseums": "მუზეუმები",
     "discoverNeighborhoods": "უბნები",
     "discoverParks": "პარკები და ბუნება",
-    "experiences": "გამოცდილებები",
+    "experiences": "თავგადასავალი",
     "experiencesTours": "ტურები და გიდები",
     "experiencesDayTrips": "ექსკურსიები",
     "experiencesWellness": "ჯანმრთელობა და სპა",
     "experiencesOutdoor": "გარე აქტივობები",
-    "foodDrinks": "საჭმელი და სასმელი",
+    "foodDrinks": "კვება",
     "foodRestaurants": "რესტორნები",
     "foodCafes": "კაფეები",
     "foodWine": "ღვინის ბარები",
@@ -310,7 +311,11 @@
     "dayN": "დღე {n}",
     "totalOverview": "{days} დღე · {distance} · ~{time} სულ",
     "travelLeg": "გზაში",
-    "mayBeClosed": "შესაძლოა დაკეტილია"
+    "mayBeClosed": "შესაძლოა დაკეტილია",
+    "sunsetAt": "მზის ჩასვლა {time}",
+    "meal_lunch": "სადილის შესვენება",
+    "meal_dinner": "ვახშამი",
+    "goldenHour": "ოქროს საათი"
   },
   "payment": {
     "successTitle": "გადახდა წარმატებულია",

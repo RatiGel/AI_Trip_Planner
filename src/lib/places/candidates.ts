@@ -29,6 +29,21 @@ export async function getCandidatePlaces(
     });
   }
 
+  // Budget caps the price level of food/shop/wine venues. Sights and museums
+  // are left in regardless of price (they're rarely the budget driver, and a
+  // missing priceLevel shouldn't exclude an attraction).
+  if (prefs.budget && prefs.budget !== "high") {
+    const maxLevel = prefs.budget === "low" ? 2 : 3;
+    const PRICED: CategorySlug[] = ["restaurant", "cafe", "wine", "shop", "club"];
+    (filter.$and as Record<string, unknown>[]).push({
+      $or: [
+        { categories: { $nin: PRICED } },
+        { priceLevel: { $lte: maxLevel } },
+        { priceLevel: { $exists: false } },
+      ],
+    });
+  }
+
   const docs = await PlaceModel.find(filter).lean();
   const places = docs.map((d) => toPlace(d as Record<string, unknown>));
 
