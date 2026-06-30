@@ -181,7 +181,13 @@
     "grpMarketing": "Marketing",
     "grpPlatform": "Platform",
     "landing": "Landing",
-    "deals": "Deals"
+    "deals": "Deals",
+    "listingFeeTitle": "Listing fee",
+    "listingFeeHint": "Default fee a business pays to publish each listing.",
+    "listingFeeLabel": "Fee (GEL)",
+    "feeSaved": "Listing fee saved",
+    "feeSaveFailed": "Failed to save fee",
+    "invalidFee": "Enter a valid fee"
   },
   "auth": {
     "signInTitle": "Welcome back",

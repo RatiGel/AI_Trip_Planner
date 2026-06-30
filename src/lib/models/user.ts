@@ -9,6 +9,10 @@ export interface IUser {
   role: "tourist" | "business" | "admin";
   suspended: boolean;
   warnings: number;
+  /** Per-owner listing fee override in tetri; undefined = use global default. */
+  feeOverrideTetri?: number;
+  /** When true, this owner's listings publish free (no listing fee). */
+  feeExempt: boolean;
   createdAt: Date;
 }
 
@@ -25,6 +29,8 @@ const UserSchema = new Schema<IUser>(
     },
     suspended: { type: Boolean, default: false },
     warnings: { type: Number, default: 0 },
+    feeOverrideTetri: { type: Number },
+    feeExempt: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

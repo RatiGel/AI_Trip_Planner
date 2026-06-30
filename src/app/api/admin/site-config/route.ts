@@ -15,9 +15,24 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   await connectDB();
+
+  // Only set keys that were actually provided so a partial save (e.g. just the
+  // listing fee from the pricing page) doesn't wipe header/footer/pages.
+  const set: Record<string, unknown> = {};
+  if (body.header !== undefined) set.header = body.header;
+  if (body.footer !== undefined) set.footer = body.footer;
+  if (body.pages !== undefined) set.pages = body.pages;
+  if (body.listingFeeTetri !== undefined) {
+    const tetri = Math.round(Number(body.listingFeeTetri));
+    if (!Number.isFinite(tetri) || tetri < 0) {
+      return NextResponse.json({ error: "Invalid listing fee" }, { status: 400 });
+    }
+    set.listingFeeTetri = tetri;
+  }
+
   const config = await SiteConfigModel.findOneAndUpdate(
     { key: "main" },
-    { $set: { header: body.header, footer: body.footer, pages: body.pages } },
+    { $set: set },
     { upsert: true, new: true }
   );
   return NextResponse.json(config);

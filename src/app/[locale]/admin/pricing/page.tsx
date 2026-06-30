@@ -2,6 +2,8 @@ import { setRequestLocale } from "next-intl/server";
 import { connectDB } from "@/lib/db";
 import { PricingPlanModel } from "@/lib/models/pricing-plan";
 import { PricingManager, type Plan } from "@/components/admin/pricing-form";
+import { ListingFeeCard } from "@/components/admin/listing-fee-card";
+import { getGlobalListingFeeTetri } from "@/lib/listing-fee";
 
 export default async function PricingPage({
   params,
@@ -12,7 +14,10 @@ export default async function PricingPage({
   setRequestLocale(locale);
 
   await connectDB();
-  const raw = await PricingPlanModel.find().sort({ order: 1 }).lean();
+  const [raw, listingFeeTetri] = await Promise.all([
+    PricingPlanModel.find().sort({ order: 1 }).lean(),
+    getGlobalListingFeeTetri(),
+  ]);
 
   const plans: Plan[] = raw.map((p) => ({
     _id: String(p._id),
@@ -38,6 +43,7 @@ export default async function PricingPage({
         </p>
       </div>
       <PricingManager initial={plans} />
+      <ListingFeeCard initialTetri={listingFeeTetri} />
     </div>
   );
 }

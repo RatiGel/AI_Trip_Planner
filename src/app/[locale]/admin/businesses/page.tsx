@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import { BusinessRequestModel } from "@/lib/models/business-request";
 import { UserModel } from "@/lib/models/user";
 import { BusinessesApproval } from "@/components/admin/businesses-approval";
+import { getGlobalListingFeeTetri } from "@/lib/listing-fee";
 
 export default async function AdminBusinessesPage({
   params,
@@ -17,6 +18,8 @@ export default async function AdminBusinessesPage({
   const rawRequests = await BusinessRequestModel.find()
     .sort({ createdAt: -1 })
     .lean();
+
+  const globalFeeTetri = await getGlobalListingFeeTetri();
 
   const userIds = rawRequests.map((r: any) => r.userId);
   const users = await UserModel.find({ _id: { $in: userIds } })
@@ -48,7 +51,7 @@ export default async function AdminBusinessesPage({
           {pendingCount} pending · {requests.length} total
         </p>
       </div>
-      <BusinessesApproval requests={requests} />
+      <BusinessesApproval requests={requests} globalFeeTetri={globalFeeTetri} />
     </div>
   );
 }

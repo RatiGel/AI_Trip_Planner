@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check, X } from "lucide-react";
 
@@ -20,15 +21,40 @@ export interface BusinessRequest {
   createdAt: string;
 }
 
-export function BusinessesApproval({ requests: initial }: { requests: BusinessRequest[] }) {
+type FeeMode = "global" | "custom" | "exempt";
+
+export function BusinessesApproval({
+  requests: initial,
+  globalFeeTetri,
+}: {
+  requests: BusinessRequest[];
+  globalFeeTetri: number;
+}) {
   const [requests, setRequests] = useState(initial);
   const [rejectId, setRejectId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [loading, setLoading] = useState(false);
+  // Per-request fee decision, keyed by request id.
+  const [feeMode, setFeeMode] = useState<Record<string, FeeMode>>({});
+  const [customGel, setCustomGel] = useState<Record<string, string>>({});
 
   async function approve(id: string) {
+    const mode = feeMode[id] ?? "global";
+    const body: { feeMode: FeeMode; feeOverrideTetri?: number } = { feeMode: mode };
+    if (mode === "custom") {
+      const tetri = Math.round(Number(customGel[id]) * 100);
+      if (!Number.isFinite(tetri) || tetri < 0) {
+        toast.error("Enter a valid custom fee");
+        return;
+      }
+      body.feeOverrideTetri = tetri;
+    }
     setLoading(true);
-    const res = await fetch(`/api/admin/businesses/${id}/approve`, { method: "PATCH" });
+    const res = await fetch(`/api/admin/businesses/${id}/approve`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
     setLoading(false);
     if (res.ok) {
       setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "approved" } : r));
@@ -103,13 +129,53 @@ export function BusinessesApproval({ requests: initial }: { requests: BusinessRe
                   </div>
                 </div>
               ) : (
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={() => approve(r.id)} disabled={loading}>
-                    <Check className="size-4" /> Approve
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => setRejectId(r.id)} disabled={loading}>
-                    <X className="size-4" /> Reject
-                  </Button>
+                <div className="space-y-3">
+                  <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-2">
+                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                      Listing fee for this owner
+                    </p>
+                    <div className="flex flex-wrap items-center gap-4 text-sm">
+                      {(["global", "custom", "exempt"] as FeeMode[]).map((mode) => (
+                        <label key={mode} className="flex cursor-pointer items-center gap-1.5">
+                          <input
+                            type="radio"
+                            name={`fee-${r.id}`}
+                            checked={(feeMode[r.id] ?? "global") === mode}
+                            onChange={() => setFeeMode((m) => ({ ...m, [r.id]: mode }))}
+                          />
+                          {mode === "global"
+                            ? `Global (₾${(globalFeeTetri / 100).toFixed(2)})`
+                            : mode === "custom"
+                            ? "Custom"
+                            : "Exempt (free)"}
+                        </label>
+                      ))}
+                      {(feeMode[r.id] ?? "global") === "custom" && (
+                        <span className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground">₾</span>
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={customGel[r.id] ?? ""}
+                            onChange={(e) =>
+                              setCustomGel((c) => ({ ...c, [r.id]: e.target.value }))
+                            }
+                            placeholder="0.00"
+                            className="h-8 w-24"
+                          />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => approve(r.id)} disabled={loading}>
+                      <Check className="size-4" /> Approve
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setRejectId(r.id)} disabled={loading}>
+                      <X className="size-4" /> Reject
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

@@ -181,7 +181,13 @@
     "grpMarketing": "Маркетинг",
     "grpPlatform": "Платформа",
     "landing": "Главная",
-    "deals": "Акции"
+    "deals": "Акции",
+    "listingFeeTitle": "Плата за листинг",
+    "listingFeeHint": "Плата по умолчанию, которую бизнес платит за публикацию каждого листинга.",
+    "listingFeeLabel": "Плата (₾)",
+    "feeSaved": "Плата сохранена",
+    "feeSaveFailed": "Не удалось сохранить плату",
+    "invalidFee": "Введите корректную плату"
   },
   "auth": {
     "signInTitle": "С возвращением",

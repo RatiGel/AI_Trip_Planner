@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { requireAdmin } from "@/lib/require-admin";
 import { PlaceModel } from "@/lib/models/place";
+import { resolveListingFee } from "@/lib/listing-fee";
 
 /**
  * Approve or reject a pending listing.
  * Body: { action: "approve" | "reject", reason?: string }
  *
- * approve → status="approved" (owner must then pay the listing fee to go live).
+ * approve → status="approved" (owner must then pay the listing fee to go live),
+ *           OR status="active" + paid=true when the owner owes no fee (exempt
+ *           or a zero global fee), so a free listing publishes immediately.
  * reject  → status="rejected" with a reason; the owner can edit & resubmit.
  */
 export async function PATCH(
@@ -30,7 +33,14 @@ export async function PATCH(
   if (!place) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   if (action === "approve") {
-    place.status = "approved";
+    const fee = await resolveListingFee(place.ownerId);
+    if (fee.exempt || fee.amountTetri <= 0) {
+      // No fee due — publish straight away.
+      place.status = "active";
+      place.paid = true;
+    } else {
+      place.status = "approved";
+    }
     place.rejectionReason = "";
   } else {
     place.status = "rejected";

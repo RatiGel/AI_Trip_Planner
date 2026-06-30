@@ -26,8 +26,13 @@ export interface ISiteConfig {
       componentOrder: string[];
     }
   >;
+  /** Global default listing publication fee, in tetri (minor GEL units). */
+  listingFeeTetri: number;
   updatedAt: Date;
 }
+
+/** Fallback when no SiteConfig row exists yet (was a hardcoded 50 GEL). */
+export const DEFAULT_LISTING_FEE_TETRI = 5000;
 
 const NavLinkSchema = new Schema(
   { label: String, href: String },
@@ -71,6 +76,7 @@ const SiteConfigSchema = new Schema<ISiteConfig>(
       socialLinks: { type: [SocialLinkSchema], default: [] },
     },
     pages: { type: Map, of: PageConfigSchema, default: {} },
+    listingFeeTetri: { type: Number, default: DEFAULT_LISTING_FEE_TETRI },
   },
   { timestamps: true }
 );

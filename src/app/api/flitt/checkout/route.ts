@@ -6,8 +6,8 @@ import { PaymentModel, type PaymentPurpose } from "@/lib/models/payment";
 import { PlaceModel } from "@/lib/models/place";
 import { ReservationModel } from "@/lib/models/reservation";
 import { TicketModel } from "@/lib/models/ticket";
+import { resolveListingFee } from "@/lib/listing-fee";
 
-const LISTING_FEE_TETRI = 5000; // 50 GEL
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 const BUSINESS_ROLES = ["business", "admin"];
@@ -42,7 +42,11 @@ async function resolve(
       // listing still in draft/pending/rejected so the review gate can't be skipped.
       if (place.status !== "approved")
         return { error: "Listing must be approved before payment", status: 409 };
-      return { amount: LISTING_FEE_TETRI, desc: `Listing fee: ${place.name}`, businessOwnerId: place.ownerId };
+      const fee = await resolveListingFee(place.ownerId);
+      // Exempt owners owe nothing — there is no checkout to start.
+      if (fee.exempt || fee.amountTetri <= 0)
+        return { error: "No listing fee due for this owner", status: 409 };
+      return { amount: fee.amountTetri, desc: `Listing fee: ${place.name}`, businessOwnerId: place.ownerId };
     }
     case "reservation": {
       const r = await ReservationModel.findById(body.targetId).lean<{
