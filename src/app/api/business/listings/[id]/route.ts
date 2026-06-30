@@ -28,8 +28,8 @@ export async function PATCH(
   if (!place) return Response.json({ error: "Not found" }, { status: 404 });
 
   const isOwner = place.ownerId === userId;
-  const isAdminOrSuper = ["admin"].includes(role ?? "");
-  if (!isOwner && !isAdminOrSuper) {
+  const isAdmin = ["admin"].includes(role ?? "");
+  if (!isOwner && !isAdmin) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -46,15 +46,15 @@ export async function PATCH(
 
   // Status transitions an OWNER may trigger — never approve/activate themselves.
   // submit: draft/rejected → pending. unpublish-to-draft: pending → draft.
-  // Admins/superadmins may set any status via the moderation panel instead.
-  if (isOwner && !isAdminOrSuper && typeof body.status === "string") {
+  // Admins may set any status via the moderation panel instead.
+  if (isOwner && !isAdmin && typeof body.status === "string") {
     if (body.status === "pending" && ["draft", "rejected"].includes(place.status)) {
       update.status = "pending";
       update.rejectionReason = "";
     } else if (body.status === "draft" && place.status === "pending") {
       update.status = "draft";
     }
-  } else if (isAdminOrSuper && typeof body.status === "string") {
+  } else if (isAdmin && typeof body.status === "string") {
     update.status = body.status;
   }
 
@@ -79,8 +79,8 @@ export async function DELETE(
   if (!place) return Response.json({ error: "Not found" }, { status: 404 });
 
   const isOwner = place.ownerId === userId;
-  const isAdminOrSuper = ["admin"].includes(role ?? "");
-  if (!isOwner && !isAdminOrSuper) {
+  const isAdmin = ["admin"].includes(role ?? "");
+  if (!isOwner && !isAdmin) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 

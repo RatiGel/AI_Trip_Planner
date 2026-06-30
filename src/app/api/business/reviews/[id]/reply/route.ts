@@ -28,8 +28,8 @@ export async function PATCH(
 
   const place = await PlaceModel.findById(review.placeId);
   const isOwner = (place as any)?.ownerId === userId;
-  const isAdminOrSuper = ["admin"].includes(role ?? "");
-  if (!isOwner && !isAdminOrSuper) {
+  const isAdmin = ["admin"].includes(role ?? "");
+  if (!isOwner && !isAdmin) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 
