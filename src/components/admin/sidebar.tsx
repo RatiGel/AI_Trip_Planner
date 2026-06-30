@@ -14,6 +14,7 @@ import {
   Flag,
   Image,
   LayoutDashboard,
+  LayoutTemplate,
   LogOut,
   MapPin,
   Palette,
@@ -73,7 +74,10 @@ const GROUPS: NavGroup[] = [
   {
     key: "marketing",
     label: "grpMarketing",
-    items: [{ href: "/admin/pricing", label: "pricing", Icon: Tag }],
+    items: [
+      { href: "/admin/landing", label: "landing", Icon: LayoutTemplate },
+      { href: "/admin/pricing", label: "pricing", Icon: Tag },
+    ],
   },
   {
     key: "platform",

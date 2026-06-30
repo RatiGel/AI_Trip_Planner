@@ -21,7 +21,14 @@ export async function POST(req: NextRequest) {
   const set: Record<string, unknown> = {};
   if (body.header !== undefined) set.header = body.header;
   if (body.footer !== undefined) set.footer = body.footer;
-  if (body.pages !== undefined) set.pages = body.pages;
+  if (body.pages !== undefined && body.pages !== null) {
+    // Set each page slug under a dot-path so a partial save (e.g. only "home"
+    // from the landing editor) merges into the Map instead of replacing every
+    // page. CMS, which sends all pages, still updates each one.
+    for (const [slug, value] of Object.entries(body.pages as Record<string, unknown>)) {
+      set[`pages.${slug}`] = value;
+    }
+  }
   if (body.listingFeeTetri !== undefined) {
     const tetri = Math.round(Number(body.listingFeeTetri));
     if (!Number.isFinite(tetri) || tetri < 0) {

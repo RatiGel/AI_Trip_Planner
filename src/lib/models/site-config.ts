@@ -24,6 +24,8 @@ export interface ISiteConfig {
       showCategories: boolean;
       showFeaturedPlaces: boolean;
       componentOrder: string[];
+      /** Place _ids to feature on the home page; empty = fall back to mock. */
+      featuredPlaceIds: string[];
     }
   >;
   /** Global default listing publication fee, in tetri (minor GEL units). */
@@ -33,6 +35,19 @@ export interface ISiteConfig {
 
 /** Fallback when no SiteConfig row exists yet (was a hardcoded 50 GEL). */
 export const DEFAULT_LISTING_FEE_TETRI = 5000;
+
+/** All home-page section keys, in their default render order. */
+export const HOME_SECTION_KEYS = [
+  "hero",
+  "stats",
+  "categories",
+  "featured",
+  "neighborhoods",
+  "aiCta",
+  "listBusiness",
+] as const;
+
+export type HomeSectionKey = (typeof HOME_SECTION_KEYS)[number];
 
 const NavLinkSchema = new Schema(
   { label: String, href: String },
@@ -58,6 +73,7 @@ const PageConfigSchema = new Schema(
     showCategories: { type: Boolean, default: true },
     showFeaturedPlaces: { type: Boolean, default: true },
     componentOrder: [String],
+    featuredPlaceIds: { type: [String], default: [] },
   },
   { _id: false }
 );

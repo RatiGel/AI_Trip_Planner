@@ -187,7 +187,21 @@
     "listingFeeLabel": "Fee (GEL)",
     "feeSaved": "Listing fee saved",
     "feeSaveFailed": "Failed to save fee",
-    "invalidFee": "Enter a valid fee"
+    "invalidFee": "Enter a valid fee",
+    "landingSections": "Sections",
+    "landingSectionsHint": "Reorder with the arrows; hide a section with the eye toggle.",
+    "landingHidden": "Hidden sections",
+    "landingHero": "Hero override",
+    "landingHeroHint": "Leave blank to use the default text and image.",
+    "landingHeroTitle": "Headline",
+    "landingHeroSubtitle": "Subtitle",
+    "landingHeroImage": "Background image URL",
+    "landingFeatured": "Featured places",
+    "landingFeaturedHint": "Pick which active places appear in the featured grid.",
+    "landingFeaturedFallback": "None selected — the homepage falls back to default places.",
+    "landingNoPlaces": "No active places yet.",
+    "landingSaved": "Landing page saved",
+    "landingSaveFailed": "Failed to save landing page"
   },
   "auth": {
     "signInTitle": "Welcome back",

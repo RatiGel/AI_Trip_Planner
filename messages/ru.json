@@ -187,7 +187,21 @@
     "listingFeeLabel": "Плата (₾)",
     "feeSaved": "Плата сохранена",
     "feeSaveFailed": "Не удалось сохранить плату",
-    "invalidFee": "Введите корректную плату"
+    "invalidFee": "Введите корректную плату",
+    "landingSections": "Секции",
+    "landingSectionsHint": "Меняйте порядок стрелками; скрывайте секцию кнопкой глаза.",
+    "landingHidden": "Скрытые секции",
+    "landingHero": "Переопределение героя",
+    "landingHeroHint": "Оставьте пустым для текста и изображения по умолчанию.",
+    "landingHeroTitle": "Заголовок",
+    "landingHeroSubtitle": "Подзаголовок",
+    "landingHeroImage": "URL фонового изображения",
+    "landingFeatured": "Избранные места",
+    "landingFeaturedHint": "Выберите, какие активные места показывать.",
+    "landingFeaturedFallback": "Ничего не выбрано — будут показаны места по умолчанию.",
+    "landingNoPlaces": "Пока нет активных мест.",
+    "landingSaved": "Главная страница сохранена",
+    "landingSaveFailed": "Не удалось сохранить"
   },
   "auth": {
     "signInTitle": "С возвращением",

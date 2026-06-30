@@ -4,8 +4,21 @@ import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 
-export function HeroSection() {
+const DEFAULT_HERO_IMAGE =
+  "https://images.unsplash.com/photo-1565008576549-57569a49371d?w=2000&q=85";
+
+export function HeroSection({
+  title,
+  subtitle,
+  imageUrl,
+}: {
+  /** Optional admin overrides; empty/undefined falls back to i18n + default image. */
+  title?: string;
+  subtitle?: string;
+  imageUrl?: string;
+} = {}) {
   const t = useTranslations("hero");
+  const image = imageUrl?.trim() || DEFAULT_HERO_IMAGE;
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "100svh", minHeight: "700px" }}>
@@ -16,8 +29,7 @@ export function HeroSection() {
         animate={{ scale: 1 }}
         transition={{ duration: 1.8, ease: [0.25, 0.46, 0.45, 0.94] }}
         style={{
-          backgroundImage:
-            "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.75) 100%), url('https://images.unsplash.com/photo-1565008576549-57569a49371d?w=2000&q=85')",
+          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.75) 100%), url('${image}')`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -40,14 +52,14 @@ export function HeroSection() {
           {/* Headline */}
           <h1 className="font-display mb-6 leading-[0.88] tracking-[-3px] text-white"
             style={{ fontSize: "clamp(60px, 11vw, 120px)" }}>
-            {t("headline")}<br />
+            {title?.trim() || t("headline")}<br />
             <em className="text-yellow-300">Tbilisi</em>
           </h1>
 
           {/* Sub */}
           <p className="mx-auto mb-10 max-w-lg font-light leading-relaxed text-white/80"
             style={{ fontSize: "clamp(16px, 2vw, 20px)" }}>
-            {t("sub")}
+            {subtitle?.trim() || t("sub")}
           </p>
 
           {/* CTAs */}

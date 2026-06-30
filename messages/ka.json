@@ -187,7 +187,21 @@
     "listingFeeLabel": "საფასური (₾)",
     "feeSaved": "საფასური შენახულია",
     "feeSaveFailed": "საფასურის შენახვა ვერ მოხერხდა",
-    "invalidFee": "შეიყვანეთ სწორი საფასური"
+    "invalidFee": "შეიყვანეთ სწორი საფასური",
+    "landingSections": "სექციები",
+    "landingSectionsHint": "დაალაგეთ ისრებით; დამალეთ სექცია თვალის ღილაკით.",
+    "landingHidden": "დამალული სექციები",
+    "landingHero": "ჰერო სექციის ჩანაცვლება",
+    "landingHeroHint": "დატოვეთ ცარიელი ნაგულისხმევი ტექსტისა და სურათისთვის.",
+    "landingHeroTitle": "სათაური",
+    "landingHeroSubtitle": "ქვესათაური",
+    "landingHeroImage": "ფონის სურათის URL",
+    "landingFeatured": "რჩეული ადგილები",
+    "landingFeaturedHint": "აირჩიეთ რომელი აქტიური ადგილები გამოჩნდეს.",
+    "landingFeaturedFallback": "არცერთი არ არის არჩეული — გამოჩნდება ნაგულისხმევი ადგილები.",
+    "landingNoPlaces": "აქტიური ადგილები ჯერ არ არის.",
+    "landingSaved": "მთავარი გვერდი შენახულია",
+    "landingSaveFailed": "შენახვა ვერ მოხერხდა"
   },
   "auth": {
     "signInTitle": "კეთილი იყოს თქვენი დაბრუნება",
