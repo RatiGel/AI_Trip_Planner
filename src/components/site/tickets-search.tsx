@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowRight, Bus, Clock, Search, Train, Wallet } from "lucide-react";
-import { toast } from "sonner";
+import { ArrowRight, Bus, Clock, ExternalLink, Search, Train, Wallet } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { payNow } from "@/lib/pay";
 import type { TicketOption } from "@/types";
 
 const CITIES = ["Tbilisi", "Batumi", "Kazbegi", "Kutaisi"];
+
+const OPERATOR_URLS: Record<"rail" | "bus", string> = {
+  rail: "https://www.matarebeli.ge/",
+  bus: "https://georgianbus.com/en/",
+};
 
 function fmtDuration(min?: number) {
   if (!min) return "";
@@ -57,10 +59,11 @@ function TicketCard({ option, onBuy, index }: { option: TicketOption; onBuy: () 
         </p>
         <button
           onClick={onBuy}
-          className="rounded-full px-5 py-2.5 text-[13px] font-semibold text-white transition-all hover:-translate-y-0.5"
+          className="flex items-center gap-1.5 rounded-full px-5 py-2.5 text-[13px] font-semibold text-white transition-all hover:-translate-y-0.5"
           style={{ background: "#B5271D", boxShadow: "0 4px 16px rgba(181,39,29,0.35)" }}
         >
-          {t("buy")}
+          {isRail ? t("bookRail") : t("bookBus")}
+          <ExternalLink className="size-3.5" />
         </button>
       </div>
     </motion.div>
@@ -102,8 +105,6 @@ type TabType = "bus" | "rail" | "transit-pass";
 
 export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
   const t = useTranslations("tickets");
-  const params = useParams();
-  const locale = typeof params?.locale === "string" ? params.locale : "en";
   const [tab, setTab] = useState<TabType>("bus");
   const [from, setFrom] = useState("Tbilisi");
   const [to, setTo] = useState("Batumi");
@@ -132,17 +133,11 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
     }, 600);
   }
 
-  async function buy(option: TicketOption) {
-    const isDbId = /^[a-f0-9]{24}$/i.test(option.id);
-    if (!isDbId) {
-      toast.error("This ticket is not yet available for online purchase.");
-      return;
+  function book(option: TicketOption) {
+    if (option.type === "rail" || option.type === "bus") {
+      window.open(OPERATOR_URLS[option.type], "_blank", "noopener,noreferrer");
     }
-    try {
-      await payNow({ purpose: "ticket", targetId: option.id, locale });
-    } catch (e) {
-      toast.error((e as Error).message);
-    }
+    // transit-pass: out of scope — no action this phase.
   }
 
   const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
@@ -252,7 +247,7 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
             exit={{ opacity: 0 }}
           >
             {transitPasses.map((p, i) => (
-              <TransitCard key={p.id} option={p} onBuy={() => buy(p)} index={i} />
+              <TransitCard key={p.id} option={p} onBuy={() => book(p)} index={i} />
             ))}
           </motion.div>
         ) : !searched ? (
@@ -291,7 +286,7 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
               {results.length} {t("routesFound")} · {activeFrom} → {activeTo}
             </p>
             {results.map((o, i) => (
-              <TicketCard key={o.id} option={o} onBuy={() => buy(o)} index={i} />
+              <TicketCard key={o.id} option={o} onBuy={() => book(o)} index={i} />
             ))}
           </motion.div>
         )}
