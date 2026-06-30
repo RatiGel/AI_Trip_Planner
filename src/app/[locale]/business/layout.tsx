@@ -1,6 +1,7 @@
 import {
   BarChart3,
   CreditCard,
+  Gift,
   Image,
   LayoutDashboard,
   List,
@@ -14,6 +15,7 @@ const NAV = [
   { href: "/business", label: "Overview", Icon: LayoutDashboard },
   { href: "/business/listings", label: "Listings", Icon: List },
   { href: "/business/reviews", label: "Reviews", Icon: MessageSquare },
+  { href: "/business/deals", label: "Deals", Icon: Gift },
   { href: "/business/media", label: "Media", Icon: Image },
   { href: "/business/analytics", label: "Analytics", Icon: BarChart3 },
   { href: "/business/billing", label: "Billing", Icon: CreditCard },

@@ -201,7 +201,19 @@
     "landingFeaturedFallback": "Ничего не выбрано — будут показаны места по умолчанию.",
     "landingNoPlaces": "Пока нет активных мест.",
     "landingSaved": "Главная страница сохранена",
-    "landingSaveFailed": "Не удалось сохранить"
+    "landingSaveFailed": "Не удалось сохранить",
+    "dealsAll": "Все акции",
+    "dealCreated": "Акция создана",
+    "dealUpdated": "Акция обновлена",
+    "dealSaveFailed": "Не удалось сохранить",
+    "dealStatusPending": "На рассмотрении",
+    "dealApprove": "Одобрить",
+    "dealReject": "Отклонить",
+    "dealApproved": "Акция одобрена",
+    "dealRejected": "Акция отклонена",
+    "dealRejectionReason": "Причина отклонения",
+    "dealActive": "Активна (видна на сайте)",
+    "dealFromBusiness": "Отправлено бизнесом"
   },
   "auth": {
     "signInTitle": "С возвращением",

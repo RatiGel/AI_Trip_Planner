@@ -12,6 +12,7 @@ import {
   Database,
   FileText,
   Flag,
+  Gift,
   Image,
   LayoutDashboard,
   LayoutTemplate,
@@ -76,6 +77,7 @@ const GROUPS: NavGroup[] = [
     label: "grpMarketing",
     items: [
       { href: "/admin/landing", label: "landing", Icon: LayoutTemplate },
+      { href: "/admin/deals", label: "deals", Icon: Gift },
       { href: "/admin/pricing", label: "pricing", Icon: Tag },
     ],
   },

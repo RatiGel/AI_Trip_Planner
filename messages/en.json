@@ -201,7 +201,19 @@
     "landingFeaturedFallback": "None selected — the homepage falls back to default places.",
     "landingNoPlaces": "No active places yet.",
     "landingSaved": "Landing page saved",
-    "landingSaveFailed": "Failed to save landing page"
+    "landingSaveFailed": "Failed to save landing page",
+    "dealsAll": "All deals",
+    "dealCreated": "Deal created",
+    "dealUpdated": "Deal updated",
+    "dealSaveFailed": "Failed to save deal",
+    "dealStatusPending": "Pending review",
+    "dealApprove": "Approve",
+    "dealReject": "Reject",
+    "dealApproved": "Deal approved",
+    "dealRejected": "Deal rejected",
+    "dealRejectionReason": "Rejection reason",
+    "dealActive": "Active (visible on site)",
+    "dealFromBusiness": "Submitted by a business"
   },
   "auth": {
     "signInTitle": "Welcome back",

@@ -1,6 +1,34 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
+import { connectDB } from "@/lib/db";
+import { DealModel } from "@/lib/models/deal";
 import { mockDeals } from "@/lib/mock/deals";
 import { DealsGrid } from "@/components/site/deals-grid";
+import type { DealOption } from "@/types";
+
+async function getActiveDeals(): Promise<DealOption[]> {
+  await connectDB();
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const raw = await DealModel.find({ status: "approved", active: true })
+    .sort({ createdAt: -1 })
+    .lean();
+  const deals: DealOption[] = raw
+    // Drop expired deals (validUntil in the past); keep ones with no expiry.
+    .filter((d) => !d.validUntil || d.validUntil >= todayIso)
+    .map((d) => ({
+      id: String(d._id),
+      title: d.title,
+      description: d.description,
+      priceOriginal: d.priceOriginal,
+      priceGEL: d.priceGEL,
+      discountPct: d.discountPct,
+      category: d.category,
+      validUntil: d.validUntil,
+      image: d.image,
+      badge: d.badge,
+    }));
+  // Fall back to mock data until the catalogue is populated.
+  return deals.length > 0 ? deals : mockDeals;
+}
 
 export default async function DealsPage({
   params,
@@ -11,6 +39,7 @@ export default async function DealsPage({
   setRequestLocale(locale);
 
   const t = await getTranslations({ locale, namespace: "deals" });
+  const deals = await getActiveDeals();
 
   return (
     <div style={{ background: "var(--site-bg-base)", minHeight: "100vh" }}>
@@ -52,7 +81,7 @@ export default async function DealsPage({
 
       {/* Deals grid */}
       <div className="mx-auto max-w-7xl px-6 py-12 md:px-12">
-        <DealsGrid deals={mockDeals} />
+        <DealsGrid deals={deals} />
       </div>
     </div>
   );

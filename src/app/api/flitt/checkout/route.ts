@@ -7,6 +7,7 @@ import { PlaceModel } from "@/lib/models/place";
 import { ReservationModel } from "@/lib/models/reservation";
 import { TicketModel } from "@/lib/models/ticket";
 import { resolveListingFee } from "@/lib/listing-fee";
+import { DealModel } from "@/lib/models/deal";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -80,8 +81,23 @@ async function resolve(
       return { amount: Math.round(svc.priceGEL * 100), desc: `Service: ${svc.name}`, businessOwnerId: place.ownerId };
     }
     case "deal": {
-      // Deals are mock-data only — no DB record to resolve against, and guests
-      // may buy without an account. Trust client-supplied amount/desc here only.
+      // Real DB deals (24-hex id): resolve the price server-side, never trust
+      // the client. Guests may still buy without an account.
+      if (/^[a-fA-F0-9]{24}$/.test(body.targetId)) {
+        const deal = await DealModel.findById(body.targetId).lean<{
+          title: string;
+          priceGEL: number;
+          status: string;
+          active: boolean;
+        }>();
+        if (!deal) return { error: "Deal not found", status: 404 };
+        if (deal.status !== "approved" || !deal.active)
+          return { error: "Deal not available", status: 409 };
+        if (!deal.priceGEL || deal.priceGEL <= 0)
+          return { error: "Deal has no valid price", status: 400 };
+        return { amount: Math.round(deal.priceGEL * 100), desc: `Deal: ${deal.title}` };
+      }
+      // Legacy mock deals have no DB record — trust client amount/desc.
       const gel = Number(body.amount);
       if (!Number.isFinite(gel) || gel <= 0) return { error: "Deal has no valid price", status: 400 };
       return { amount: Math.round(gel * 100), desc: body.desc?.slice(0, 120) || `Deal ${body.targetId}` };

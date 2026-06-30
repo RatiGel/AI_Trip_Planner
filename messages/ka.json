@@ -201,7 +201,19 @@
     "landingFeaturedFallback": "არცერთი არ არის არჩეული — გამოჩნდება ნაგულისხმევი ადგილები.",
     "landingNoPlaces": "აქტიური ადგილები ჯერ არ არის.",
     "landingSaved": "მთავარი გვერდი შენახულია",
-    "landingSaveFailed": "შენახვა ვერ მოხერხდა"
+    "landingSaveFailed": "შენახვა ვერ მოხერხდა",
+    "dealsAll": "ყველა შეთავაზება",
+    "dealCreated": "შეთავაზება შექმნილია",
+    "dealUpdated": "შეთავაზება განახლდა",
+    "dealSaveFailed": "შენახვა ვერ მოხერხდა",
+    "dealStatusPending": "განსახილველი",
+    "dealApprove": "დამტკიცება",
+    "dealReject": "უარყოფა",
+    "dealApproved": "შეთავაზება დამტკიცდა",
+    "dealRejected": "შეთავაზება უარყოფილია",
+    "dealRejectionReason": "უარყოფის მიზეზი",
+    "dealActive": "აქტიური (ჩანს საიტზე)",
+    "dealFromBusiness": "გამოგზავნა ბიზნესმა"
   },
   "auth": {
     "signInTitle": "კეთილი იყოს თქვენი დაბრუნება",
