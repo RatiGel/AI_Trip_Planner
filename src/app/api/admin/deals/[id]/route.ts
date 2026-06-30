@@ -3,7 +3,21 @@ import { connectDB } from "@/lib/db";
 import { DealModel } from "@/lib/models/deal";
 import { AuditLogModel } from "@/lib/models/audit-log";
 import { requireAdmin } from "@/lib/require-admin";
-import { auth } from "@/lib/auth";
+
+// Editable via the deals manager. `status` is controlled by the approve/reject
+// PATCH only; `ownerId` is never reassigned through the editor.
+const EDITABLE_FIELDS = [
+  "title",
+  "description",
+  "priceOriginal",
+  "priceGEL",
+  "discountPct",
+  "category",
+  "validUntil",
+  "image",
+  "badge",
+  "active",
+] as const;
 
 export async function PUT(
   req: NextRequest,
@@ -13,9 +27,14 @@ export async function PUT(
   if (!gate.ok) return gate.response;
 
   const { id } = await params;
-  const body = await req.json();
+  const body = (await req.json()) as Record<string, unknown>;
+  const update: Record<string, unknown> = {};
+  for (const key of EDITABLE_FIELDS) {
+    if (body[key] !== undefined) update[key] = body[key];
+  }
+
   await connectDB();
-  const deal = await DealModel.findByIdAndUpdate(id, body, { new: true });
+  const deal = await DealModel.findByIdAndUpdate(id, update, { new: true });
   if (!deal) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(deal);
 }
@@ -63,11 +82,9 @@ export async function PATCH(
   }
   await deal.save();
 
-  const session = await auth();
-  const admin = session!.user as { id?: string; email?: string };
   await AuditLogModel.create({
-    adminId: admin.id,
-    adminEmail: admin.email ?? "",
+    adminId: gate.user.id,
+    adminEmail: gate.user.email ?? "",
     action: body.action === "approve" ? "APPROVE_DEAL" : "REJECT_DEAL",
     targetType: "deal",
     targetId: id,
