@@ -183,7 +183,24 @@
     "noAccount": "No account?",
     "hasAccount": "Already have an account?",
     "createOne": "Create one",
-    "signInLink": "Sign in"
+    "signInLink": "Sign in",
+    "forgotLink": "Forgot password?",
+    "forgot": {
+      "title": "Reset your password",
+      "subtitle": "Enter your email and we'll send you a reset link.",
+      "button": "Send reset link",
+      "sent": "If that email is registered, a reset link is on its way.",
+      "backToLogin": "Back to sign in"
+    },
+    "reset": {
+      "title": "Set a new password",
+      "subtitle": "Choose a new password for your account.",
+      "password": "New password",
+      "button": "Update password",
+      "success": "Password updated. You can now sign in.",
+      "invalid": "This reset link is invalid or has expired.",
+      "missingToken": "No reset token found. Request a new link."
+    }
   },
   "common": {
     "search": "Search",
