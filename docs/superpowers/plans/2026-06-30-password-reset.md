@@ -4,9 +4,9 @@
 
 **Goal:** Let a user who forgot their password set a new one via a time-limited, single-use link emailed to them.
 
-**Architecture:** Two API routes (`forgot-password`, `reset-password`) plus two `[locale]` pages. Raw token (`crypto.randomBytes(32)`) is emailed; its `sha256` hash + a 1-hour expiry are stored on the User doc. Reset looks the user up by token hash + unexpired, sets a new bcrypt password, clears the reset fields. Email sent via Resend.
+**Architecture:** Two API routes (`forgot-password`, `reset-password`) plus two `[locale]` pages. Raw token (`crypto.randomBytes(32)`) is emailed; its `sha256` hash + a 1-hour expiry are stored on the User doc. Reset looks the user up by token hash + unexpired, sets a new bcrypt password, clears the reset fields. Email sent via Nodemailer over Gmail SMTP.
 
-**Tech Stack:** Next.js 16 (App Router, async `params`), next-intl 4, Mongoose, NextAuth v5, bcryptjs, Node `crypto`, Resend.
+**Tech Stack:** Next.js 16 (App Router, async `params`), next-intl 4, Mongoose, NextAuth v5, bcryptjs, Node `crypto`, Nodemailer (Gmail SMTP).
 
 ## Global Constraints
 
@@ -26,7 +26,7 @@
 | File | Responsibility |
 |------|----------------|
 | `src/lib/models/user.ts` (modify) | Add `resetTokenHash`, `resetTokenExpiry` fields |
-| `src/lib/email.ts` (create) | Resend client + `sendPasswordResetEmail` |
+| `src/lib/email.ts` (create) | Nodemailer Gmail transport + `sendPasswordResetEmail` |
 | `src/app/api/auth/forgot-password/route.ts` (create) | Generate token, store hash, send mail, generic 200 |
 | `src/app/api/auth/reset-password/route.ts` (create) | Validate token, set new password, clear fields |
 | `src/app/[locale]/forgot-password/page.tsx` (create) | Server page → renders `ForgotPasswordForm` |
