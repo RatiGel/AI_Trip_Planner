@@ -35,11 +35,11 @@
 | `src/components/site/reset-password-form.tsx` (create) | Client new-password form |
 | `src/components/site/auth-card.tsx` (modify) | Add "Forgot password?" link in signin mode |
 | `messages/{en,ka,ru}.json` (modify) | `auth.forgot.*`, `auth.reset.*` keys |
-| `.env.local` (modify) | `RESEND_API_KEY`, `RESEND_FROM` |
+| `.env.local` (modify) | `GMAIL_USER`, `GMAIL_APP_PASSWORD` |
 
 ---
 
-### Task 1: Add reset fields to User model + install Resend
+### Task 1: Add reset fields to User model + install Nodemailer
 
 **Files:**
 - Modify: `src/lib/models/user.ts`
@@ -49,19 +49,20 @@
 **Interfaces:**
 - Produces: `IUser.resetTokenHash?: string`, `IUser.resetTokenExpiry?: Date`; same two fields on the Mongoose schema. Used by Tasks 3 and 4.
 
-- [ ] **Step 1: Install Resend**
+- [ ] **Step 1: Install Nodemailer**
 
 ```bash
-npm install resend
+npm install nodemailer && npm install -D @types/nodemailer
 ```
 
 - [ ] **Step 2: Add env vars to `.env.local`**
 
-Append these lines (fill real values; `RESEND_FROM` must be a verified-domain sender):
+Append these lines. `GMAIL_USER` is your full gmail address (also the FROM);
+`GMAIL_APP_PASSWORD` is a 16-char Google App Password (requires 2FA enabled):
 
 ```
-RESEND_API_KEY=re_replace_me
-RESEND_FROM=noreply@yourdomain.com
+GMAIL_USER=your.address@gmail.com
+GMAIL_APP_PASSWORD=replace_with_16_char_app_password
 ```
 
 - [ ] **Step 3: Add fields to `IUser` interface**
@@ -104,15 +105,17 @@ git commit -m "feat(auth): add reset token fields to User, install resend"
 - Create: `src/lib/email.ts`
 
 **Interfaces:**
-- Consumes: `RESEND_API_KEY`, `RESEND_FROM` from env.
+- Consumes: `GMAIL_USER`, `GMAIL_APP_PASSWORD` from env.
 - Produces: `sendPasswordResetEmail(to: string, link: string, locale: string): Promise<void>`. Used by Task 3.
+
+Uses Nodemailer + Gmail SMTP. The transporter is created lazily (module-load
+must not throw when env is unset). `GMAIL_USER` is both the SMTP auth user and
+the FROM address.
 
 - [ ] **Step 1: Write `src/lib/email.ts`**
 
 ```ts
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import nodemailer from "nodemailer";
 
 const SUBJECTS: Record<string, string> = {
   en: "Reset your password",
@@ -135,10 +138,23 @@ const BODY: Record<string, (link: string) => string> = {
      <p>Если вы не запрашивали это, проигнорируйте письмо.</p>`,
 };
 
+function getTransport() {
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (!user || !pass) {
+    throw new Error("GMAIL_USER / GMAIL_APP_PASSWORD not configured");
+  }
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: { user, pass },
+  });
+}
+
 export async function sendPasswordResetEmail(to: string, link: string, locale: string) {
   const lang = SUBJECTS[locale] ? locale : "en";
-  await resend.emails.send({
-    from: process.env.RESEND_FROM!,
+  const transport = getTransport();
+  await transport.sendMail({
+    from: process.env.GMAIL_USER,
     to,
     subject: SUBJECTS[lang],
     html: BODY[lang](link),
@@ -155,7 +171,7 @@ Expected: no errors.
 
 ```bash
 git add src/lib/email.ts
-git commit -m "feat(auth): add password reset email helper (resend)"
+git commit -m "feat(auth): add password reset email helper (nodemailer + gmail)"
 ```
 
 ---
