@@ -190,7 +190,8 @@
       "subtitle": "Enter your email and we'll send you a reset link.",
       "button": "Send reset link",
       "sent": "If that email is registered, a reset link is on its way.",
-      "backToLogin": "Back to sign in"
+      "backToLogin": "Back to sign in",
+      "link": "Forgot password?"
     },
     "reset": {
       "title": "Set a new password",
