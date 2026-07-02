@@ -36,8 +36,12 @@ function getTransport() {
 export async function sendPasswordResetEmail(to: string, link: string, locale: string) {
   const lang = SUBJECTS[locale] ? locale : "en";
   const transport = getTransport();
+  // MAIL_FROM = display "from" (e.g. "Visit Tbilisi <visit@tbilisi.ge>").
+  // Gmail rewrites this to GMAIL_USER unless it's a verified "Send mail as" alias.
+  const from = process.env.MAIL_FROM || process.env.GMAIL_USER;
   await transport.sendMail({
-    from: process.env.GMAIL_USER,
+    from,
+    replyTo: from,
     to,
     subject: SUBJECTS[lang],
     html: BODY[lang](link),
