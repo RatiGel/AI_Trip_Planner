@@ -4,19 +4,24 @@ export interface IItinerary {
   _id: mongoose.Types.ObjectId;
   title: string;
   userId?: string;
-  days: { date: string; items: { placeId: string; time: string; notes?: string }[] }[];
+  days: {
+    _id?: mongoose.Types.ObjectId;
+    date: string;
+    items: { _id?: mongoose.Types.ObjectId; placeId: string; time: string; notes?: string }[];
+  }[];
   createdAt: Date;
 }
 
-const ItineraryItemSchema = new Schema(
-  { placeId: String, time: String, notes: String },
-  { _id: false }
-);
+const ItineraryItemSchema = new Schema({
+  placeId: String,
+  time: String,
+  notes: String,
+});
 
-const ItineraryDaySchema = new Schema(
-  { date: String, items: [ItineraryItemSchema] },
-  { _id: false }
-);
+const ItineraryDaySchema = new Schema({
+  date: String,
+  items: [ItineraryItemSchema],
+});
 
 const ItinerarySchema = new Schema<IItinerary>(
   {
