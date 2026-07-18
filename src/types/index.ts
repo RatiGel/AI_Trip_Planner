@@ -108,6 +108,13 @@ export interface Place {
   extReviewCount?: number;
 }
 
+/** A candidate place surfaced to the itinerary pipeline, tagged by where it
+ *  came from. "listed" candidates (our DB) always rank ahead of "external"
+ *  ones (future map/API sources) — see lib/places/candidates.ts. */
+export interface PlaceCandidate extends Place {
+  source: "listed" | "external";
+}
+
 // ── AI Route Planner ────────────────────────────────────────────────
 // The AI is responsible ONLY for itinerary planning. It never returns
 // coordinates, addresses, or routes — only place IDs drawn from the
