@@ -74,43 +74,47 @@ export function TripsList({
           </header>
 
           <Accordion className="mt-4">
-            {trip.days.map((day) => (
-              <AccordionItem key={day.date} value={day.date}>
-                <AccordionTrigger>
-                  <span className="flex items-center gap-2">
-                    <CalendarDays className="size-4 text-primary" />
-                    {day.date}
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <ul className="space-y-2">
-                    {day.items.map((item) => {
-                      const place = placesMap[item.placeId];
-                      if (!place) return null;
-                      const name = locale === "ka" ? place.nameKa : place.name;
-                      return (
-                        <li key={`${item.placeId}-${item.time}`} className="flex items-start gap-3">
-                          <span className="w-12 shrink-0 text-sm tabular-nums text-muted-foreground">
-                            {item.time}
-                          </span>
-                          <div className="flex-1">
-                            <Link
-                              href={`/places/${place.slug}`}
-                              className="text-sm font-medium hover:underline"
-                            >
-                              {name}
-                            </Link>
-                            {item.notes && (
-                              <p className="text-xs text-muted-foreground">{item.notes}</p>
-                            )}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
+            {trip.days.map((day, dayIndex) => {
+              const dayKey = day._id ?? `idx-${dayIndex}`;
+              return (
+                <AccordionItem key={dayKey} value={dayKey}>
+                  <AccordionTrigger>
+                    <span className="flex items-center gap-2">
+                      <CalendarDays className="size-4 text-primary" />
+                      {day.date}
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="space-y-2">
+                      {day.items.map((item, itemIndex) => {
+                        const place = placesMap[item.placeId];
+                        if (!place) return null;
+                        const name = locale === "ka" ? place.nameKa : place.name;
+                        const itemKey = item._id ?? `idx-${itemIndex}`;
+                        return (
+                          <li key={itemKey} className="flex items-start gap-3">
+                            <span className="w-12 shrink-0 text-sm tabular-nums text-muted-foreground">
+                              {item.time}
+                            </span>
+                            <div className="flex-1">
+                              <Link
+                                href={`/places/${place.slug}`}
+                                className="text-sm font-medium hover:underline"
+                              >
+                                {name}
+                              </Link>
+                              {item.notes && (
+                                <p className="text-xs text-muted-foreground">{item.notes}</p>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
           </Accordion>
         </article>
       ))}

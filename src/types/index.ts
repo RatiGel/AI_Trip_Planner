@@ -213,12 +213,18 @@ export interface ChatMessage {
 }
 
 export interface ItineraryItem {
+  /** Stable Mongoose subdocument id. Optional — absent on docs saved before
+   *  subdocument _ids were enabled; callers should fall back to array index. */
+  _id?: string;
   placeId: string;
   time: string;
   notes?: string;
 }
 
 export interface ItineraryDay {
+  /** Stable Mongoose subdocument id. Optional — absent on docs saved before
+   *  subdocument _ids were enabled; callers should fall back to array index. */
+  _id?: string;
   date: string;
   items: ItineraryItem[];
 }

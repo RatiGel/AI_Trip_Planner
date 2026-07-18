@@ -33,8 +33,10 @@ export default async function TripsPage({
       title: d.title,
       createdAt: d.createdAt.toISOString().slice(0, 10),
       days: d.days.map((day: IItinerary["days"][number]) => ({
+        _id: day._id ? String(day._id) : undefined,
         date: day.date,
         items: day.items.map((item: IItinerary["days"][number]["items"][number]) => ({
+          _id: item._id ? String(item._id) : undefined,
           placeId: item.placeId,
           time: item.time,
           notes: item.notes,
