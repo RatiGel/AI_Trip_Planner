@@ -100,7 +100,12 @@
     "title": "My Trips",
     "empty": "You haven't saved any trips yet.",
     "startPlanning": "Start planning",
-    "signInToSee": "Sign in to see your trips"
+    "signInToSee": "Sign in to see your trips",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete \"{title}\"? This cannot be undone.",
+    "deleted": "Trip deleted",
+    "deleteFailed": "Failed to delete trip"
   },
   "tickets": {
     "title": "Tickets",
