@@ -47,6 +47,10 @@ interface PlaceResult {
   category: string;
 }
 
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export function TripForm({ tripId, defaultValues }: TripFormProps) {
   const router = useRouter();
   const [title, setTitle] = useState(defaultValues.title);
@@ -67,8 +71,8 @@ export function TripForm({ tripId, defaultValues }: TripFormProps) {
   }
 
   function addDay() {
-    const today = defaultValues.days[0]?.date ?? "";
-    setDays((prev) => [...prev, { date: today, items: [] }]);
+    const date = defaultValues.days[0]?.date ?? todayISO();
+    setDays((prev) => [...prev, { date, items: [] }]);
   }
 
   function removeDay(dayIndex: number) {
