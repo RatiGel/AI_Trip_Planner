@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { aiClient, hasLLM, ITINERARY_MODEL } from "@/lib/ai/client";
 import { toAICandidate } from "@/lib/places/candidates";
-import type { AIItinerary, Place, TravelPreferences } from "@/types";
+import type { AIItinerary, PlaceCandidate, TravelPreferences } from "@/types";
 
 const SYSTEM_PROMPT = `You are an expert local trip planner for tourism in Georgia (the country in the Caucasus).
 
@@ -51,7 +51,7 @@ const ITINERARY_TOOL: Anthropic.Messages.Tool = {
   },
 };
 
-function buildUserMessage(prefs: TravelPreferences, candidates: Place[]): string {
+function buildUserMessage(prefs: TravelPreferences, candidates: PlaceCandidate[]): string {
   const list = candidates.map((p) => JSON.stringify(toAICandidate(p))).join("\n");
   return [
     `Plan a ${prefs.days}-day trip.`,
@@ -72,7 +72,7 @@ function applyFilter(itin: AIItinerary, validIds: Set<string>): AIItinerary {
   };
 }
 
-function buildFallbackItinerary(prefs: TravelPreferences, candidates: Place[]): AIItinerary {
+function buildFallbackItinerary(prefs: TravelPreferences, candidates: PlaceCandidate[]): AIItinerary {
   const stopsPerDay = prefs.pace === "relaxed" ? 3 : prefs.pace === "packed" ? 5 : 4;
   const days = [];
   let idx = 0;
@@ -88,7 +88,7 @@ function buildFallbackItinerary(prefs: TravelPreferences, candidates: Place[]): 
 
 export async function generateItinerary(
   prefs: TravelPreferences,
-  candidates: Place[],
+  candidates: PlaceCandidate[],
 ): Promise<AIItinerary> {
   if (!hasLLM) {
     return buildFallbackItinerary(prefs, candidates);
