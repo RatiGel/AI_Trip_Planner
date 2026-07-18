@@ -71,8 +71,8 @@ NextAuth v5 (`next-auth@beta`). Config in `src/lib/auth.ts`. Credentials provide
 - `src/components/ui/` — shadcn primitives, never modify directly
 - `src/components/site/` — shared app components (header, footer, cards, forms)
 - `src/components/admin/` — admin-only components
-- `src/components/chat/` — chat UI (`ChatUI`) currently uses mock replies with `setTimeout`; no real API calls yet
-- `src/components/map/` — map placeholder (Mapbox in Phase 5)
+- `src/components/chat/` — chat UI (`ChatUI`) streams real SSE responses from `POST /api/chat`; falls back to a heuristic mock itinerary only when no `ANTHROPIC_API_KEY`/`OPENROUTER_API_KEY` is configured (see `hasLLM` in `src/lib/ai/client.ts`)
+- `src/components/map/` — `MapExplorer` is the live map (Mapbox GL if `NEXT_PUBLIC_MAPBOX_TOKEN` is set, else Leaflet/OSM fallback), plotting real DB places from `/map`; `map-placeholder.tsx` is unused dead code
 - `src/components/site/home/` — homepage section components (HeroSection, StatsBar, CategoriesStrip, FeaturedPlaces, NeighborhoodsSection, AIPlannerCTA)
 
 **Admin section** — `src/app/[locale]/admin/` has its own layout with sidebar nav. Pages: dashboard, cities, places (+ places/new), orders, reservations. Not auth-gated yet.
