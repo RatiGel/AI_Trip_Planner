@@ -1,7 +1,12 @@
-import { setRequestLocale } from "next-intl/server";
+import type { Metadata } from "next";
+import { setRequestLocale, getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { MapPin, Clock, Star } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { buildMetadata } from "@/lib/seo";
+import { JsonLd } from "@/components/site/json-ld";
+import { FaqBlock } from "@/components/site/faq-block";
+import { RelatedGuides } from "@/components/site/related-guides";
 
 const PLACES = [
   {
@@ -92,6 +97,21 @@ const PLACES = [
 
 const FILTERS = ["All", "Restaurants", "Cafes", "Wine Bars", "Nightlife"];
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "foodPage.meta" });
+  return buildMetadata({
+    locale,
+    path: "/food",
+    title: t("title"),
+    description: t("description"),
+  });
+}
+
 export default async function FoodPage({
   params,
 }: {
@@ -100,8 +120,32 @@ export default async function FoodPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
+  const restaurantSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: PLACES.map((place, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      item: {
+        "@type": place.type === "cafe" ? "CafeOrCoffeeShop" : "Restaurant",
+        name: place.name,
+        servesCuisine: place.cuisine,
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: place.rating,
+        },
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: place.area,
+          addressCountry: "GE",
+        },
+      },
+    })),
+  };
+
   return (
     <div style={{ background: "#0A0A0A", minHeight: "100vh" }}>
+      <JsonLd data={restaurantSchema} />
       {/* Hero */}
       <div className="relative flex items-end overflow-hidden" style={{ height: 380, paddingTop: 72 }}>
         <div
@@ -181,6 +225,9 @@ export default async function FoodPage({
           ))}
         </div>
       </div>
+
+      <FaqBlock namespace="foodPage.faq" />
+      <RelatedGuides namespace="foodPage.related" />
     </div>
   );
 }
