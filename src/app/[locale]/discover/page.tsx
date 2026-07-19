@@ -1,9 +1,14 @@
-import { setRequestLocale } from "next-intl/server";
+import type { Metadata } from "next";
+import { setRequestLocale, getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { Star, Filter } from "lucide-react";
 import { mockPlaces } from "@/lib/mock/places";
 import { mockCategories } from "@/lib/mock/categories";
+import { buildMetadata } from "@/lib/seo";
+import { JsonLd } from "@/components/site/json-ld";
+import { FaqBlock } from "@/components/site/faq-block";
+import { RelatedGuides } from "@/components/site/related-guides";
 
 const CATEGORY_LABELS: Record<string, string> = {
   sight: "Sightseeing",
@@ -16,6 +21,21 @@ const CATEGORY_LABELS: Record<string, string> = {
   market: "Markets",
 };
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "discoverPage.meta" });
+  return buildMetadata({
+    locale,
+    path: "/discover",
+    title: t("title"),
+    description: t("description"),
+  });
+}
+
 export default async function DiscoverPage({
   params,
 }: {
@@ -24,8 +44,16 @@ export default async function DiscoverPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
+  const collectionSchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Tbilisi Attractions",
+    url: "https://exploretbilisi.online/en/discover",
+  };
+
   return (
     <div style={{ background: "#0A0A0A", minHeight: "100vh" }}>
+      <JsonLd data={collectionSchema} />
       {/* Page hero */}
       <div className="relative flex items-end overflow-hidden" style={{ height: 400, paddingTop: 72 }}>
         <div
@@ -112,6 +140,9 @@ export default async function DiscoverPage({
           ))}
         </div>
       </div>
+
+      <FaqBlock namespace="discoverPage.faq" />
+      <RelatedGuides namespace="discoverPage.related" />
     </div>
   );
 }

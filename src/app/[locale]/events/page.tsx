@@ -1,7 +1,12 @@
-import { setRequestLocale } from "next-intl/server";
+import type { Metadata } from "next";
+import { setRequestLocale, getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { Calendar, MapPin, ArrowRight } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { buildMetadata } from "@/lib/seo";
+import { JsonLd } from "@/components/site/json-ld";
+import { FaqBlock } from "@/components/site/faq-block";
+import { RelatedGuides } from "@/components/site/related-guides";
 
 const EVENTS = [
   {
@@ -68,6 +73,21 @@ const EVENTS = [
 
 const FILTERS = ["All Events", "Music", "Food & Wine", "Arts & Culture", "Festivals", "Film"];
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "eventsPage.meta" });
+  return buildMetadata({
+    locale,
+    path: "/events",
+    title: t("title"),
+    description: t("description"),
+  });
+}
+
 export default async function EventsPage({
   params,
 }: {
@@ -79,8 +99,27 @@ export default async function EventsPage({
   const featured = EVENTS.filter((e) => e.featured);
   const regular = EVENTS.filter((e) => !e.featured);
 
+  const eventsSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: EVENTS.map((evt, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      item: {
+        "@type": "Event",
+        name: evt.title,
+        description: evt.desc,
+        location: {
+          "@type": "Place",
+          name: evt.location,
+        },
+      },
+    })),
+  };
+
   return (
     <div style={{ background: "#0A0A0A", minHeight: "100vh" }}>
+      <JsonLd data={eventsSchema} />
       {/* Hero */}
       <div className="relative flex items-end overflow-hidden" style={{ height: 380, paddingTop: 72 }}>
         <div
@@ -173,6 +212,9 @@ export default async function EventsPage({
           ))}
         </div>
       </div>
+
+      <FaqBlock namespace="eventsPage.faq" />
+      <RelatedGuides namespace="eventsPage.related" />
     </div>
   );
 }

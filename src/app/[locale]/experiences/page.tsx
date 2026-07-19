@@ -1,7 +1,12 @@
-import { setRequestLocale } from "next-intl/server";
+import type { Metadata } from "next";
+import { setRequestLocale, getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { Clock, Users, Star } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { buildMetadata } from "@/lib/seo";
+import { JsonLd } from "@/components/site/json-ld";
+import { FaqBlock } from "@/components/site/faq-block";
+import { RelatedGuides } from "@/components/site/related-guides";
 
 const EXPERIENCES = [
   {
@@ -86,6 +91,21 @@ const EXPERIENCES = [
 
 const FILTERS = ["All", "Tours", "Food & Wine", "Wellness", "Day Trips", "Nightlife"];
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "experiencesPage.meta" });
+  return buildMetadata({
+    locale,
+    path: "/experiences",
+    title: t("title"),
+    description: t("description"),
+  });
+}
+
 export default async function ExperiencesPage({
   params,
 }: {
@@ -94,8 +114,28 @@ export default async function ExperiencesPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
+  const experiencesSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: EXPERIENCES.map((exp, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      item: {
+        "@type": "TouristAttraction",
+        name: exp.title,
+        description: exp.desc,
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: exp.rating,
+          reviewCount: exp.reviews,
+        },
+      },
+    })),
+  };
+
   return (
     <div style={{ background: "#0A0A0A", minHeight: "100vh" }}>
+      <JsonLd data={experiencesSchema} />
       {/* Hero */}
       <div className="relative flex items-end overflow-hidden" style={{ height: 380, paddingTop: 72 }}>
         <div
@@ -179,6 +219,9 @@ export default async function ExperiencesPage({
           ))}
         </div>
       </div>
+
+      <FaqBlock namespace="experiencesPage.faq" />
+      <RelatedGuides namespace="experiencesPage.related" />
     </div>
   );
 }
