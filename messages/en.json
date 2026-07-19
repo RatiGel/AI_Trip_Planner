@@ -1,7 +1,7 @@
 {
   "site": {
-    "name": "TbilisiTrip",
-    "tagline": "Your AI-powered guide to Georgia"
+    "name": "ExploreTbilisi",
+    "tagline": "Tbilisi Travel Guide & AI-Powered Trip Planner"
   },
   "nav": {
     "home": "Home",
@@ -669,6 +669,220 @@
           "desc": "Festivals, concerts, and what's happening while you're here.",
           "href": "/events",
           "cta": "See events"
+        }
+      ]
+    }
+  },
+  "homePage": {
+    "meta": {
+      "title": "Tbilisi Travel Guide & AI Trip Planner",
+      "description": "Plan your perfect Tbilisi itinerary with our free AI trip planner. Discover top attractions, restaurants, day trips, and things to do in Tbilisi, Georgia."
+    }
+  },
+  "foodPage": {
+    "meta": {
+      "title": "Best Restaurants & Cafés in Tbilisi — Georgian Food & Wine Guide",
+      "description": "Where to eat in Tbilisi: the best Georgian restaurants, cafés, wine bars, and nightlife spots, hand-picked for real travelers."
+    },
+    "faq": {
+      "heading": "Food & Drink FAQs",
+      "sub": "What travelers ask before eating out in Tbilisi.",
+      "items": [
+        {
+          "q": "What is the best area to eat in Tbilisi?",
+          "a": "Vera and Old Town have the highest concentration of well-reviewed restaurants and cafés, while Marjanishvili and Fabrika are best for wine bars and nightlife."
+        },
+        {
+          "q": "What food is Tbilisi famous for?",
+          "a": "Khinkali (soup dumplings), khachapuri (cheese bread), and natural Georgian wine are the essentials — most restaurants on this list serve all three."
+        },
+        {
+          "q": "Is Tbilisi nightlife good?",
+          "a": "Yes — Tbilisi has a well-known techno and rooftop bar scene, especially around Marjanishvili and Fabrika, alongside more relaxed wine bars in Old Town."
+        },
+        {
+          "q": "Do restaurants in Tbilisi accept cards?",
+          "a": "Cards are accepted almost everywhere in the city center, though smaller wine bars and food halls may prefer cash."
+        }
+      ]
+    },
+    "related": {
+      "heading": "Plan the rest of your trip",
+      "sub": "More guides to round out your Tbilisi itinerary.",
+      "items": [
+        {
+          "icon": "compass",
+          "title": "Things to Do",
+          "desc": "City tours, wine tastings, and unique experiences in Tbilisi.",
+          "href": "/experiences",
+          "cta": "See experiences"
+        },
+        {
+          "icon": "map-pin",
+          "title": "Main Attractions",
+          "desc": "The must-see sights and neighborhoods in Tbilisi.",
+          "href": "/discover",
+          "cta": "Explore attractions"
+        },
+        {
+          "icon": "info",
+          "title": "Travel Guide",
+          "desc": "Transport, safety, and first-time visitor essentials.",
+          "href": "/travel-info",
+          "cta": "Read the guide"
+        }
+      ]
+    }
+  },
+  "discoverPage": {
+    "meta": {
+      "title": "Tbilisi Attractions — Must-See Places & Main Attractions",
+      "description": "The best Tbilisi attractions: Old Town sights, museums, parks, and neighborhoods. A curated guide to the must-see places in Tbilisi."
+    },
+    "faq": {
+      "heading": "Attractions FAQs",
+      "sub": "Common questions about sightseeing in Tbilisi.",
+      "items": [
+        {
+          "q": "What are the must-see attractions in Tbilisi?",
+          "a": "Narikala Fortress, the Old Town sulphur baths, Rike Park, and the Bridge of Peace are the most-visited sights, alongside the National Museum and Dry Bridge Market."
+        },
+        {
+          "q": "How many days do you need to see Tbilisi's main attractions?",
+          "a": "2-3 days covers the core Old Town sights comfortably; add a day for museums and neighborhood walks if you want a deeper visit."
+        },
+        {
+          "q": "Is Tbilisi walkable?",
+          "a": "Yes, the Old Town and central neighborhoods are very walkable, though the cable car and metro help cover longer distances quickly."
+        }
+      ]
+    },
+    "related": {
+      "heading": "Keep exploring",
+      "sub": "More Tbilisi guides to plan your visit.",
+      "items": [
+        {
+          "icon": "utensils",
+          "title": "Food & Wine",
+          "desc": "Best restaurants, cafés, and wine bars in Tbilisi.",
+          "href": "/food",
+          "cta": "See where to eat"
+        },
+        {
+          "icon": "compass",
+          "title": "Things to Do",
+          "desc": "City tours, boats, and unique Tbilisi activities.",
+          "href": "/experiences",
+          "cta": "See experiences"
+        },
+        {
+          "icon": "sparkles",
+          "title": "AI Trip Planner",
+          "desc": "Get a personalized day-by-day Tbilisi itinerary.",
+          "href": "/planner",
+          "cta": "Plan my trip"
+        }
+      ]
+    }
+  },
+  "experiencesPage": {
+    "meta": {
+      "title": "Things to Do in Tbilisi — City Tours, Boats & Activities",
+      "description": "Book the best Tbilisi experiences: walking tours, wine tastings, sulphur baths, river boats, and more curated activities."
+    },
+    "faq": {
+      "heading": "Activities FAQs",
+      "sub": "What travelers ask about Tbilisi tours and activities.",
+      "items": [
+        {
+          "q": "What is the most popular activity in Tbilisi?",
+          "a": "The Old Town walking tour and Georgian wine & food tasting are the two most-booked experiences, alongside sulphur bath visits."
+        },
+        {
+          "q": "Are there boat tours in Tbilisi?",
+          "a": "Yes, short Mtkvari river boat rides are available near the Old Town and Rike Park, popular for photos of the Peace Bridge and Narikala Fortress."
+        },
+        {
+          "q": "Do I need to book city tours in advance?",
+          "a": "Popular tours and wine tastings can fill up in summer — booking 1-2 days ahead is recommended."
+        }
+      ]
+    },
+    "related": {
+      "heading": "More ways to explore Tbilisi",
+      "sub": "Round out your itinerary with these guides.",
+      "items": [
+        {
+          "icon": "map-pin",
+          "title": "Main Attractions",
+          "desc": "The must-see sights and neighborhoods in Tbilisi.",
+          "href": "/discover",
+          "cta": "Explore attractions"
+        },
+        {
+          "icon": "calendar",
+          "title": "Events in Tbilisi",
+          "desc": "Festivals, concerts, and what's on this month.",
+          "href": "/events",
+          "cta": "See what's on"
+        },
+        {
+          "icon": "sparkles",
+          "title": "AI Trip Planner",
+          "desc": "Get a personalized day-by-day Tbilisi itinerary.",
+          "href": "/planner",
+          "cta": "Plan my trip"
+        }
+      ]
+    }
+  },
+  "eventsPage": {
+    "meta": {
+      "title": "Events in Tbilisi — What's On This Month",
+      "description": "Upcoming festivals, concerts, and cultural events in Tbilisi, Georgia. Find out what's on during your visit."
+    },
+    "faq": {
+      "heading": "Events FAQs",
+      "sub": "Common questions about events in Tbilisi.",
+      "items": [
+        {
+          "q": "What events happen in Tbilisi in summer?",
+          "a": "Tbilisi Open Air and the Georgian Wine Festival are the two biggest summer events, both drawing large local and international crowds."
+        },
+        {
+          "q": "Where can I find live music in Tbilisi?",
+          "a": "Fabrika, Mtkvari riverbank venues, and dedicated festival grounds host most of the city's live music events throughout the year."
+        },
+        {
+          "q": "Do Tbilisi festivals sell out?",
+          "a": "Major festivals like Tbilisi Open Air can sell out — buying tickets in advance online is recommended."
+        }
+      ]
+    },
+    "related": {
+      "heading": "Plan around the event",
+      "sub": "Guides to fill out the rest of your trip.",
+      "items": [
+        {
+          "icon": "compass",
+          "title": "Things to Do",
+          "desc": "City tours, wine tastings, and unique experiences.",
+          "href": "/experiences",
+          "cta": "See experiences"
+        },
+        {
+          "icon": "utensils",
+          "title": "Food & Wine",
+          "desc": "Best restaurants and nightlife in Tbilisi.",
+          "href": "/food",
+          "cta": "See where to eat"
+        },
+        {
+          "icon": "info",
+          "title": "Travel Guide",
+          "desc": "Transport, safety, and first-time visitor essentials.",
+          "href": "/travel-info",
+          "cta": "Read the guide"
         }
       ]
     }
