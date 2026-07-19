@@ -17,6 +17,10 @@ import {
   Banknote,
   Landmark,
   Calendar,
+  Compass,
+  MapPin,
+  Sparkles,
+  Info,
   type LucideIcon,
 } from "lucide-react";
 
@@ -40,6 +44,10 @@ export const ICONS: Record<string, LucideIcon> = {
   banknote: Banknote,
   landmark: Landmark,
   calendar: Calendar,
+  compass: Compass,
+  "map-pin": MapPin,
+  sparkles: Sparkles,
+  info: Info,
 };
 
 export function Icon({ name, className }: { name: string; className?: string }) {
