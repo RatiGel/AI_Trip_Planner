@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { Clock, MapPin, Phone, Star, Globe } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -12,10 +13,33 @@ import { connectDB } from "@/lib/db";
 import { PlaceModel } from "@/lib/models/place";
 import { PUBLISHED } from "@/lib/places/published";
 import { serializePlace, serializeDoc } from "@/lib/serialize";
+import { buildMetadata, SITE_URL } from "@/lib/seo";
+import { JsonLd } from "@/components/site/json-ld";
 import type { Place } from "@/types";
 
 const DAY_NAMES_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const DAY_NAMES_KA = ["კვი", "ორშ", "სამ", "ოთხ", "ხუთ", "პარ", "შაბ"];
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  await connectDB();
+  const placeDoc = await PlaceModel.findOne({ slug }).lean();
+  if (!placeDoc) return {};
+  const place = serializePlace(placeDoc);
+  const name = locale === "ka" ? place.nameKa : place.name;
+  const description = locale === "ka" ? place.descriptionKa : place.description;
+  return buildMetadata({
+    locale,
+    path: `/places/${slug}`,
+    title: `${name} — ${place.citySlug} Travel Guide`,
+    description,
+    image: place.images?.[0],
+  });
+}
 
 export default async function PlacePage({
   params,
@@ -44,9 +68,30 @@ function PlaceContent({ place, similar }: { place: Place; similar: Place[] }) {
   const name = locale === "ka" ? place.nameKa : place.name;
   const description = locale === "ka" ? place.descriptionKa : place.description;
   const dayNames = locale === "ka" ? DAY_NAMES_KA : DAY_NAMES_EN;
+  const placeSchema = {
+    "@context": "https://schema.org",
+    "@type": "TouristAttraction",
+    name,
+    description,
+    url: `${SITE_URL}/${locale}/places/${place.slug}`,
+    image: place.images,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: place.geo.address,
+    },
+    aggregateRating:
+      place.reviewCount > 0
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: place.rating,
+            reviewCount: place.reviewCount,
+          }
+        : undefined,
+  };
 
   return (
     <article className="container mx-auto grid gap-8 px-4 py-10 lg:grid-cols-3">
+      <JsonLd data={placeSchema} />
       <div className="lg:col-span-2 space-y-6">
         <div className="grid gap-2 sm:grid-cols-3">
           <div className="relative col-span-2 row-span-2 aspect-[4/3] overflow-hidden rounded-2xl bg-muted">

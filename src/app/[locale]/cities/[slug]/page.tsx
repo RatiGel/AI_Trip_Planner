@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { MapPin } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -10,7 +11,28 @@ import { connectDB } from "@/lib/db";
 import { CityModel } from "@/lib/models/city";
 import { PlaceModel } from "@/lib/models/place";
 import { PUBLISHED } from "@/lib/places/published";
+import { buildMetadata, SITE_URL } from "@/lib/seo";
+import { JsonLd } from "@/components/site/json-ld";
 import type { City, Place } from "@/types";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  await connectDB();
+  const city = (await CityModel.findOne({ slug }).lean()) as unknown as City | null;
+  if (!city) return {};
+  const name = locale === "ka" ? city.nameKa : city.name;
+  const description = locale === "ka" ? city.descriptionKa : city.description;
+  return buildMetadata({
+    locale,
+    path: `/cities/${slug}`,
+    title: `Things to Do in ${name} — Attractions & Travel Guide`,
+    description,
+  });
+}
 
 export default async function CityPage({
   params,
@@ -32,9 +54,27 @@ function CityContent({ city, places }: { city: City; places: Place[] }) {
   const locale = useLocale();
   const name = locale === "ka" ? city.nameKa : city.name;
   const description = locale === "ka" ? city.descriptionKa : city.description;
+  const citySchema = {
+    "@context": "https://schema.org",
+    "@type": "TouristDestination",
+    name,
+    description,
+    url: `${SITE_URL}/${locale}/cities/${city.slug}`,
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: city.geo.lat,
+      longitude: city.geo.lng,
+    },
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: city.geo.address,
+      addressCountry: city.country,
+    },
+  };
 
   return (
     <>
+      <JsonLd data={citySchema} />
       <section className="relative h-[40vh] min-h-72 w-full overflow-hidden">
         <Image src={city.heroImage} alt={name} fill priority className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />

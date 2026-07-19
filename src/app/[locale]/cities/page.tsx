@@ -1,9 +1,26 @@
+import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
+import { setRequestLocale, getTranslations } from "next-intl/server";
 import { CityCard } from "@/components/site/city-card";
 import { connectDB } from "@/lib/db";
 import { CityModel } from "@/lib/models/city";
+import { buildMetadata } from "@/lib/seo";
 import type { City } from "@/types";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "cities" });
+  return buildMetadata({
+    locale,
+    path: "/cities",
+    title: `${t("title")} — Georgia Travel Guide`,
+    description: t("subtitle"),
+  });
+}
 
 export default async function CitiesPage({
   params,
