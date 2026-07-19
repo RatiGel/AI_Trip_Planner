@@ -169,9 +169,94 @@
   background-size: 22px 22px;
 }
 
+/* Ambient brand glow behind the AI planner — two slow-drifting pools of
+   gold and wine light. Kept far below text-contrast thresholds. */
+.ai-ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ai-ambient::before,
+.ai-ambient::after {
+  content: "";
+  position: absolute;
+  width: 55vmax;
+  height: 55vmax;
+  border-radius: 50%;
+  filter: blur(80px);
+  will-change: transform;
+}
+.ai-ambient::before {
+  top: -25vmax;
+  left: -12vmax;
+  background: radial-gradient(
+    circle,
+    color-mix(in oklch, var(--color-gold) 14%, transparent),
+    transparent 65%
+  );
+  animation: ambient-drift 14s ease-in-out infinite alternate;
+}
+.ai-ambient::after {
+  bottom: -30vmax;
+  right: -15vmax;
+  background: radial-gradient(
+    circle,
+    color-mix(in oklch, var(--color-wine) 10%, transparent),
+    transparent 65%
+  );
+  animation: ambient-drift 18s ease-in-out infinite alternate-reverse;
+}
+@keyframes ambient-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(6vmax, 4vmax, 0) scale(1.08);
+  }
+}
+
+/* Composer focus glow */
+.ai-composer {
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.25s ease;
+}
+.ai-composer:focus-within {
+  border-color: color-mix(in oklch, var(--color-gold) 55%, transparent);
+  box-shadow:
+    0 0 0 3px color-mix(in oklch, var(--color-gold) 14%, transparent),
+    0 12px 40px -12px color-mix(in oklch, var(--color-wine) 25%, transparent);
+}
+
+/* Thinking dots */
+@keyframes ai-think {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+.ai-think-dot {
+  animation: ai-think 1.1s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .chat-rise {
     animation: none;
+  }
+  .ai-ambient::before,
+  .ai-ambient::after {
+    animation: none;
+  }
+  .ai-think-dot {
+    animation: none;
+    opacity: 0.6;
   }
 }
 

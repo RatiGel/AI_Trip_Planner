@@ -1,19 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { Check, MapPin, Star } from "lucide-react";
+import {
+  Camera,
+  Check,
+  Coffee,
+  Landmark,
+  MapPin,
+  Music,
+  ShoppingBag,
+  Star,
+  TreePine,
+  UtensilsCrossed,
+  Wine,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import type { AIItinerary, PlacePreviewCard } from "@/types";
 
-const CAT_EMOJI: Record<string, string> = {
-  museum: "🏛️",
-  sight: "🗼",
-  cafe: "☕",
-  restaurant: "🍽️",
-  club: "🎵",
-  park: "🌿",
-  shop: "🛍️",
-  wine: "🍷",
+const CAT_ICON: Record<string, LucideIcon> = {
+  museum: Landmark,
+  sight: Camera,
+  cafe: Coffee,
+  restaurant: UtensilsCrossed,
+  club: Music,
+  park: TreePine,
+  shop: ShoppingBag,
+  wine: Wine,
 };
 
 // Warm tinted backgrounds per category for the image-fallback tile.
@@ -148,11 +161,14 @@ export function PlaceSelectionCards({
                           />
                         ) : (
                           <div
-                            className={`flex size-full items-center justify-center bg-gradient-to-br text-2xl ${
+                            className={`flex size-full items-center justify-center bg-gradient-to-br ${
                               CAT_TINT[place.category] ?? "from-stone-100 to-stone-200 text-stone-600"
                             }`}
                           >
-                            {CAT_EMOJI[place.category] ?? "📍"}
+                            {(() => {
+                              const Icon = CAT_ICON[place.category] ?? MapPin;
+                              return <Icon className="size-6" strokeWidth={1.75} />;
+                            })()}
                           </div>
                         )}
                         {/* Selected check overlay */}

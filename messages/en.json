@@ -86,7 +86,8 @@
     "selectAll": "Select all",
     "deselectAll": "Deselect all",
     "confirmSelection": "Confirm {count} places →",
-    "building": "Building your itinerary…"
+    "building": "Building your itinerary…",
+    "location": "Tbilisi, Georgia"
   },
   "map": {
     "title": "Map",
@@ -197,7 +198,7 @@
     "viewAll": "View all",
     "showMore": "Show more",
     "comingSoon": "Coming soon",
-    "aiChat": "AI Chat"
+    "aiChat": "AI Guide"
   },
   "footer": {
     "tagline": "Made for travellers in Georgia.",
@@ -205,28 +206,29 @@
   },
   "header": {
     "planMyTrip": "Plan My Trip",
-    "discover": "Discover",
+    "discover": "Places",
     "discoverSightseeing": "Sightseeing",
     "discoverMuseums": "Museums",
     "discoverNeighborhoods": "Neighborhoods",
     "discoverParks": "Parks & Nature",
-    "experiences": "Experiences",
+    "experiences": "Things to Do",
     "experiencesTours": "Tours & Guides",
     "experiencesDayTrips": "Day Trips",
     "experiencesWellness": "Wellness & Spas",
     "experiencesOutdoor": "Outdoor Activities",
-    "foodDrinks": "Food & Drinks",
+    "foodDrinks": "Eat & Drink",
     "foodRestaurants": "Restaurants",
     "foodCafes": "Cafes",
     "foodWine": "Wine Bars",
     "foodNightlife": "Nightlife",
-    "events": "Events",
+    "events": "What's On",
     "eventsUpcoming": "Upcoming Events",
     "eventsFestivals": "Festivals",
     "eventsArts": "Arts & Culture",
     "eventsMusic": "Music & Concerts",
     "tickets": "Tickets",
-    "deals": "Deals"
+    "deals": "Deals",
+    "travelInfo": "Travel Guide"
   },
   "hero": {
     "eyebrow": "Georgia, Caucasus",
@@ -325,5 +327,350 @@
     "pendingTitle": "Payment pending",
     "pendingBody": "We are confirming your payment. This page will reflect the final status shortly.",
     "backHome": "Back to home"
+  },
+  "travelInfoPage": {
+    "meta": {
+      "title": "Essential Travel Info — Tbilisi",
+      "description": "Everything a first-time visitor needs to know about traveling in Tbilisi, Georgia: currency, transport, safety, weather, apps and more."
+    },
+    "hero": {
+      "eyebrow": "Plan with confidence",
+      "title": "Essential Travel Info",
+      "sub": "Everything a first-time visitor needs to feel at home in Tbilisi — money, transport, safety, and the little things locals wish you knew.",
+      "quickNav": "Jump to"
+    },
+    "nav": {
+      "firstTime": "First-Time Visitor",
+      "gettingAround": "Getting Around",
+      "neighborhoods": "Neighborhoods",
+      "safety": "Safety",
+      "etiquette": "Etiquette",
+      "accessibility": "Accessibility",
+      "weather": "Weather",
+      "apps": "Useful Apps",
+      "faq": "FAQs"
+    },
+    "firstTime": {
+      "heading": "First-Time Visitor Essentials",
+      "sub": "The eight things worth knowing before you land.",
+      "items": [
+        {
+          "icon": "wallet",
+          "title": "Currency",
+          "value": "Georgian Lari (₾ GEL)",
+          "detail": "Cards accepted almost everywhere. Carry small cash for markets, marshrutkas, and rural areas."
+        },
+        {
+          "icon": "languages",
+          "title": "Language",
+          "value": "Georgian (ქართული)",
+          "detail": "English is common in tourist areas; Russian is widely understood. A friendly “gamarjoba” (hello) goes a long way."
+        },
+        {
+          "icon": "clock",
+          "title": "Time Zone",
+          "value": "GMT+4",
+          "detail": "Georgia Standard Time. No daylight saving — the clocks never change."
+        },
+        {
+          "icon": "phone",
+          "title": "Emergency",
+          "value": "112",
+          "detail": "One number for police, fire, and ambulance. English-speaking operators available."
+        },
+        {
+          "icon": "plug",
+          "title": "Power Plugs",
+          "value": "Type C & F · 220V",
+          "detail": "European two-pin plugs, 220V / 50Hz. Bring an adapter if you're from the US or UK."
+        },
+        {
+          "icon": "droplet",
+          "title": "Drinking Water",
+          "value": "Tap water is safe",
+          "detail": "Tbilisi tap water is clean and safe to drink. Refill your bottle from the city's fountains too."
+        },
+        {
+          "icon": "passport",
+          "title": "Visa",
+          "value": "Visa-free up to 1 year",
+          "detail": "Citizens of ~95 countries (EU, US, UK, Canada, Australia and more) enter visa-free for up to 365 days. Confirm your own eligibility."
+        },
+        {
+          "icon": "sun",
+          "title": "Best Time to Visit",
+          "value": "May–Jun · Sep–Oct",
+          "detail": "Mild temperatures, fewer crowds, and the vineyards at their best. Summer is hot; winter is cold but charming."
+        }
+      ]
+    },
+    "gettingAround": {
+      "heading": "Getting Around",
+      "sub": "From the airport to your last khinkali — how to move through the city.",
+      "tabs": {
+        "airport": "Airport",
+        "transit": "Metro & Bus",
+        "taxi": "Taxi",
+        "walking": "Walking",
+        "card": "Transport Card"
+      },
+      "airport": {
+        "title": "From Tbilisi International Airport (TBS)",
+        "points": [
+          "The airport sits about 17 km southeast of the center — roughly 20–30 minutes by car.",
+          "Bus 337 runs between the airport and Freedom Square day and night for a flat fare, paid with a Metromoney card or contactless bank card.",
+          "The train to Tbilisi Central runs only a few times a day — check the schedule before relying on it.",
+          "For a taxi, order through the Bolt app rather than accepting rides from drivers who approach you inside the terminal."
+        ]
+      },
+      "transit": {
+        "title": "Metro, Bus & Marshrutka",
+        "points": [
+          "The metro has two lines and is the fastest way across the center. Trains run roughly 06:00–24:00.",
+          "City buses are modern, air-conditioned, and tracked live in the TTC / Google Maps apps.",
+          "Marshrutkas (minibuses) cover routes buses don't — pay the driver and tell them where to stop.",
+          "One flat fare covers 90 minutes of transfers across metro, bus, and marshrutka when you tap the same card."
+        ]
+      },
+      "taxi": {
+        "title": "Taxis & Ride-hailing",
+        "points": [
+          "Bolt is the default ride-hailing app — cheap, reliable, and cashless. Yandex Go also works.",
+          "Always prefer an app so the fare is fixed up front and you avoid haggling.",
+          "Street taxis rarely use meters; agree the price before getting in if you must take one.",
+          "Most short rides across the center cost only a few lari."
+        ]
+      },
+      "walking": {
+        "title": "On Foot",
+        "points": [
+          "The Old Town, Sololaki, and Rustaveli Avenue are best explored on foot.",
+          "Wear comfortable shoes — cobblestones and steep lanes are part of the charm.",
+          "The aerial cableway from Rike Park up to Narikala Fortress is a scenic shortcut worth taking.",
+          "Streets are well-lit and walkable in the center late into the evening."
+        ]
+      },
+      "card": {
+        "title": "The Metromoney Card",
+        "points": [
+          "Buy a rechargeable Metromoney card at any metro station for a small deposit.",
+          "One card can pay for several people — just tap once per person.",
+          "It works on the metro, city buses, marshrutkas, and the Rike–Narikala cableway.",
+          "Contactless bank cards and Apple/Google Pay also work directly on buses and the metro."
+        ]
+      }
+    },
+    "neighborhoods": {
+      "heading": "Neighborhood Guide",
+      "sub": "Where to stay, wander, and eat — a quick orientation.",
+      "items": [
+        {
+          "name": "Old Town (Kala)",
+          "vibe": "Historic & atmospheric",
+          "desc": "Cobbled lanes, sulphur baths, and balconied houses. The postcard heart of the city.",
+          "goodFor": "First-timers, sightseeing, photography"
+        },
+        {
+          "name": "Sololaki",
+          "vibe": "Elegant & bohemian",
+          "desc": "Art-nouveau facades, hidden courtyards, and some of the best specialty coffee in town.",
+          "goodFor": "Architecture lovers, cafés, slow mornings"
+        },
+        {
+          "name": "Vera & Vake",
+          "vibe": "Leafy & upscale",
+          "desc": "Tree-lined streets, parks, boutiques, and modern restaurants. Calmer and greener.",
+          "goodFor": "Longer stays, families, quiet nights"
+        },
+        {
+          "name": "Marjanishvili",
+          "vibe": "Lively & local",
+          "desc": "Across the river, mixing Soviet-era grandeur with buzzing nightlife and diverse food.",
+          "goodFor": "Nightlife, budget eats, real city life"
+        }
+      ],
+      "goodForLabel": "Good for:"
+    },
+    "safety": {
+      "heading": "Safety",
+      "sub": "Tbilisi is one of the safest capitals in the region.",
+      "intro": "Violent crime against tourists is rare, and locals are famously hospitable. A little everyday awareness is all you need.",
+      "tips": [
+        "Petty theft is uncommon but watch your belongings in crowded markets and on packed transit.",
+        "Traffic can be assertive — cross at marked crossings and don't assume cars will stop.",
+        "Tap water is safe, but stick to bottled water on trips into the mountains.",
+        "Solo travelers, including women, generally report feeling safe day and night in the center.",
+        "Save the emergency number 112 and your accommodation's address in Georgian."
+      ],
+      "emergencyLabel": "In an emergency, dial",
+      "emergencyNumber": "112"
+    },
+    "etiquette": {
+      "heading": "Local Rules & Etiquette",
+      "sub": "Small courtesies that Georgians deeply appreciate.",
+      "doTitle": "Do",
+      "dontTitle": "Avoid",
+      "dos": [
+        "Accept hospitality warmly — being offered food, wine, or a toast is a genuine honor.",
+        "Learn a few words: “gamarjoba” (hello), “madloba” (thank you), “gaumarjos” (cheers).",
+        "Dress modestly when visiting churches — cover shoulders and knees; women may cover their heads.",
+        "Let the tamada (toastmaster) lead the toasts at a supra feast."
+      ],
+      "donts": [
+        "Don't refuse a toast outright at the table — sip if you can't drink a full glass.",
+        "Don't discuss politics with strangers unless invited; topics like the 2008 conflict are sensitive.",
+        "Don't photograph people, especially in rural areas, without a smile and a nod first.",
+        "Don't tip excessively — rounding up or leaving 10% is plenty where service isn't included."
+      ]
+    },
+    "accessibility": {
+      "heading": "Accessibility",
+      "sub": "An honest picture for travelers with mobility needs.",
+      "points": [
+        "The historic center's cobblestones, steep lanes, and stairs make some areas challenging for wheelchairs.",
+        "Not all metro stations have elevators; newer buses are low-floor and wheelchair-friendly.",
+        "Larger hotels and modern restaurants increasingly offer step-free access — call ahead to confirm.",
+        "Bolt lets you note accessibility needs, and drivers are generally willing to help.",
+        "Pavements can be uneven; a travel companion is helpful for the Old Town's hilliest parts."
+      ]
+    },
+    "weather": {
+      "heading": "Weather & Seasons",
+      "sub": "What to expect — and what to pack.",
+      "items": [
+        {
+          "season": "Spring",
+          "icon": "flower",
+          "months": "Mar – May",
+          "temp": "10–22°C",
+          "desc": "Green hills and blossoming trees.",
+          "pack": "Layers and a light rain jacket."
+        },
+        {
+          "season": "Summer",
+          "icon": "sun",
+          "months": "Jun – Aug",
+          "temp": "25–35°C",
+          "desc": "Hot and dry; evenings on terraces.",
+          "pack": "Light clothes, sunscreen, a water bottle."
+        },
+        {
+          "season": "Autumn",
+          "icon": "leaf",
+          "months": "Sep – Nov",
+          "temp": "12–25°C",
+          "desc": "Grape harvest and golden light — the best season.",
+          "pack": "Light layers for warm days, cool nights."
+        },
+        {
+          "season": "Winter",
+          "icon": "snowflake",
+          "months": "Dec – Feb",
+          "temp": "0–8°C",
+          "desc": "Cold, sometimes snowy, cozy wine cellars.",
+          "pack": "A warm coat, scarf, and waterproof shoes."
+        }
+      ],
+      "labels": {
+        "pack": "Pack:"
+      }
+    },
+    "apps": {
+      "heading": "Useful Apps",
+      "sub": "Download these before you arrive.",
+      "items": [
+        {
+          "icon": "car",
+          "name": "Bolt",
+          "desc": "Ride-hailing and scooters — the everyday way to get a taxi."
+        },
+        {
+          "icon": "utensils",
+          "name": "Wolt",
+          "desc": "Food and grocery delivery from thousands of Tbilisi spots."
+        },
+        {
+          "icon": "map",
+          "name": "Google Maps",
+          "desc": "Live transit routes, walking directions, and offline maps."
+        },
+        {
+          "icon": "bus",
+          "name": "TTC",
+          "desc": "Official Tbilisi Transport Company app — buses, metro, and cards."
+        },
+        {
+          "icon": "banknote",
+          "name": "TBC / Bank of Georgia",
+          "desc": "Handy if you open a local account or use QR payments."
+        },
+        {
+          "icon": "languages",
+          "name": "Google Translate",
+          "desc": "Download Georgian offline for menus and signs."
+        }
+      ]
+    },
+    "faq": {
+      "heading": "Frequently Asked Questions",
+      "sub": "Quick answers to what visitors ask most.",
+      "items": [
+        {
+          "q": "Do I need to tip in Tbilisi?",
+          "a": "Tipping isn't mandatory. Many restaurants add a 10% service charge; if not, rounding up or leaving 10% is a kind gesture."
+        },
+        {
+          "q": "Can I drink the tap water?",
+          "a": "Yes. Tbilisi's tap water is clean and safe to drink straight from the tap."
+        },
+        {
+          "q": "Is Tbilisi expensive?",
+          "a": "It's very affordable by European standards. A hearty meal, a taxi across town, or a metro ride each cost only a few lari."
+        },
+        {
+          "q": "Do people speak English?",
+          "a": "In tourist areas, hotels, and among younger people, yes. Learning a few Georgian words is warmly welcomed everywhere."
+        },
+        {
+          "q": "Is it safe for solo and women travelers?",
+          "a": "Generally very safe. Most solo travelers, including women, feel comfortable exploring the center day and night with normal awareness."
+        },
+        {
+          "q": "How do I pay for public transport?",
+          "a": "Tap a Metromoney card or a contactless bank card. One fare covers 90 minutes of transfers across metro, bus, and marshrutka."
+        },
+        {
+          "q": "What's the best way to get from the airport?",
+          "a": "Order a Bolt for door-to-door convenience, or take bus 337 to Freedom Square for a flat fare."
+        }
+      ]
+    },
+    "related": {
+      "heading": "Keep Exploring",
+      "sub": "Now that you know the essentials, dive into the good stuff.",
+      "items": [
+        {
+          "icon": "landmark",
+          "title": "Attractions",
+          "desc": "Fortresses, museums, and the city's must-see sights.",
+          "href": "/discover",
+          "cta": "Explore attractions"
+        },
+        {
+          "icon": "utensils",
+          "title": "Restaurants",
+          "desc": "Where to feast on khinkali, khachapuri, and Georgian wine.",
+          "href": "/food",
+          "cta": "Find restaurants"
+        },
+        {
+          "icon": "calendar",
+          "title": "Events",
+          "desc": "Festivals, concerts, and what's happening while you're here.",
+          "href": "/events",
+          "cta": "See events"
+        }
+      ]
+    }
   }
 }

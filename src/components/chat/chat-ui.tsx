@@ -1,7 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, ExternalLink, Plus, Save, Send, Sparkles } from "lucide-react";
+import {
+  ArrowUp,
+  Check,
+  ExternalLink,
+  Landmark,
+  MapPin,
+  MoonStar,
+  Plus,
+  Save,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -32,6 +43,18 @@ const STARTER: ChatMessage = {
   content:
     "Hi! Tell me about your trip — how many days, what you love (museums, nightlife, coffee, hiking…). I'll build a personalized itinerary from real curated places.",
 };
+
+const EXAMPLE_ICONS = [Landmark, MoonStar, Users];
+
+function AssistantAvatar({ className = "" }: { className?: string }) {
+  return (
+    <span
+      className={`flex size-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-sm ${className}`}
+    >
+      <Sparkles className="size-3.5" />
+    </span>
+  );
+}
 
 export function ChatUI() {
   const t = useTranslations("chat");
@@ -255,49 +278,50 @@ export function ChatUI() {
   );
 
   const streamingBubble = streamingMsg ? (
-    <div className="flex items-start">
-      <div className="max-w-[85%] rounded-2xl rounded-tl-sm border border-border/60 bg-card px-4 py-2.5 text-sm leading-relaxed text-foreground shadow-sm">
+    <div className="flex items-start gap-3">
+      <AssistantAvatar className="mt-0.5" />
+      <div className="min-w-0 flex-1 text-[15px] leading-relaxed text-foreground">
         {streamingMsg}
-        <span className="ml-0.5 inline-block h-3.5 w-0.5 animate-pulse bg-[#B5271D] align-middle" />
+        <span className="ml-0.5 inline-block h-4 w-0.5 animate-pulse bg-[#B5271D] align-middle" />
       </div>
     </div>
   ) : null;
 
   const dots =
     pending && !streamingMsg ? (
-      <div className="flex items-start">
-        <div className="rounded-2xl rounded-tl-sm border border-border/60 bg-card px-4 py-3 shadow-sm">
-          <span className="inline-flex gap-1">
-            <span className="size-1.5 animate-bounce rounded-full bg-[#B5271D]/70" />
-            <span className="size-1.5 animate-bounce rounded-full bg-[#B5271D]/70 [animation-delay:120ms]" />
-            <span className="size-1.5 animate-bounce rounded-full bg-[#B5271D]/70 [animation-delay:240ms]" />
-          </span>
-        </div>
+      <div className="flex items-center gap-3">
+        <AssistantAvatar />
+        <span className="inline-flex items-center gap-1">
+          <span className="ai-think-dot size-1.5 rounded-full bg-[#B5271D]" />
+          <span className="ai-think-dot size-1.5 rounded-full bg-[#B5271D] [animation-delay:150ms]" />
+          <span className="ai-think-dot size-1.5 rounded-full bg-[#B5271D] [animation-delay:300ms]" />
+        </span>
       </div>
     ) : null;
 
   const messageList = (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {messages.map((m, idx) => (
         <div
           key={m.id}
           className={`chat-rise flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
         >
           {m.content && m.role === "assistant" && (
-            <div className="max-w-[88%]">
-              <div className="rounded-2xl rounded-tl-sm border border-border/60 bg-card px-4 py-2.5 text-sm leading-relaxed text-foreground shadow-sm">
+            <div className="flex w-full items-start gap-3">
+              <AssistantAvatar className="mt-0.5" />
+              <div className="min-w-0 flex-1 text-[15px] leading-relaxed text-foreground">
                 {m.content}
               </div>
             </div>
           )}
           {m.content && m.role === "user" && (
-            <div className="max-w-[80%] rounded-2xl rounded-br-sm bg-gradient-to-br from-[#E8A020] to-[#B5271D] px-4 py-2.5 text-sm font-medium leading-relaxed text-white shadow-md">
+            <div className="max-w-[80%] rounded-2xl rounded-br-md bg-gradient-to-br from-[#E8A020] to-[#B5271D] px-4 py-2.5 text-[15px] font-medium leading-relaxed text-white shadow-md shadow-[#B5271D]/15">
               {m.content}
             </div>
           )}
 
           {m.type === "route-plan" && plan && (
-            <div className="mt-1 w-full space-y-3">
+            <div className="mt-2 w-full space-y-3 sm:pl-10">
               <div className="overflow-hidden rounded-2xl border border-border shadow-sm">
                 <div className="relative h-[400px]">
                   <RouteMap plan={plan} selectedId={selectedId} onSelect={setSelectedId} />
@@ -363,18 +387,20 @@ export function ChatUI() {
             m.previewPlaces &&
             m.pendingItinerary &&
             !confirming && (
-              <PlaceSelectionCards
-                places={m.previewPlaces}
-                pendingItinerary={m.pendingItinerary}
-                pending={pending}
-                onConfirm={(ids, filtered) =>
-                  handleConfirm(
-                    ids,
-                    filtered,
-                    (m.itineraryPlaces ?? []).filter((p) => ids.includes(p.id)),
-                  )
-                }
-              />
+              <div className="w-full sm:pl-10">
+                <PlaceSelectionCards
+                  places={m.previewPlaces}
+                  pendingItinerary={m.pendingItinerary}
+                  pending={pending}
+                  onConfirm={(ids, filtered) =>
+                    handleConfirm(
+                      ids,
+                      filtered,
+                      (m.itineraryPlaces ?? []).filter((p) => ids.includes(p.id)),
+                    )
+                  }
+                />
+              </div>
             )}
         </div>
       ))}
@@ -383,35 +409,29 @@ export function ChatUI() {
     </div>
   );
 
-  const inputBar = (compact: boolean) => (
-    <div
-      className={`flex items-end gap-2 ${compact ? "border-t border-border bg-card/50 p-3" : "md:col-span-2"}`}
-    >
-      <div className="relative flex flex-1 items-end rounded-2xl border border-border bg-background shadow-sm transition-colors focus-within:border-[#E8A020]/60 focus-within:ring-2 focus-within:ring-[#E8A020]/20">
-        <Textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={t("placeholder")}
-          rows={compact ? 1 : 2}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              send();
-            }
-          }}
-          className="min-h-[48px] resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
-        />
-      </div>
+  const composer = (autoFocus: boolean) => (
+    <div className="ai-composer relative flex items-end gap-2 rounded-3xl border border-border bg-card/90 p-2 shadow-lg shadow-black/[0.04] backdrop-blur-md">
+      <Textarea
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder={t("placeholder")}
+        rows={1}
+        autoFocus={autoFocus}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            send();
+          }
+        }}
+        className="max-h-40 min-h-[44px] flex-1 resize-none border-0 bg-transparent text-[15px] shadow-none focus-visible:ring-0"
+      />
       <button
         onClick={send}
         disabled={pending || !input.trim()}
         aria-label={t("send")}
-        className={`flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-[#E8A020] to-[#B5271D] font-semibold text-white shadow-md transition-all duration-200 hover:shadow-lg hover:brightness-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:shadow-md ${
-          compact ? "size-11" : "h-12 px-5"
-        }`}
+        className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-md transition-all duration-200 hover:shadow-lg hover:brightness-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        <Send className="size-4" />
-        {!compact && <span className="hidden sm:inline">{t("send")}</span>}
+        <ArrowUp className="size-4.5" strokeWidth={2.5} />
       </button>
     </div>
   );
@@ -419,13 +439,11 @@ export function ChatUI() {
   // ── Plan view ────────────────────────────────────────────────────────
   if (plan) {
     return (
-      <div className="grid h-[calc(100vh-4rem)] grid-cols-1 md:grid-cols-[1fr_340px]">
+      <div className="grid h-dvh grid-cols-1 pt-[72px] md:grid-cols-[1fr_340px]">
         <div className="flex flex-col overflow-hidden border-b border-border md:border-b-0 md:border-r">
-          <div className="flex shrink-0 items-center justify-between border-b border-border bg-gradient-to-r from-[#FFF7ED]/60 to-transparent px-4 py-3 dark:from-[#2a1a10]/30">
+          <div className="flex shrink-0 items-center justify-between border-b border-border/70 bg-card/60 px-4 py-3 backdrop-blur">
             <div className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-sm">
-                <Sparkles className="size-4" />
-              </span>
+              <AssistantAvatar />
               <span className="text-sm font-semibold">{t("title")}</span>
             </div>
             <div className="flex gap-1.5">
@@ -447,10 +465,12 @@ export function ChatUI() {
           )}
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
-            {messageList}
+            <div className="mx-auto max-w-3xl">{messageList}</div>
           </div>
 
-          {inputBar(true)}
+          <div className="shrink-0 border-t border-border/70 bg-card/50 p-3 backdrop-blur">
+            <div className="mx-auto max-w-3xl">{composer(false)}</div>
+          </div>
         </div>
 
         <aside className="hidden overflow-hidden border-l border-border bg-card md:block">
@@ -463,61 +483,45 @@ export function ChatUI() {
   // ── Default view ─────────────────────────────────────────────────────
   const onlyStarter = messages.length === 1;
 
-  // Empty state: full-width centered hero, no side rail, no dead space.
+  // Empty state: immersive centered hero with ambient brand glow.
   if (onlyStarter) {
     return (
-      <div className="relative flex h-[calc(100vh-4rem)] flex-col">
-        <div className="chat-texture pointer-events-none absolute inset-0 opacity-[0.5] [mask-image:radial-gradient(ellipse_at_center,black,transparent_72%)]" />
+      <div className="relative flex h-dvh flex-col overflow-hidden pt-[72px]">
+        <div className="ai-ambient" aria-hidden />
+        <div className="chat-texture pointer-events-none absolute inset-0 opacity-40 [mask-image:radial-gradient(ellipse_at_center,black,transparent_70%)]" />
+
         <div className="relative flex flex-1 flex-col items-center justify-center px-4">
-          <div className="chat-rise flex w-full max-w-xl flex-col items-center gap-7 text-center">
-            <span className="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-lg shadow-[#B5271D]/25">
-              <Sparkles className="size-8" />
-            </span>
-            <div className="space-y-2">
-              <h1 className="font-display text-4xl tracking-tight">{t("title")}</h1>
+          <div className="chat-rise flex w-full max-w-2xl flex-col items-center gap-8 text-center">
+            <div className="space-y-4">
+              <span className="mx-auto inline-flex items-center gap-1.5 rounded-full border border-[#E8A020]/30 bg-[#E8A020]/[0.08] px-3.5 py-1.5 text-xs font-medium text-[#92400e] backdrop-blur dark:text-[#F5C842]">
+                <MapPin className="size-3.5" />
+                {t("location")}
+              </span>
+              <h1 className="font-display text-[clamp(2.5rem,6vw,3.75rem)] leading-[1.05] tracking-tight [text-wrap:balance]">
+                {t("title")}
+              </h1>
               <p className="mx-auto max-w-md text-[15px] leading-relaxed text-muted-foreground">
-                {STARTER.content}
+                {t("subtitle")}
               </p>
             </div>
 
-            <div className="relative flex w-full items-end gap-2 rounded-2xl border border-border bg-card p-2 shadow-lg shadow-black/[0.03] transition-colors focus-within:border-[#E8A020]/60 focus-within:ring-2 focus-within:ring-[#E8A020]/20">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder={t("placeholder")}
-                rows={1}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    send();
-                  }
-                }}
-                className="min-h-[44px] resize-none border-0 bg-transparent text-[15px] shadow-none focus-visible:ring-0"
-              />
-              <button
-                onClick={send}
-                disabled={pending || !input.trim()}
-                aria-label={t("send")}
-                className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-md transition-all duration-200 hover:shadow-lg hover:brightness-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                <Send className="size-4" />
-              </button>
-            </div>
+            <div className="w-full">{composer(true)}</div>
 
-            <div className="grid w-full gap-2 sm:grid-cols-3">
-              {[t("example1"), t("example2"), t("example3")].map((ex, i) => (
-                <button
-                  key={ex}
-                  onClick={() => setInput(ex)}
-                  style={{ animationDelay: `${80 + i * 60}ms` }}
-                  className="chat-rise group cursor-pointer rounded-xl border border-border bg-card/80 p-3 text-left text-xs font-medium leading-snug shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-[#E8A020]/50 hover:shadow-md"
-                >
-                  <span className="mb-1.5 flex size-6 items-center justify-center rounded-lg bg-[#E8A020]/15 text-[#B5271D] transition-colors group-hover:bg-[#E8A020]/25 dark:text-[#F5C842]">
-                    <Sparkles className="size-3.5" />
-                  </span>
-                  {ex}
-                </button>
-              ))}
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {[t("example1"), t("example2"), t("example3")].map((ex, i) => {
+                const Icon = EXAMPLE_ICONS[i] ?? Sparkles;
+                return (
+                  <button
+                    key={ex}
+                    onClick={() => setInput(ex)}
+                    style={{ animationDelay: `${120 + i * 70}ms` }}
+                    className="chat-rise group inline-flex cursor-pointer items-center gap-2 rounded-full border border-border bg-card/70 py-2 pl-3 pr-4 text-[13px] font-medium leading-none backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-[#E8A020]/50 hover:bg-[#E8A020]/[0.06] hover:shadow-md"
+                  >
+                    <Icon className="size-4 text-[#B5271D] transition-transform duration-200 group-hover:scale-110 dark:text-[#F5C842]" />
+                    {ex}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -525,60 +529,42 @@ export function ChatUI() {
     );
   }
 
-  // Conversation in progress (pre-plan): chat column + suggestions rail.
+  // Conversation in progress (pre-plan): single centered column, glass composer.
   return (
-    <div className="container mx-auto grid h-[calc(100vh-4rem)] grid-rows-[auto_1fr_auto] gap-4 px-4 py-6 md:grid-cols-[1fr_300px] md:grid-rows-[auto_1fr_auto]">
-      <div className="flex items-end justify-between gap-3 md:col-span-2">
-        <div>
-          <h1 className="flex items-center gap-2.5 font-display text-[28px] leading-tight tracking-tight">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white shadow-md">
-              <Sparkles className="size-5" />
-            </span>
-            {t("title")}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={newChat}>
-            <Plus className="size-4" /> {t("newChat")}
-          </Button>
-          <Button
-            size="sm"
-            onClick={saveTrip}
-            className="bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white hover:brightness-105"
-          >
-            <Save className="size-4" /> {t("save")}
-          </Button>
-        </div>
-      </div>
+    <div className="relative flex h-dvh flex-col overflow-hidden pt-[72px]">
+      <div className="ai-ambient opacity-60" aria-hidden />
 
-      <div
-        ref={scrollRef}
-        className="chat-texture overflow-y-auto rounded-2xl border border-border bg-gradient-to-b from-card to-[#FFF7ED]/30 bg-fixed p-5 dark:to-transparent"
-      >
-        {messageList}
-      </div>
-
-      <aside className="hidden flex-col gap-3 overflow-y-auto rounded-2xl border border-border bg-card p-4 md:col-start-2 md:row-span-2 md:row-start-1 md:flex">
-        <p className="flex items-center gap-1.5 text-sm font-semibold">
-          <Sparkles className="size-4 text-[#E8A020]" />
-          {t("examples")}
-        </p>
-        <div className="space-y-2">
-          {[t("example1"), t("example2"), t("example3")].map((ex) => (
-            <button
-              key={ex}
-              onClick={() => setInput(ex)}
-              className="group flex w-full cursor-pointer items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5 text-left text-xs leading-snug transition-all duration-200 hover:-translate-y-0.5 hover:border-[#E8A020]/50 hover:shadow-sm"
+      <div className="relative flex shrink-0 items-center justify-between border-b border-border/60 bg-background/70 px-4 py-2.5 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <AssistantAvatar />
+            <div className="leading-tight">
+              <p className="text-sm font-semibold">{t("title")}</p>
+              <p className="text-xs text-muted-foreground">{t("subtitle")}</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={newChat}>
+              <Plus className="size-4" /> {t("newChat")}
+            </Button>
+            <Button
+              size="sm"
+              onClick={saveTrip}
+              className="bg-gradient-to-br from-[#E8A020] to-[#B5271D] text-white hover:brightness-105"
             >
-              <span className="text-muted-foreground/40 transition-colors group-hover:text-[#E8A020]">→</span>
-              {ex}
-            </button>
-          ))}
+              <Save className="size-4" /> {t("save")}
+            </Button>
+          </div>
         </div>
-      </aside>
+      </div>
 
-      {inputBar(false)}
+      <div ref={scrollRef} className="relative flex-1 overflow-y-auto px-4 py-6">
+        <div className="mx-auto max-w-3xl">{messageList}</div>
+      </div>
+
+      <div className="relative shrink-0 px-4 pb-4 pt-2">
+        <div className="mx-auto max-w-3xl">{composer(false)}</div>
+      </div>
     </div>
   );
 }

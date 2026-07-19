@@ -27,6 +27,7 @@ export function SiteHeader() {
   const tNav = useTranslations("nav");
 
   const NAV: { label: string; href: string; icon?: React.ReactNode; children: { label: string; href: string }[] }[] = [
+    { label: t("travelInfo"), href: "/travel-info", children: [] },
     {
       label: t("discover"),
       href: "/discover",
@@ -91,7 +92,7 @@ export function SiteHeader() {
         borderBottom: scrolled || !isHome ? "1px solid var(--site-border-06)" : "none",
       }}
     >
-      <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-6 md:px-12">
+      <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-6 md:px-12 xl:grid xl:grid-cols-[1fr_auto_1fr]">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-1">
           <span className="font-display text-[22px] tracking-[-0.5px]" style={{ color: "var(--site-text)" }}>
@@ -100,7 +101,7 @@ export function SiteHeader() {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 xl:flex">
           {NAV.map((item) => (
             <div
               key={item.label}
@@ -110,7 +111,7 @@ export function SiteHeader() {
             >
               <Link
                 href={item.href}
-                className="flex items-center gap-1.5 rounded-md px-3 py-2 text-[14px] font-medium transition-colors"
+                className="flex items-center gap-1 whitespace-nowrap rounded-md px-3 py-2 text-[14px] font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5"
                 style={{ color: "var(--site-text-80)" }}
               >
                 {item.icon && item.icon}
@@ -152,7 +153,7 @@ export function SiteHeader() {
         </nav>
 
         {/* Right actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2 lg:justify-self-end xl:ml-6 xl:pl-6 xl:border-l" style={{ borderColor: "var(--site-border-20)" }}>
           {session?.user && (
             <Link
               href="/tickets"
@@ -165,7 +166,7 @@ export function SiteHeader() {
           )}
 
           {session?.user ? (
-            <div className="hidden items-center md:flex">
+            <div className="hidden items-center xl:flex">
               <DropdownMenu>
                 <DropdownMenuTrigger
                   className="flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3 text-[13px] font-medium outline-none transition-all hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring"
@@ -235,7 +236,7 @@ export function SiteHeader() {
           ) : (
             <Link
               href="/login"
-              className="hidden rounded-md px-3 py-1.5 text-[13px] transition-colors md:block"
+              className="hidden rounded-md px-3 py-1.5 text-[13px] transition-colors xl:block"
               style={{ color: "var(--site-text-50)" }}
             >
               {tNav("login")}
@@ -247,7 +248,7 @@ export function SiteHeader() {
 
           {/* Mobile hamburger */}
           <button
-            className="flex size-9 items-center justify-center rounded-full transition-colors md:hidden"
+            className="flex size-9 items-center justify-center rounded-full transition-colors xl:hidden"
             style={{ background: "var(--site-surface-08)", color: "var(--site-text-80)" }}
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
@@ -265,7 +266,7 @@ export function SiteHeader() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25 }}
-            className="overflow-hidden border-t md:hidden"
+            className="overflow-hidden border-t xl:hidden"
             style={{ background: "var(--site-header-bg)", backdropFilter: "blur(20px)", borderColor: "var(--site-border-06)" }}
           >
             <nav className="flex flex-col gap-0.5 px-4 py-4">
