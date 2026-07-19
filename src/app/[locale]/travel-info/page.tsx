@@ -12,6 +12,8 @@ import { UsefulApps } from "@/components/site/travel-info/useful-apps";
 import { FaqAccordion } from "@/components/site/travel-info/faq-accordion";
 import { RelatedLinks } from "@/components/site/travel-info/related-links";
 import { AIPlannerCTA } from "@/components/site/home/ai-planner-cta";
+import { buildMetadata } from "@/lib/seo";
+import { JsonLd } from "@/components/site/json-ld";
 
 export async function generateMetadata({
   params,
@@ -23,7 +25,12 @@ export async function generateMetadata({
     locale,
     namespace: "travelInfoPage.meta",
   });
-  return { title: t("title"), description: t("description") };
+  return buildMetadata({
+    locale,
+    path: "/travel-info",
+    title: t("title"),
+    description: t("description"),
+  });
 }
 
 export default async function TravelInfoPage({
@@ -34,8 +41,24 @@ export default async function TravelInfoPage({
   const { locale } = await params;
   setRequestLocale(locale);
 
+  const tFaq = await getTranslations({ locale, namespace: "travelInfoPage.faq" });
+  const faqItems = (tFaq.raw("items") ?? []) as { q: string; a: string }[];
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqItems.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.a,
+      },
+    })),
+  };
+
   return (
     <main style={{ background: "var(--site-bg-base)" }}>
+      <JsonLd data={faqSchema} />
       <TravelHero />
       <FirstTimeGrid />
       <GettingAround />
