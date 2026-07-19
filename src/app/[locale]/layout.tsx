@@ -12,6 +12,7 @@ import { AiChatFab } from "@/components/site/ai-chat-fab";
 import { Providers } from "@/components/providers";
 import { routing } from "@/i18n/routing";
 import { getAdminConfig, buildThemeCss } from "@/lib/get-admin-config";
+import { SITE_URL } from "@/lib/seo";
 import "../globals.css";
 
 const inter = Inter({
@@ -45,12 +46,21 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "site" });
+  const languages: Record<string, string> = {};
+  for (const l of routing.locales) {
+    languages[l] = `${SITE_URL}/${l}`;
+  }
   return {
+    metadataBase: new URL(SITE_URL),
     title: {
       default: `${t("name")} — ${t("tagline")}`,
       template: `%s · ${t("name")}`,
     },
     description: t("tagline"),
+    alternates: {
+      canonical: `${SITE_URL}/${locale}`,
+      languages,
+    },
   };
 }
 
