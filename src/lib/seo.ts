@@ -27,7 +27,7 @@ export function buildMetadata({
   }
 
   return {
-    title,
+    title: { absolute: `${title} · ExploreTbilisi` },
     description,
     alternates: {
       canonical: localizedPath(locale, path),
