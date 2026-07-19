@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import type { ChatCompletionTool } from "openai/resources/chat/completions";
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { PlaceModel } from "@/lib/models/place";
@@ -33,35 +33,38 @@ Rules:
 - confirmationMessage: a short, plain message with no emoji, e.g. "Here's a 3-day Tbilisi plan based on what you're after — take a look and confirm if it works."
 - Only include categories that genuinely match the stated interests.`;
 
-const CREATE_TRIP_PLAN_TOOL: Anthropic.Messages.Tool = {
-  name: "create_trip_plan",
-  description:
-    "Call this when you have collected the user's trip duration and interests and are ready to generate their itinerary.",
-  input_schema: {
-    type: "object",
-    properties: {
-      days: { type: "number", description: "Number of travel days (1-7)" },
-      interests: { type: "string", description: "User interests as described by the user" },
-      pace: {
-        type: "string",
-        enum: ["relaxed", "balanced", "packed"],
-        description: "Trip pace",
+const CREATE_TRIP_PLAN_TOOL: ChatCompletionTool = {
+  type: "function",
+  function: {
+    name: "create_trip_plan",
+    description:
+      "Call this when you have collected the user's trip duration and interests and are ready to generate their itinerary.",
+    parameters: {
+      type: "object",
+      properties: {
+        days: { type: "number", description: "Number of travel days (1-7)" },
+        interests: { type: "string", description: "User interests as described by the user" },
+        pace: {
+          type: "string",
+          enum: ["relaxed", "balanced", "packed"],
+          description: "Trip pace",
+        },
+        categories: {
+          type: "array",
+          items: { type: "string" },
+          description: "Relevant category slugs from: museum, sight, cafe, restaurant, park, wine, shop, club",
+        },
+        citySlug: {
+          type: "string",
+          description: "City slug — default: tbilisi",
+        },
+        confirmationMessage: {
+          type: "string",
+          description: "Short warm message shown to the user while the itinerary is being built",
+        },
       },
-      categories: {
-        type: "array",
-        items: { type: "string" },
-        description: "Relevant category slugs from: museum, sight, cafe, restaurant, park, wine, shop, club",
-      },
-      citySlug: {
-        type: "string",
-        description: "City slug — default: tbilisi",
-      },
-      confirmationMessage: {
-        type: "string",
-        description: "Short warm message shown to the user while the itinerary is being built",
-      },
+      required: ["days", "interests", "confirmationMessage"],
     },
-    required: ["days", "interests", "confirmationMessage"],
   },
 };
 
@@ -274,41 +277,35 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // ── Anthropic streaming ──────────────────────────────────────────────
-  const anthropicMessages = messages
+  // ── OpenRouter streaming (OpenAI-compatible) ─────────────────────────
+  const chatMessages = messages
     .filter((m) => m.role === "user" || m.role === "assistant")
     .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
 
   (async () => {
     try {
-      const stream = aiClient.messages.stream({
+      const stream = await aiClient.chat.completions.create({
         model: CHAT_MODEL,
         max_tokens: 1024,
         tools: [CREATE_TRIP_PLAN_TOOL],
-        system: CHAT_SYSTEM,
-        messages: anthropicMessages,
+        messages: [{ role: "system", content: CHAT_SYSTEM }, ...chatMessages],
+        stream: true,
       });
 
       let toolName = "";
       let toolInputJson = "";
-      let inToolBlock = false;
 
-      for await (const event of stream) {
-        if (event.type === "content_block_start") {
-          if (event.content_block.type === "tool_use") {
-            inToolBlock = true;
-            toolName = event.content_block.name;
-            toolInputJson = "";
-          }
-        } else if (event.type === "content_block_delta") {
-          const delta = event.delta;
-          if (delta.type === "text_delta") {
-            await writer.write(sse({ type: "token", delta: delta.text }));
-          } else if (delta.type === "input_json_delta" && inToolBlock) {
-            toolInputJson += delta.partial_json;
-          }
-        } else if (event.type === "content_block_stop") {
-          inToolBlock = false;
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta;
+        if (!delta) continue;
+
+        if (delta.content) {
+          await writer.write(sse({ type: "token", delta: delta.content }));
+        }
+
+        for (const toolCall of delta.tool_calls ?? []) {
+          if (toolCall.function?.name) toolName = toolCall.function.name;
+          if (toolCall.function?.arguments) toolInputJson += toolCall.function.arguments;
         }
       }
 

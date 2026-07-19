@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import type { ChatCompletionTool } from "openai/resources/chat/completions";
 import { aiClient, hasLLM, ITINERARY_MODEL } from "@/lib/ai/client";
 import { toAICandidate } from "@/lib/places/candidates";
 import type { AIItinerary, PlaceCandidate, TravelPreferences } from "@/types";
@@ -17,37 +17,40 @@ Rules:
 
 Call the submit_itinerary tool to return your plan.`;
 
-const ITINERARY_TOOL: Anthropic.Messages.Tool = {
-  name: "submit_itinerary",
-  description:
-    "Submit the planned day-by-day itinerary. Use place_ids ONLY from the candidate list provided.",
-  input_schema: {
-    type: "object",
-    properties: {
-      title: { type: "string", description: "Short evocative trip title" },
-      days: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            day: { type: "number" },
-            stops: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  place_id: { type: "string" },
-                  reason: { type: "string" },
+const ITINERARY_TOOL: ChatCompletionTool = {
+  type: "function",
+  function: {
+    name: "submit_itinerary",
+    description:
+      "Submit the planned day-by-day itinerary. Use place_ids ONLY from the candidate list provided.",
+    parameters: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Short evocative trip title" },
+        days: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              day: { type: "number" },
+              stops: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    place_id: { type: "string" },
+                    reason: { type: "string" },
+                  },
+                  required: ["place_id", "reason"],
                 },
-                required: ["place_id", "reason"],
               },
             },
+            required: ["day", "stops"],
           },
-          required: ["day", "stops"],
         },
       },
+      required: ["title", "days"],
     },
-    required: ["title", "days"],
   },
 };
 
@@ -97,22 +100,23 @@ export async function generateItinerary(
   const validIds = new Set(candidates.map((c) => c.id));
 
   try {
-    const response = await aiClient.messages.create({
+    const response = await aiClient.chat.completions.create({
       model: ITINERARY_MODEL,
       max_tokens: 2048,
       tools: [ITINERARY_TOOL],
-      tool_choice: { type: "any" },
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: buildUserMessage(prefs, candidates) }],
+      tool_choice: "required",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: buildUserMessage(prefs, candidates) },
+      ],
     });
 
-    const toolBlock = response.content.find(
-      (b): b is Anthropic.Messages.ToolUseBlock =>
-        b.type === "tool_use" && b.name === "submit_itinerary",
+    const toolCall = response.choices[0]?.message.tool_calls?.find(
+      (t) => t.type === "function" && t.function.name === "submit_itinerary",
     );
 
-    if (toolBlock) {
-      const input = toolBlock.input as AIItinerary;
+    if (toolCall?.type === "function") {
+      const input = JSON.parse(toolCall.function.arguments) as AIItinerary;
       const filtered = applyFilter(input, validIds);
       if (filtered.days.some((d) => d.stops.length > 0)) return filtered;
     }

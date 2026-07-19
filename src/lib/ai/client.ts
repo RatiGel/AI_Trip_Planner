@@ -1,45 +1,32 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
 /**
  * LLM client for the AI chat + itinerary planner.
  *
- * Routes through OpenRouter's Anthropic-compatible Messages API when
- * OPENROUTER_API_KEY is set (https://openrouter.ai/api → /v1/messages,
- * with native tool-use + streaming passthrough). Falls back to the direct
- * Anthropic API when only ANTHROPIC_API_KEY is set.
- *
- * Model IDs differ per provider: OpenRouter uses "anthropic/<slug>",
- * the direct Anthropic API uses bare IDs.
+ * Routes through OpenRouter's OpenAI-compatible Chat Completions API
+ * (https://openrouter.ai/api/v1 → /chat/completions). Free-tier models
+ * (Llama, Qwen, Gemma, GPT-OSS, Nemotron, etc.) are only served over this
+ * OpenAI-style wire format, not Anthropic's Messages API — so this client
+ * always speaks OpenAI, regardless of which underlying model is picked.
  */
 
 const openRouterKey = process.env.OPENROUTER_API_KEY;
-const anthropicKey = process.env.ANTHROPIC_API_KEY;
 
-const useOpenRouter = !!openRouterKey;
+/** True when an LLM provider is configured. Gates the mock-mode fallback. */
+export const hasLLM = !!openRouterKey;
 
-/** True when any LLM provider is configured. Gates the mock-mode fallback. */
-export const hasLLM = useOpenRouter || !!anthropicKey;
-
-export const aiClient = new Anthropic(
-  useOpenRouter
-    ? {
-        apiKey: openRouterKey,
-        baseURL: "https://openrouter.ai/api",
-        defaultHeaders: {
-          // Optional OpenRouter attribution headers.
-          "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL ?? "https://ai-trip-planner-six-beta.vercel.app",
-          "X-Title": "Tbilisi Trip Planner",
-        },
-      }
-    : { apiKey: anthropicKey },
-);
+export const aiClient = new OpenAI({
+  apiKey: openRouterKey,
+  baseURL: "https://openrouter.ai/api/v1",
+  defaultHeaders: {
+    // Optional OpenRouter attribution headers.
+    "HTTP-Referer": process.env.NEXT_PUBLIC_SITE_URL ?? "https://ai-trip-planner-six-beta.vercel.app",
+    "X-Title": "Tbilisi Trip Planner",
+  },
+});
 
 /** Conversational model — decides when enough info exists to plan a trip. */
-export const CHAT_MODEL = useOpenRouter
-  ? "anthropic/claude-sonnet-4.6"
-  : "claude-sonnet-4-6";
+export const CHAT_MODEL = "openai/gpt-oss-20b:free";
 
-/** Itinerary model — fast, tool-forced structured output from candidates. */
-export const ITINERARY_MODEL = useOpenRouter
-  ? "anthropic/claude-haiku-4.5"
-  : "claude-haiku-4-5";
+/** Itinerary model — tool-forced structured output from candidates. */
+export const ITINERARY_MODEL = "nvidia/nemotron-3-nano-30b-a3b:free";
