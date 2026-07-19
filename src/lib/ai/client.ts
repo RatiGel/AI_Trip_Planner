@@ -26,7 +26,7 @@ export const aiClient = new OpenAI({
 });
 
 /** Conversational model — decides when enough info exists to plan a trip. */
-export const CHAT_MODEL = "openai/gpt-oss-20b:free";
+export const CHAT_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
 
 /** Itinerary model — tool-forced structured output from candidates. */
 export const ITINERARY_MODEL = "nvidia/nemotron-3-nano-30b-a3b:free";
