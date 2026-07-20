@@ -61,6 +61,9 @@ export async function generateMetadata({
       canonical: `${SITE_URL}/${locale}`,
       languages,
     },
+    verification: {
+      google: "wsGn1a6OGiXV4KIA9TcxFKcgThC6J4Q1iHmyTNBs9u0",
+    },
   };
 }
 
