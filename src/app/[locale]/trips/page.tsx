@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { MapPinned } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -74,7 +74,7 @@ function TripsContent({
   if (!isLoggedIn || trips.length === 0) {
     return (
       <div className="container mx-auto flex min-h-[60vh] flex-col items-center justify-center px-4 py-16 text-center">
-        <Sparkles className="mb-4 size-10 text-primary" />
+        <MapPinned className="mb-4 size-10 text-[var(--color-wine)] dark:text-[var(--color-gold)]" />
         <h1 className="text-2xl font-semibold">{t("title")}</h1>
         <p className="mt-2 max-w-md text-muted-foreground">{t("empty")}</p>
         {!isLoggedIn ? (
@@ -91,8 +91,18 @@ function TripsContent({
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-semibold tracking-tight">{t("title")}</h1>
+    <div className="container mx-auto max-w-4xl px-4 py-12 md:py-16">
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-display text-4xl leading-none tracking-[-0.5px] md:text-5xl">
+            {t("title")}
+          </h1>
+          <p className="mt-2 text-muted-foreground">{t("subtitle")}</p>
+        </div>
+        <span className="rounded-full bg-[var(--color-wine)]/10 px-3.5 py-1.5 text-sm font-medium text-[var(--color-wine)] dark:bg-[var(--color-gold)]/15 dark:text-[var(--color-gold)]">
+          {t("count", { count: trips.length })}
+        </span>
+      </header>
       <TripsList trips={trips} placesMap={placesMap} />
     </div>
   );

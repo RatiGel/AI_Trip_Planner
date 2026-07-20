@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CalendarDays, ChevronDown, LayoutDashboard, LogOut, Menu, Shield, Sparkles, Ticket, User, X } from "lucide-react";
+import { CalendarDays, ChevronDown, LayoutDashboard, LogOut, MapPinned, Menu, Shield, Ticket, User, X } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -192,7 +192,7 @@ export function SiteHeader() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem render={<Link href="/trips" />}>
-                    <Sparkles className="size-4" /> My Trips
+                    <MapPinned className="size-4" /> My Trips
                   </DropdownMenuItem>
                   <DropdownMenuItem render={<Link href="/reservations" />}>
                     <CalendarDays className="size-4" /> Reservations
