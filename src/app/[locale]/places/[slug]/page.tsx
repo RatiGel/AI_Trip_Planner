@@ -79,14 +79,6 @@ function PlaceContent({ place, similar }: { place: Place; similar: Place[] }) {
       "@type": "PostalAddress",
       streetAddress: place.geo.address,
     },
-    aggregateRating:
-      place.reviewCount > 0
-        ? {
-            "@type": "AggregateRating",
-            ratingValue: place.rating,
-            reviewCount: place.reviewCount,
-          }
-        : undefined,
   };
 
   return (

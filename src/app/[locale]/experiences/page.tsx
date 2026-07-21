@@ -124,11 +124,6 @@ export default async function ExperiencesPage({
         "@type": "TouristAttraction",
         name: exp.title,
         description: exp.desc,
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: exp.rating,
-          reviewCount: exp.reviews,
-        },
       },
     })),
   };

@@ -130,10 +130,6 @@ export default async function FoodPage({
         "@type": place.type === "cafe" ? "CafeOrCoffeeShop" : "Restaurant",
         name: place.name,
         servesCuisine: place.cuisine,
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: place.rating,
-        },
         address: {
           "@type": "PostalAddress",
           addressLocality: place.area,
