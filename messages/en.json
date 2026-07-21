@@ -137,6 +137,17 @@
     "routesFound": "routes found",
     "redirecting": "Redirecting to payment…"
   },
+  "gettingAround": {
+    "eyebrow": "Getting Around",
+    "heading": "Getting",
+    "headingEm": "Around",
+    "description": "Plan public-transport routes across Tbilisi, buy transit passes, and book intercity tickets.",
+    "cityTab": "City Transportation",
+    "citySubtitle": "Public transport within Tbilisi — passes and route planning.",
+    "fromTab": "Travel from Tbilisi",
+    "fromSubtitle": "Bus and railway tickets to other Georgian cities.",
+    "passes": "Transit passes"
+  },
   "transit": {
     "planTitle": "Plan a route",
     "planSubtitle": "Get public-transport directions across Tbilisi.",
@@ -252,6 +263,7 @@
     "eventsArts": "Arts & Culture",
     "eventsMusic": "Music & Concerts",
     "tickets": "Tickets",
+    "gettingAround": "Getting Around",
     "deals": "Deals",
     "travelInfo": "Travel Guide"
   },

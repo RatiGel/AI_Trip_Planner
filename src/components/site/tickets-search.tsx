@@ -104,7 +104,20 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
   const t = useTranslations("tickets");
   const params = useParams();
   const locale = typeof params?.locale === "string" ? params.locale : "en";
-  const [tab, setTab] = useState<TabType>("bus");
+
+  const busTickets = tickets.filter((tk) => tk.type === "bus");
+  const railTickets = tickets.filter((tk) => tk.type === "rail");
+  const transitPasses = tickets.filter((tk) => tk.type === "transit-pass");
+
+  // Only offer tabs for ticket types actually present in this subset — callers
+  // may pass just passes (city transport) or just bus/rail (intercity travel).
+  const availableTabs: TabType[] = [
+    ...(busTickets.length > 0 ? (["bus"] as const) : []),
+    ...(railTickets.length > 0 ? (["rail"] as const) : []),
+    ...(transitPasses.length > 0 ? (["transit-pass"] as const) : []),
+  ];
+
+  const [tab, setTab] = useState<TabType>(availableTabs[0] ?? "bus");
   const [from, setFrom] = useState("Tbilisi");
   const [to, setTo] = useState("Batumi");
   const [date, setDate] = useState("");
@@ -114,10 +127,6 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
   const [activeTo, setActiveTo] = useState("Batumi");
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
-
-  const busTickets = tickets.filter((t) => t.type === "bus");
-  const railTickets = tickets.filter((t) => t.type === "rail");
-  const transitPasses = tickets.filter((t) => t.type === "transit-pass");
 
   const pool = tab === "bus" ? busTickets : tab === "rail" ? railTickets : [];
   const results = pool.filter((o) => o.from === activeFrom && o.to === activeTo);
@@ -145,34 +154,40 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
     }
   }
 
-  const TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
+  const ALL_TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: "bus", label: t("bus"), icon: <Bus className="size-4" /> },
     { id: "rail", label: t("rail"), icon: <Train className="size-4" /> },
     { id: "transit-pass", label: t("transitPass"), icon: <Wallet className="size-4" /> },
   ];
+  // Only show pills for ticket types present in this subset. When the caller
+  // passes a single type (e.g. just transit passes, or just bus+rail), pills
+  // for absent/empty categories are hidden instead of rendering an empty tab.
+  const TABS = ALL_TABS.filter((tb) => availableTabs.includes(tb.id));
 
   const showRouteForm = tab === "bus" || tab === "rail";
 
   return (
     <div className="space-y-8">
-      {/* Tab pills */}
-      <div className="flex flex-wrap gap-2">
-        {TABS.map((tb) => (
-          <button
-            key={tb.id}
-            onClick={() => { setTab(tb.id); setSearched(false); }}
-            className="flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-semibold transition-all"
-            style={
-              tab === tb.id
-                ? { background: "#B5271D", color: "#fff", boxShadow: "0 4px 16px rgba(181,39,29,0.35)" }
-                : { background: "var(--site-bg-elevated)", color: "var(--site-text-50)", border: "1px solid var(--site-border-08)" }
-            }
-          >
-            {tb.icon}
-            {tb.label}
-          </button>
-        ))}
-      </div>
+      {/* Tab pills — only rendered when there's more than one type to switch between */}
+      {TABS.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          {TABS.map((tb) => (
+            <button
+              key={tb.id}
+              onClick={() => { setTab(tb.id); setSearched(false); }}
+              className="flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-semibold transition-all"
+              style={
+                tab === tb.id
+                  ? { background: "#B5271D", color: "#fff", boxShadow: "0 4px 16px rgba(181,39,29,0.35)" }
+                  : { background: "var(--site-bg-elevated)", color: "var(--site-text-50)", border: "1px solid var(--site-border-08)" }
+              }
+            >
+              {tb.icon}
+              {tb.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Route form — bus/rail only */}
       <AnimatePresence mode="wait">

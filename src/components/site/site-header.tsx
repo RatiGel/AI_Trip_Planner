@@ -161,7 +161,7 @@ export function SiteHeader() {
               style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
             >
               <Ticket className="size-3.5" />
-              {t("tickets")}
+              {t("gettingAround")}
             </Link>
           )}
 

@@ -2,11 +2,11 @@ import { setRequestLocale, getTranslations } from "next-intl/server";
 import { connectDB } from "@/lib/db";
 import { TicketModel } from "@/lib/models/ticket";
 import { mockBusTickets, mockRailTickets, mockTransitPasses } from "@/lib/mock/tickets";
-import { TicketsSearch } from "@/components/site/tickets-search";
+import { GettingAround } from "@/components/site/getting-around";
 import { serializeDoc } from "@/lib/serialize";
 import type { TicketOption } from "@/types";
 
-export default async function TicketsPage({
+export default async function GettingAroundPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
@@ -20,15 +20,11 @@ export default async function TicketsPage({
     tickets = [...mockBusTickets, ...mockRailTickets, ...mockTransitPasses];
   }
 
-  const t = await getTranslations({ locale, namespace: "tickets" });
+  const t = await getTranslations({ locale, namespace: "gettingAround" });
 
   return (
     <div style={{ background: "var(--site-bg-base)", minHeight: "100vh" }}>
-      {/* Hero */}
-      <div
-        className="relative flex items-end overflow-hidden"
-        style={{ height: 360, paddingTop: 72 }}
-      >
+      <div className="relative flex items-end overflow-hidden" style={{ height: 360, paddingTop: 72 }}>
         <div
           className="absolute inset-0"
           style={{
@@ -39,20 +35,11 @@ export default async function TicketsPage({
           }}
         />
         <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-12 md:px-12">
-          <p
-            className="mb-3 text-[11px] font-bold uppercase tracking-[3px]"
-            style={{ color: "#B5271D" }}
-          >
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[3px]" style={{ color: "#B5271D" }}>
             {t("eyebrow")}
           </p>
-          <h1
-            className="font-display leading-tight text-white"
-            style={{ fontSize: "clamp(42px, 7vw, 80px)", letterSpacing: "-2px" }}
-          >
-            {t("heading")}{" "}
-            <em className="italic" style={{ color: "#F5C842" }}>
-              {t("headingEm")}
-            </em>
+          <h1 className="font-display leading-tight text-white" style={{ fontSize: "clamp(42px, 7vw, 80px)", letterSpacing: "-2px" }}>
+            {t("heading")} <em className="italic" style={{ color: "#F5C842" }}>{t("headingEm")}</em>
           </h1>
           <p className="mt-3 max-w-xl text-white/60" style={{ fontSize: "clamp(14px, 1.5vw, 16px)" }}>
             {t("description")}
@@ -60,9 +47,8 @@ export default async function TicketsPage({
         </div>
       </div>
 
-      {/* Content */}
       <div className="mx-auto max-w-7xl px-6 py-12 md:px-12">
-        <TicketsSearch tickets={tickets} />
+        <GettingAround tickets={tickets} />
       </div>
     </div>
   );
