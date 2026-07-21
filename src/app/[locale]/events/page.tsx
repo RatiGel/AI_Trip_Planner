@@ -3,7 +3,7 @@ import { setRequestLocale, getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { Calendar, MapPin, ArrowRight } from "lucide-react";
 import { Link } from "@/i18n/navigation";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata, SITE_URL } from "@/lib/seo";
 import { JsonLd } from "@/components/site/json-ld";
 import { FaqBlock } from "@/components/site/faq-block";
 import { RelatedGuides } from "@/components/site/related-guides";
@@ -14,6 +14,8 @@ const EVENTS = [
     title: "Tbilisi Open Air Festival",
     category: "Music",
     date: "Jun 14–16, 2026",
+    startDate: "2026-06-14T12:00:00+04:00",
+    endDate: "2026-06-16T23:00:00+04:00",
     location: "Mtkvari River Bank",
     img: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&q=80",
     featured: true,
@@ -24,6 +26,8 @@ const EVENTS = [
     title: "Georgian Wine Festival",
     category: "Food & Wine",
     date: "May 25–26, 2026",
+    startDate: "2026-05-25T11:00:00+04:00",
+    endDate: "2026-05-26T22:00:00+04:00",
     location: "Old Town, Rike Park",
     img: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&q=80",
     featured: true,
@@ -34,6 +38,8 @@ const EVENTS = [
     title: "Art Gene Festival",
     category: "Arts & Culture",
     date: "Jul 4–7, 2026",
+    startDate: "2026-07-04T12:00:00+04:00",
+    endDate: "2026-07-07T22:00:00+04:00",
     location: "Ethnographic Museum",
     img: "https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=800&q=80",
     featured: false,
@@ -44,6 +50,8 @@ const EVENTS = [
     title: "Tbilisi Jazz Festival",
     category: "Music",
     date: "Oct 10–13, 2026",
+    startDate: "2026-10-10T19:00:00+04:00",
+    endDate: "2026-10-13T23:00:00+04:00",
     location: "Fabrika & Venues",
     img: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&q=80",
     featured: false,
@@ -54,6 +62,8 @@ const EVENTS = [
     title: "Tbilisoba City Day",
     category: "Festival",
     date: "Oct 4–5, 2026",
+    startDate: "2026-10-04T10:00:00+04:00",
+    endDate: "2026-10-05T22:00:00+04:00",
     location: "Citywide",
     img: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80",
     featured: false,
@@ -64,6 +74,8 @@ const EVENTS = [
     title: "Documentary Film Festival",
     category: "Film",
     date: "Nov 1–8, 2026",
+    startDate: "2026-11-01T18:00:00+04:00",
+    endDate: "2026-11-08T22:00:00+04:00",
     location: "Various Cinemas",
     img: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80",
     featured: false,
@@ -109,9 +121,28 @@ export default async function EventsPage({
         "@type": "Event",
         name: evt.title,
         description: evt.desc,
+        startDate: evt.startDate,
+        endDate: evt.endDate,
+        eventStatus: "https://schema.org/EventScheduled",
+        eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+        image: [evt.img],
+        performer: {
+          "@type": "PerformingGroup",
+          name: evt.title,
+        },
+        organizer: {
+          "@type": "Organization",
+          name: "Explore Tbilisi",
+          url: SITE_URL,
+        },
         location: {
           "@type": "Place",
           name: evt.location,
+          address: {
+            "@type": "PostalAddress",
+            addressLocality: "Tbilisi",
+            addressCountry: "GE",
+          },
         },
       },
     })),
