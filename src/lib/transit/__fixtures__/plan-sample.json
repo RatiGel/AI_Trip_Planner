@@ -1,0 +1,53 @@
+{
+  "from": { "lat": 41.6977, "lon": 44.8015, "name": "Origin" },
+  "to": { "lat": 41.7297, "lon": 44.801, "name": "Destination" },
+  "itineraries": [
+    {
+      "startTime": "2026-07-21T09:00:00.000Z",
+      "endTime": "2026-07-21T09:34:00.000Z",
+      "duration": 2040,
+      "walkTime": 540,
+      "walkDistance": 620,
+      "legs": [
+        {
+          "from": { "lat": 41.6977, "lon": 44.8015, "name": "Origin" },
+          "to": { "lat": 41.7005, "lon": 44.8009, "name": "Rustaveli Metro" },
+          "startTime": "2026-07-21T09:00:00.000Z",
+          "endTime": "2026-07-21T09:05:00.000Z",
+          "duration": 300,
+          "distance": 350,
+          "mode": "WALK",
+          "route": null,
+          "intermediateStops": null,
+          "realTime": false
+        },
+        {
+          "from": { "lat": 41.7005, "lon": 44.8009, "name": "Rustaveli Metro", "stopId": "1946" },
+          "to": { "lat": 41.7285, "lon": 44.8011, "name": "Station Square" },
+          "startTime": "2026-07-21T09:05:00.000Z",
+          "endTime": "2026-07-21T09:29:00.000Z",
+          "duration": 1440,
+          "distance": 3200,
+          "mode": "BUS",
+          "route": { "shortName": "37", "longName": "Rustaveli — Station Square", "color": "0033B4" },
+          "intermediateStops": [
+            { "id": "2001", "code": null, "name": "Kostava St", "lat": 41.71, "lon": 44.8, "vehicleMode": "BUS" }
+          ],
+          "realTime": true
+        },
+        {
+          "from": { "lat": 41.7285, "lon": 44.8011, "name": "Station Square" },
+          "to": { "lat": 41.7297, "lon": 44.801, "name": "Destination" },
+          "startTime": "2026-07-21T09:29:00.000Z",
+          "endTime": "2026-07-21T09:34:00.000Z",
+          "duration": 300,
+          "distance": 270,
+          "mode": "WALK",
+          "route": null,
+          "intermediateStops": null,
+          "realTime": false
+        }
+      ]
+    }
+  ]
+}
