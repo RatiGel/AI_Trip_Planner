@@ -8,7 +8,29 @@
 Let a site visitor plan a public-transport journey in Tbilisi: enter a start and
 destination, get journey options (walk / bus / metro legs) with live next-bus
 arrival times. Mirrors what the official TTC phone app does, delivered on our
-site. Lives as a **"Plan a route" tab** on the existing `/tickets` page.
+site.
+
+Delivered as part of a restructure of the existing `/tickets` page into a
+**"Getting Around"** hub, so the route planner lives next to the Tbilisi transit
+pass. See "Page restructure" below.
+
+## Page restructure
+
+Rename the existing `/tickets` page to **"Getting Around"** (keep the `/tickets`
+URL to avoid breaking links; only the title/heading + nav label change). The
+page splits into two sections:
+
+1. **City Transportation** — in-city transit: transit passes (buy) + **Plan a Route** (the new route planner).
+2. **Travel from Tbilisi** — intercity tickets: bus + rail.
+
+Existing ticket data is re-bucketed **by `TicketOption.type`**, no data
+migration:
+
+- `type: "transit-pass"` → **City Transportation**
+- `type: "bus"` / `type: "rail"` → **Travel from Tbilisi**
+
+Sections rendered as two tabs (or two stacked sections) on the page. The route
+planner is a sub-view within the City Transportation section.
 
 ## Data source
 
@@ -64,7 +86,8 @@ browser; single place to normalize/guard the undocumented `plan()` shape.
 | `src/app/api/transit/arrivals/route.ts` | Wraps `ttc.arrivalTimes`. |
 | `src/components/transit/route-planner.tsx` | Client tab UI: two geocode search inputs, swap button, Plan button, journey results list. |
 | `src/components/transit/journey-card.tsx` | One journey: leg timeline (walk→bus 37→walk) + live arrival badge on boarding stop. |
-| `src/app/[locale]/tickets/page.tsx` | Add tabs: "Tickets" \| "Plan a route". |
+| `src/app/[locale]/tickets/page.tsx` | Retitle to "Getting Around"; render two sections (City Transportation / Travel from Tbilisi); bucket tickets by `type`; mount route planner inside City Transportation. |
+| Nav / header | Update the menu label `Tickets` → `Getting Around`. |
 | `messages/{en,ka,ru}.json` | New `transit` namespace keys. |
 
 Optional (v1 stretch): draw the journey polyline on a mini Leaflet map
