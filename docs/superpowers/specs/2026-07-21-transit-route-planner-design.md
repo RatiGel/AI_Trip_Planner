@@ -1,7 +1,19 @@
 # Tbilisi Transit Route Planner — Design
 
 **Date:** 2026-07-21
-**Status:** Approved, ready for implementation plan
+**Status:** Approved. **Amended during implementation** — see note below.
+
+> **Implementation amendment (2026-07-21):** The `ttc-api` npm package referenced
+> below turned out to be broken as published (ESM-interop bug,
+> `c.default.create is not a function`). We therefore do **not** depend on it and
+> instead call the TTC API **directly via `fetch`** at
+> `https://transit.ttc.com.ge/pis-gateway/api/v2` with an `X-Api-Key` header. The
+> exact endpoints and the `BusPlan`/`BusArrival` response shapes were confirmed
+> from the `ttc-api` type definitions and the `MCP_TTC_public_transport` Python
+> reference implementation. The TTC API is geo-firewalled to Georgia. The
+> authoritative, up-to-date design is the implementation plan
+> (`docs/superpowers/plans/2026-07-21-transit-route-planner.md`); this spec's
+> "Data source" and client sections below are kept for historical context.
 
 ## Goal
 

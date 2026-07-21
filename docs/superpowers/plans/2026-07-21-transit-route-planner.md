@@ -4,20 +4,35 @@
 
 **Goal:** Add a public-transport route planner (start→destination journeys with live arrivals) to the site, restructured into a "Getting Around" hub alongside the Tbilisi transit pass.
 
-**Architecture:** A thin server-side proxy over the unofficial `ttc-api` npm package. Three Next.js API routes (`geocode`, `plan`, `arrivals`) wrap OSM Nominatim + TTC calls; a defensive `normalize.ts` converts TTC's undocumented `plan()` output into our typed `JourneyPlan`. The existing `/tickets` page is retitled "Getting Around" and split into two sections — **City Transportation** (transit passes + the new route planner) and **Travel from Tbilisi** (bus/rail tickets) — bucketed by `TicketOption.type`.
+**Architecture:** A thin server-side proxy that calls the TTC (Tbilisi Transport Company) transit API **directly via `fetch`** — the OpenTripPlanner-style backend at `https://transit.ttc.com.ge/pis-gateway/api/v2`. (The `ttc-api` npm package that originally motivated this is broken as published — an ESM-interop bug, `c.default.create is not a function` — so we do not depend on it. Its bundled `.d.ts` and a second reference implementation, the `MCP_TTC_public_transport` Python server, gave us the exact endpoints, params, headers, and response shapes; see the data-source note below.) Three Next.js API routes (`geocode`, `plan`, `arrivals`) wrap OSM Nominatim + the TTC calls; a defensive `normalize.ts` converts the TTC `/plan` response into our typed `JourneyPlan`. The existing `/tickets` page is retitled "Getting Around" and split into two sections — **City Transportation** (transit passes + the new route planner) and **Travel from Tbilisi** (bus/rail tickets) — bucketed by `TicketOption.type`.
 
-**Tech Stack:** Next.js 16 (App Router, `runtime = "nodejs"`), TypeScript, `ttc-api`, OSM Nominatim, next-intl 4, `@base-ui/react` Tabs, framer-motion, Tailwind v4. Unit tests via Node's built-in `node:test` runner executed through `tsx` (already a dependency — no new test framework).
+**Tech Stack:** Next.js 16 (App Router, `runtime = "nodejs"`), TypeScript, native `fetch` to the TTC API (no third-party transit package), OSM Nominatim, next-intl 4, `@base-ui/react` Tabs, framer-motion, Tailwind v4. Unit tests via Node's built-in `node:test` runner executed through `tsx` (already a dependency — no new test framework).
+
+## Data source (TTC API contract)
+
+Confirmed from the `ttc-api@2.0.0` type definitions **and** the `MCP_TTC_public_transport` reference implementation (identical base URL, header, and params):
+
+- **Base:** `https://transit.ttc.com.ge/pis-gateway/api/v2`
+- **Auth header:** `X-Api-Key` (public key baked into both reference clients: `c0a2f304-551a-4d08-b8df-2c53ecd57f9f`). Stored in env `TTC_API_KEY`, defaulting to that value.
+- **Geo firewall:** TTC only serves requests originating from **Georgia**. From a non-Georgian server region calls may fail — the graceful `transit_unavailable` path (below) covers this; note it for deploy.
+- `GET /plan?fromPlace={lat},{lng}&toPlace={lat},{lng}&departMode=leaveNow&modes=WALK,BUS&optimize=quick&locale={ka|en}` → `BusPlan`:
+  - `{ from, to, itineraries: Itinerary[] }`
+  - `Itinerary`: `{ startTime, endTime, duration /*sec*/, walkTime, walkDistance, legs: Leg[] }`
+  - `Leg`: `{ from:{lat,lon,name}, to:{lat,lon,name}, duration /*sec*/, distance, mode: "WALK"|"BUS"|"SUBWAY"|"GONDOLA", route:{shortName,longName,color}|null, intermediateStops, realTime }`
+- `GET /stops/1:{stopId}/arrival-times?locale={ka|en}&ignoreScheduledArrivalTimes=false` → `BusArrival[]`: `{ shortName, color, headsign, realtime, realtimeArrivalMinutes, scheduledArrivalMinutes }`
+- `GET /stops?locale={ka|en}` → `BusStop[]`: `{ id, code, name, lat, lon, vehicleMode }` (not used in v1)
 
 ## Global Constraints
 
 - Next.js 16: `params`/`searchParams` in page props are **Promises** — always `await`.
 - Import `Link`, `useRouter`, `redirect`, `usePathname` from `@/i18n/navigation`, **never** `next/navigation` (except `useParams`, which the codebase uses directly in client components).
-- All API routes touching `ttc-api` MUST declare `export const runtime = "nodejs"`.
+- All API routes calling the TTC API MUST declare `export const runtime = "nodejs"`.
 - i18n: add every new key to **all three** message files (`messages/en.json`, `messages/ka.json`, `messages/ru.json`) together.
-- `ttc-api` is **unofficial, no auth**. Every TTC call is wrapped with a 5s timeout and try/catch; on any failure return a typed `{ error }` and never throw to the page.
+- The TTC API is **unofficial** and geo-firewalled to Georgia. Every TTC `fetch` is wrapped with a 5s timeout and try/catch; on any failure return a typed `{ error }` and never throw to the page.
+- API key comes from `process.env.TTC_API_KEY`, falling back to the known public key. Never expose it to the browser (server-side routes only).
 - Keep the `/tickets` URL. Only the page title, heading, and nav label change to "Getting Around".
 - No data migration: tickets are bucketed by existing `TicketOption.type` (`"transit-pass"` → City Transportation; `"bus"`/`"rail"` → Travel from Tbilisi).
-- Server-side only for `ttc-api` and Nominatim — never call either from the browser.
+- Server-side only for the TTC API and Nominatim — never call either from the browser.
 
 ---
 
@@ -26,10 +41,10 @@
 | File | Responsibility |
 |------|----------------|
 | `src/types/transit.ts` | Typed shapes: `LatLng`, `GeocodeResult`, `JourneyLeg`, `JourneyPlan`, `Arrival`, `TransitError`. |
-| `src/lib/transit/client.ts` | Singleton `ttc` wrapper: locale mapping, 5s-timeout + try/catch helpers `planJourney`, `getArrivals`. The one swappable seam. |
-| `src/lib/transit/normalize.ts` | Pure function `normalizePlan(raw): JourneyPlan[]` — defensive conversion of TTC output. |
-| `src/lib/transit/normalize.test.ts` | `node:test` unit tests against a captured fixture. |
-| `src/lib/transit/__fixtures__/plan-sample.json` | Real captured `ttc.plan()` output (from probe script). |
+| `src/lib/transit/client.ts` | TTC `fetch` wrapper: base URL + `X-Api-Key`, locale mapping, 5s-timeout + try/catch helpers `planJourney`, `getArrivals`. The one swappable seam. |
+| `src/lib/transit/normalize.ts` | Pure function `normalizePlan(raw): JourneyPlan[]` — defensive conversion of the TTC `/plan` (`BusPlan`) response. |
+| `src/lib/transit/normalize.test.ts` | `node:test` unit tests against the fixture + defensive cases. |
+| `src/lib/transit/__fixtures__/plan-sample.json` | Representative TTC `/plan` response, hand-built from the confirmed `BusPlan` shape (see Task 1). |
 | `src/app/api/transit/geocode/route.ts` | `GET` Nominatim proxy, Tbilisi-biased, in-memory cache. |
 | `src/app/api/transit/plan/route.ts` | `POST` → `planJourney` → `normalizePlan`. |
 | `src/app/api/transit/arrivals/route.ts` | `GET` → `getArrivals`. |
@@ -37,80 +52,116 @@
 | `src/components/transit/journey-card.tsx` | One journey: leg timeline + live arrival badge. |
 | `src/components/site/getting-around.tsx` | Client wrapper: two sections (City Transportation / Travel from Tbilisi), mounts `TicketsSearch` + `RoutePlanner`. |
 | `src/app/[locale]/tickets/page.tsx` | Retitle "Getting Around"; render `GettingAround`. |
-| `scripts/probe-ttc-plan.ts` | Throwaway: call `ttc.plan()` live, print JSON to capture the fixture. |
+| `.env.local` / `.env.example` | `TTC_API_KEY` (server-only). |
 | `messages/{en,ka,ru}.json` | New `gettingAround` + `transit` namespaces. |
 
 ---
 
-## Task 1: Install dependency and probe the live TTC `plan()` shape
+## Task 1: Test script, env key, and TTC `/plan` fixture
+
+> **Context (why no live probe):** The original plan probed `ttc.plan()` live to capture the response shape. That is not possible: the `ttc-api` package is broken as published (ESM-interop bug), and the TTC API is geo-firewalled to Georgia (unreachable from this dev/CI environment). Instead, the exact `BusPlan` response shape is already **confirmed** from two independent sources — the `ttc-api@2.0.0` TypeScript definitions and the `MCP_TTC_public_transport` Python reference implementation (see the "Data source" section at the top of this plan). This task builds a representative fixture from that confirmed shape. We do **not** install `ttc-api`.
 
 **Files:**
-- Modify: `package.json` (add `ttc-api` dep + `test` script)
-- Create: `scripts/probe-ttc-plan.ts`
+- Modify: `package.json` (add `test` script — no new dependency)
+- Modify: `.env.local` (add `TTC_API_KEY`); create `.env.example` entry if that file exists
 - Create: `src/lib/transit/__fixtures__/plan-sample.json`
 
 **Interfaces:**
-- Produces: a captured JSON fixture that Task 3 (`normalize.ts`) and Task 4 (tests) design against.
+- Produces: a JSON fixture matching the TTC `/plan` `BusPlan` shape that Task 3 (`normalize.ts`) designs and tests against.
 
-- [ ] **Step 1: Install the package**
+- [ ] **Step 1: Add a test script to package.json**
 
-```bash
-npm install ttc-api
-```
-
-- [ ] **Step 2: Add a test script to package.json**
-
-In `package.json` `"scripts"`, add:
+In `package.json` `"scripts"`, add (no dependency install — `tsx` is already present):
 
 ```json
 "test": "node --import tsx --test \"src/**/*.test.ts\""
 ```
 
-- [ ] **Step 3: Write the probe script**
+- [ ] **Step 2: Add the TTC API key to env**
 
-Create `scripts/probe-ttc-plan.ts`:
+Append to `.env.local`:
 
-```ts
-import { ttc } from "ttc-api";
-
-// Rustaveli area -> Station Square area, real Tbilisi coordinates.
-async function main() {
-  ttc.setLocale("en");
-  const journey = await ttc.plan({
-    from: [41.6977, 44.8015],
-    to: [41.7297, 44.8010],
-    locale: "en",
-  });
-  console.log(JSON.stringify(journey, null, 2));
-
-  const stops = await ttc.stops();
-  console.log("STOPS_SAMPLE", JSON.stringify(stops?.slice?.(0, 2), null, 2));
-}
-
-main().catch((e) => {
-  console.error("PROBE_FAILED", e);
-  process.exit(1);
-});
+```
+TTC_API_KEY=c0a2f304-551a-4d08-b8df-2c53ecd57f9f
 ```
 
-- [ ] **Step 4: Run the probe and capture output**
+If a `.env.example` file exists in the repo, add `TTC_API_KEY=` to it too (empty value — the code falls back to the public key). If `.env.example` does not exist, do not create one.
 
-Run: `npx tsx scripts/probe-ttc-plan.ts`
+- [ ] **Step 3: Create the fixture from the confirmed `BusPlan` shape**
 
-Expected: JSON printed to stdout showing the journey structure (legs, stops, coordinates, times) and a 2-stop sample.
+Create `src/lib/transit/__fixtures__/plan-sample.json`. This mirrors a real TTC `/plan` response for a Rustaveli→Station Square trip: one itinerary, WALK → BUS → WALK. Field names/types are exactly those in the confirmed `BusPlan`/`Itinerary`/`Leg` shape (durations in **seconds**, distances in **metres**, `mode` uppercase, `route` non-null only on transit legs):
 
-- If it prints `PROBE_FAILED`, the unofficial API is down or changed. Stop and report — the rest of the plan depends on this shape. Do not fabricate a fixture.
+```json
+{
+  "from": { "lat": 41.6977, "lon": 44.8015, "name": "Origin" },
+  "to": { "lat": 41.7297, "lon": 44.801, "name": "Destination" },
+  "itineraries": [
+    {
+      "startTime": "2026-07-21T09:00:00.000Z",
+      "endTime": "2026-07-21T09:34:00.000Z",
+      "duration": 2040,
+      "walkTime": 540,
+      "walkDistance": 620,
+      "legs": [
+        {
+          "from": { "lat": 41.6977, "lon": 44.8015, "name": "Origin" },
+          "to": { "lat": 41.7005, "lon": 44.8009, "name": "Rustaveli Metro" },
+          "startTime": "2026-07-21T09:00:00.000Z",
+          "endTime": "2026-07-21T09:05:00.000Z",
+          "duration": 300,
+          "distance": 350,
+          "mode": "WALK",
+          "route": null,
+          "intermediateStops": null,
+          "realTime": false
+        },
+        {
+          "from": { "lat": 41.7005, "lon": 44.8009, "name": "Rustaveli Metro", "stopId": "1946" },
+          "to": { "lat": 41.7285, "lon": 44.8011, "name": "Station Square" },
+          "startTime": "2026-07-21T09:05:00.000Z",
+          "endTime": "2026-07-21T09:29:00.000Z",
+          "duration": 1440,
+          "distance": 3200,
+          "mode": "BUS",
+          "route": { "shortName": "37", "longName": "Rustaveli — Station Square", "color": "0033B4" },
+          "intermediateStops": [
+            { "id": "2001", "code": null, "name": "Kostava St", "lat": 41.71, "lon": 44.8, "vehicleMode": "BUS" }
+          ],
+          "realTime": true
+        },
+        {
+          "from": { "lat": 41.7285, "lon": 44.8011, "name": "Station Square" },
+          "to": { "lat": 41.7297, "lon": 44.801, "name": "Destination" },
+          "startTime": "2026-07-21T09:29:00.000Z",
+          "endTime": "2026-07-21T09:34:00.000Z",
+          "duration": 300,
+          "distance": 270,
+          "mode": "WALK",
+          "route": null,
+          "intermediateStops": null,
+          "realTime": false
+        }
+      ]
+    }
+  ]
+}
+```
 
-- [ ] **Step 5: Save the captured journey JSON as the fixture**
+> Note the boarding leg's `from.stopId` — the TTC `Leg.from` shape does not always include a stop id, so `normalizePlan` must treat `fromStopId` as optional (Task 3 handles this). This fixture includes it on the BUS leg so the arrivals path can be exercised.
 
-Copy the journey object (the first JSON block, before `STOPS_SAMPLE`) into `src/lib/transit/__fixtures__/plan-sample.json`. This is real data — do not hand-edit it.
+- [ ] **Step 4: Validate the fixture is well-formed JSON**
 
-- [ ] **Step 6: Commit**
+Run: `node -e "JSON.parse(require('fs').readFileSync('src/lib/transit/__fixtures__/plan-sample.json','utf8'));console.log('valid')"`
+Expected: prints `valid`.
+
+- [ ] **Step 5: Commit**
 
 ```bash
-git add package.json package-lock.json scripts/probe-ttc-plan.ts src/lib/transit/__fixtures__/plan-sample.json
-git commit -m "chore(transit): add ttc-api dep and capture live plan() fixture"
+git add package.json .env.example src/lib/transit/__fixtures__/plan-sample.json
+git commit -m "chore(transit): add test script, TTC_API_KEY env, and plan fixture"
 ```
+
+(`.env.local` is git-ignored and will not be committed — that is expected.)
 
 ---
 
@@ -122,15 +173,15 @@ git commit -m "chore(transit): add ttc-api dep and capture live plan() fixture"
 **Interfaces:**
 - Produces: `LatLng`, `GeocodeResult`, `LegMode`, `JourneyLeg`, `JourneyPlan`, `Arrival`, `TransitError` — consumed by Tasks 3, 5, 6, 7, 8.
 
-> **Note:** After Task 1's fixture is captured, adjust the *optional* fields below to match real data field names if they differ. The required fields and exported names must stay as written — later tasks depend on them.
+> **Note:** These are OUR normalized shapes (not the raw TTC shapes). The exported names and required fields must stay exactly as written — Tasks 3–10 depend on them.
 
 - [ ] **Step 1: Write the type file**
 
 Create `src/types/transit.ts`:
 
 ```ts
-// Server-normalized transit shapes. TTC's raw plan() output is undocumented;
-// normalizePlan() maps it into these. Keep field names stable — API routes and
+// Server-normalized transit shapes. normalizePlan() maps the TTC /plan
+// (BusPlan) response into these. Keep field names stable — API routes and
 // UI components import these directly.
 
 export type LatLng = [number, number]; // [latitude, longitude]
@@ -198,7 +249,9 @@ git commit -m "feat(transit): add normalized transit type definitions"
 
 - [ ] **Step 1: Write the failing tests**
 
-Create `src/lib/transit/normalize.test.ts`. Adjust the fixture-shape assertions in the FIRST test to match the real captured JSON's top-level structure; the defensive tests below stay as written:
+Create `src/lib/transit/normalize.test.ts`:
+
+The TTC `/plan` response is a `BusPlan`: `{ from, to, itineraries: Itinerary[] }`, each itinerary `{ duration /*sec*/, legs: Leg[] }`, each leg `{ mode: "WALK"|"BUS"|"SUBWAY"|"GONDOLA", duration /*sec*/, distance /*m*/, from:{name,stopId?}, to:{name}, route:{shortName,longName,color}|null }`. `normalizePlan` maps that into `JourneyPlan[]`, converting seconds→minutes and uppercase modes→our `LegMode`.
 
 ```ts
 import { test } from "node:test";
@@ -206,19 +259,30 @@ import assert from "node:assert/strict";
 import { normalizePlan } from "./normalize";
 import sample from "./__fixtures__/plan-sample.json";
 
-test("normalizes the real captured plan() fixture into JourneyPlan[]", () => {
+test("normalizes the BusPlan fixture into JourneyPlan[]", () => {
   const plans = normalizePlan(sample);
-  assert.ok(Array.isArray(plans), "returns an array");
-  assert.ok(plans.length > 0, "produces at least one plan");
+  assert.equal(plans.length, 1, "one itinerary → one plan");
   const first = plans[0];
-  assert.ok(typeof first.id === "string" && first.id.length > 0, "plan has an id");
-  assert.ok(Array.isArray(first.legs) && first.legs.length > 0, "plan has legs");
-  for (const leg of first.legs) {
-    assert.ok(
-      ["walk", "bus", "metro", "unknown"].includes(leg.mode),
-      `leg mode is a known value, got ${leg.mode}`
-    );
-  }
+  assert.equal(first.id, "plan-0");
+  assert.equal(first.durationMin, 34, "2040s → 34min");
+  assert.equal(first.legs.length, 3, "walk/bus/walk");
+  assert.deepEqual(first.legs.map((l) => l.mode), ["walk", "bus", "walk"]);
+});
+
+test("maps the BUS leg's route, stops, and stopId", () => {
+  const busLeg = normalizePlan(sample)[0].legs[1];
+  assert.equal(busLeg.mode, "bus");
+  assert.equal(busLeg.line, "37", "route.shortName → line");
+  assert.equal(busLeg.fromStop, "Rustaveli Metro");
+  assert.equal(busLeg.toStop, "Station Square");
+  assert.equal(busLeg.fromStopId, "1946", "from.stopId → fromStopId");
+  assert.equal(busLeg.durationMin, 24, "1440s → 24min");
+  assert.equal(busLeg.distanceM, 3200);
+});
+
+test("maps SUBWAY mode to 'metro'", () => {
+  const raw = { itineraries: [{ duration: 60, legs: [{ mode: "SUBWAY", duration: 60 }] }] };
+  assert.equal(normalizePlan(raw)[0].legs[0].mode, "metro");
 });
 
 test("returns [] for null / non-object input without throwing", () => {
@@ -228,23 +292,36 @@ test("returns [] for null / non-object input without throwing", () => {
   assert.deepEqual(normalizePlan("nope"), []);
 });
 
-test("maps unknown leg types to mode 'unknown' instead of throwing", () => {
-  const raw = { plans: [{ legs: [{ mode: "teleport" }] }] };
+test("returns [] when itineraries is missing or not an array", () => {
+  assert.deepEqual(normalizePlan({}), []);
+  assert.deepEqual(normalizePlan({ itineraries: "no" }), []);
+});
+
+test("maps unknown leg modes to 'unknown' instead of throwing", () => {
+  const raw = { itineraries: [{ duration: 10, legs: [{ mode: "TELEPORT", duration: 10 }] }] };
   const out = normalizePlan(raw);
   assert.equal(out.length, 1);
   assert.equal(out[0].legs[0].mode, "unknown");
 });
 
-test("skips malformed legs but keeps the plan", () => {
-  const raw = { plans: [{ legs: [null, { mode: "walk" }, 5] }] };
+test("skips malformed legs but keeps the itinerary", () => {
+  const raw = { itineraries: [{ duration: 10, legs: [null, { mode: "WALK", duration: 60 }, 5] }] };
   const out = normalizePlan(raw);
   assert.equal(out.length, 1);
   assert.equal(out[0].legs.length, 1);
   assert.equal(out[0].legs[0].mode, "walk");
 });
 
-test("assigns stable ids per plan index", () => {
-  const raw = { plans: [{ legs: [{ mode: "walk" }] }, { legs: [{ mode: "bus" }] }] };
+test("drops itineraries whose legs are all malformed", () => {
+  const raw = { itineraries: [{ duration: 10, legs: [null, 3] }] };
+  assert.deepEqual(normalizePlan(raw), []);
+});
+
+test("assigns stable ids per itinerary index", () => {
+  const raw = { itineraries: [
+    { duration: 10, legs: [{ mode: "WALK", duration: 10 }] },
+    { duration: 20, legs: [{ mode: "BUS", duration: 20 }] },
+  ] };
   const out = normalizePlan(raw);
   assert.equal(out[0].id, "plan-0");
   assert.equal(out[1].id, "plan-1");
@@ -258,17 +335,19 @@ Expected: FAIL — `Cannot find module './normalize'`.
 
 - [ ] **Step 3: Write the implementation**
 
-Create `src/lib/transit/normalize.ts`. The `readPlansArray`, `readLegsArray`, and field-mapping lines marked `// FIXTURE:` must be reconciled with the real captured JSON key names from Task 1 (the raw API may use `itineraries`/`segments` etc. instead of `plans`/`legs`):
+Create `src/lib/transit/normalize.ts`. This maps the confirmed `BusPlan` shape — no guessing of container keys:
 
 ```ts
 import type { JourneyPlan, JourneyLeg, LegMode } from "@/types/transit";
 
+const SECONDS_PER_MIN = 60;
+
 function toMode(raw: unknown): LegMode {
-  const s = String(raw ?? "").toLowerCase();
-  if (s.includes("walk") || s.includes("foot")) return "walk";
-  if (s.includes("metro") || s.includes("subway") || s.includes("rail")) return "metro";
-  if (s.includes("bus")) return "bus";
-  return "unknown";
+  const s = String(raw ?? "").toUpperCase();
+  if (s === "WALK") return "walk";
+  if (s === "BUS") return "bus";
+  if (s === "SUBWAY" || s === "METRO") return "metro";
+  return "unknown"; // GONDOLA and anything unrecognized
 }
 
 function num(v: unknown): number | undefined {
@@ -279,48 +358,47 @@ function str(v: unknown): string | undefined {
   return typeof v === "string" && v.length > 0 ? v : undefined;
 }
 
+function secToMin(v: unknown): number | undefined {
+  const n = num(v);
+  return n === undefined ? undefined : Math.round(n / SECONDS_PER_MIN);
+}
+
+function asObj(v: unknown): Record<string, unknown> | null {
+  return v && typeof v === "object" ? (v as Record<string, unknown>) : null;
+}
+
 function normalizeLeg(raw: unknown): JourneyLeg | null {
-  if (!raw || typeof raw !== "object") return null;
-  const r = raw as Record<string, unknown>;
+  const r = asObj(raw);
+  if (!r) return null;
+  const from = asObj(r.from);
+  const to = asObj(r.to);
+  const route = asObj(r.route);
   return {
-    mode: toMode(r.mode ?? r.type ?? r.vehicleType), // FIXTURE: confirm key
-    line: str(r.line ?? r.route ?? r.shortName),      // FIXTURE: confirm key
-    fromStop: str(r.fromStop ?? r.from),              // FIXTURE: confirm key
-    toStop: str(r.toStop ?? r.to),                    // FIXTURE: confirm key
-    fromStopId: str(r.fromStopId ?? r.stopId),        // FIXTURE: confirm key
-    durationMin: num(r.durationMin ?? r.duration),    // FIXTURE: confirm key
-    distanceM: num(r.distanceM ?? r.distance),        // FIXTURE: confirm key
+    mode: toMode(r.mode),
+    line: route ? str(route.shortName) : undefined,
+    fromStop: from ? str(from.name) : undefined,
+    toStop: to ? str(to.name) : undefined,
+    fromStopId: from ? str(from.stopId) : undefined,
+    durationMin: secToMin(r.duration),
+    distanceM: num(r.distance),
   };
 }
 
-function readPlansArray(raw: Record<string, unknown>): unknown[] {
-  // FIXTURE: confirm the container key. Try common shapes, else wrap single.
-  const candidates = [raw.plans, raw.itineraries, raw.routes, raw.results];
-  for (const c of candidates) if (Array.isArray(c)) return c;
-  return [raw]; // single plan returned bare
-}
-
-function readLegsArray(plan: Record<string, unknown>): unknown[] {
-  const candidates = [plan.legs, plan.segments, plan.steps];
-  for (const c of candidates) if (Array.isArray(c)) return c;
-  return [];
-}
-
 export function normalizePlan(raw: unknown): JourneyPlan[] {
-  if (!raw || typeof raw !== "object") return [];
-  const rawPlans = readPlansArray(raw as Record<string, unknown>);
+  const root = asObj(raw);
+  if (!root || !Array.isArray(root.itineraries)) return [];
 
   const plans: JourneyPlan[] = [];
-  rawPlans.forEach((p, i) => {
-    if (!p || typeof p !== "object") return;
-    const pr = p as Record<string, unknown>;
-    const legs = readLegsArray(pr)
+  root.itineraries.forEach((it, i) => {
+    const itin = asObj(it);
+    if (!itin || !Array.isArray(itin.legs)) return;
+    const legs = itin.legs
       .map(normalizeLeg)
       .filter((l): l is JourneyLeg => l !== null);
     if (legs.length === 0) return;
     plans.push({
       id: `plan-${i}`,
-      durationMin: num(pr.durationMin ?? pr.duration),
+      durationMin: secToMin(itin.duration),
       legs,
     });
   });
@@ -331,7 +409,7 @@ export function normalizePlan(raw: unknown): JourneyPlan[] {
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `npm test`
-Expected: PASS (all normalize tests). If the fixture test fails on structure, fix the `// FIXTURE:` key names to match the real JSON — do not weaken the assertions.
+Expected: PASS (all normalize tests).
 
 - [ ] **Step 5: Commit**
 
@@ -342,7 +420,7 @@ git commit -m "feat(transit): add defensive normalizePlan with unit tests"
 
 ---
 
-## Task 4: Write the `ttc-api` client wrapper
+## Task 4: Write the TTC `fetch` client wrapper
 
 **Files:**
 - Create: `src/lib/transit/client.ts`
@@ -354,31 +432,32 @@ git commit -m "feat(transit): add defensive normalizePlan with unit tests"
   - `getArrivals(stopId: string, locale: string): Promise<Arrival[] | null>` (null = failure)
   - Consumed by Task 6 and Task 7.
 
+This calls the TTC API directly via `fetch` (see the "Data source" section for the exact endpoints/params). No `ttc-api` import — that package is broken. `AbortSignal.timeout(5000)` provides the 5s guard.
+
 - [ ] **Step 1: Write the wrapper**
 
 Create `src/lib/transit/client.ts`:
 
 ```ts
-import { ttc } from "ttc-api";
 import type { LatLng, Arrival, JourneyPlan } from "@/types/transit";
 import { normalizePlan } from "./normalize";
 
+const BASE = "https://transit.ttc.com.ge/pis-gateway/api/v2";
+const API_KEY = process.env.TTC_API_KEY || "c0a2f304-551a-4d08-b8df-2c53ecd57f9f";
 const TIMEOUT_MS = 5000;
 
 function ttcLocale(locale: string): "ka" | "en" {
   return locale === "ka" ? "ka" : "en"; // ru falls back to en
 }
 
-async function withTimeout<T>(p: Promise<T>): Promise<T> {
-  let timer: ReturnType<typeof setTimeout>;
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error("ttc_timeout")), TIMEOUT_MS);
+async function ttcGet(path: string, params: Record<string, string>): Promise<unknown> {
+  const url = `${BASE}${path}?${new URLSearchParams(params)}`;
+  const res = await fetch(url, {
+    headers: { "X-Api-Key": API_KEY },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
   });
-  try {
-    return await Promise.race([p, timeout]);
-  } finally {
-    clearTimeout(timer!);
-  }
+  if (!res.ok) throw new Error(`ttc_http_${res.status}`);
+  return res.json();
 }
 
 export async function planJourney(
@@ -387,8 +466,14 @@ export async function planJourney(
   locale: string
 ): Promise<JourneyPlan[] | null> {
   try {
-    const loc = ttcLocale(locale);
-    const raw = await withTimeout(ttc.plan({ from, to, locale: loc }));
+    const raw = await ttcGet("/plan", {
+      fromPlace: `${from[0]},${from[1]}`,
+      toPlace: `${to[0]},${to[1]}`,
+      departMode: "leaveNow",
+      modes: "WALK,BUS",
+      optimize: "quick",
+      locale: ttcLocale(locale),
+    });
     return normalizePlan(raw);
   } catch (e) {
     console.error("[transit] planJourney failed:", e);
@@ -401,10 +486,15 @@ function normalizeArrivals(raw: unknown): Arrival[] {
   return raw
     .filter((a): a is Record<string, unknown> => !!a && typeof a === "object")
     .map((a) => ({
-      line: typeof a.line === "string" ? a.line : undefined,
-      minutes: typeof a.minutes === "number" ? a.minutes : undefined,
-      realtime: a.realtime !== false,
-      destination: typeof a.destination === "string" ? a.destination : undefined,
+      line: typeof a.shortName === "string" ? a.shortName : undefined,
+      minutes:
+        typeof a.realtimeArrivalMinutes === "number"
+          ? a.realtimeArrivalMinutes
+          : typeof a.scheduledArrivalMinutes === "number"
+            ? a.scheduledArrivalMinutes
+            : undefined,
+      realtime: a.realtime === true,
+      destination: typeof a.headsign === "string" ? a.headsign : undefined,
     }));
 }
 
@@ -413,8 +503,10 @@ export async function getArrivals(
   locale: string
 ): Promise<Arrival[] | null> {
   try {
-    const loc = ttcLocale(locale);
-    const raw = await withTimeout(ttc.arrivalTimes({ stopId, locale: loc }));
+    const raw = await ttcGet(`/stops/1:${stopId}/arrival-times`, {
+      locale: ttcLocale(locale),
+      ignoreScheduledArrivalTimes: "false",
+    });
     return normalizeArrivals(raw);
   } catch (e) {
     console.error("[transit] getArrivals failed:", e);
@@ -422,8 +514,6 @@ export async function getArrivals(
   }
 }
 ```
-
-> **Note:** After Task 1's probe, reconcile the `normalizeArrivals` field names (`line`/`minutes`/`realtime`/`destination`) with the `arrivalTimes()` sample if they differ.
 
 - [ ] **Step 2: Typecheck**
 
@@ -434,7 +524,7 @@ Expected: PASS.
 
 ```bash
 git add src/lib/transit/client.ts
-git commit -m "feat(transit): add timeout-guarded ttc-api client wrapper"
+git commit -m "feat(transit): add timeout-guarded TTC fetch client wrapper"
 ```
 
 ---
@@ -1261,7 +1351,7 @@ git commit -m "test(transit): end-to-end verification adjustments"
 **Spec coverage:**
 - Goal (plan A→B + arrivals) → Tasks 3–9. ✅
 - Page restructure (Getting Around, City / From sections, bucket by type, keep URL) → Task 10. ✅
-- Data source `ttc-api`, no key, server-side → Tasks 1, 4. ✅
+- Data source: TTC API direct via fetch (ttc-api pkg dropped as broken), key in env, server-side → Tasks 1, 4. ✅
 - Approach A thin proxy → Tasks 4–7. ✅
 - 3 API routes (geocode/plan/arrivals) → Tasks 5, 6, 7. ✅
 - `client.ts` swappable seam + 5s timeout → Task 4. ✅
@@ -1272,9 +1362,9 @@ git commit -m "test(transit): end-to-end verification adjustments"
 - Error handling: 5s timeout, typed error, graceful UI, defensive normalize → Tasks 3,4,6,7,8; failure path Task 11. ✅
 - i18n `transit` + `gettingAround` in all 3 files, ka/en/ru→en locale mapping → Tasks 8, 10, 4. ✅
 - Testing: normalize unit tests, no live CI calls → Task 3; manual smoke Tasks 5,6,7,11. ✅
-- First step = probe live pl() shape → Task 1. ✅
+- First step = establish confirmed /plan shape + fixture (live probe impossible: broken pkg + geo firewall) → Task 1. ✅
 - YAGNI cuts (no saved routes/fares/caching) → honored, none added. ✅
 
-**Placeholder scan:** `// FIXTURE:` markers are intentional reconciliation points tied to Task 1's real capture, each with concrete fallback code — not placeholders. No TBD/TODO left.
+**Placeholder scan:** No TBD/TODO/placeholder markers. Task 1's fixture and Task 3's normalize are concrete against the confirmed `BusPlan` shape (no `// FIXTURE:` reconciliation markers remain).
 
 **Type consistency:** `normalizePlan(raw: unknown): JourneyPlan[]`, `planJourney → JourneyPlan[] | null`, `getArrivals → Arrival[] | null`, `<JourneyCard plan={} locale={} />`, `<RoutePlanner />`, `<GettingAround tickets={} />` — names/signatures match across Tasks 2–10.
