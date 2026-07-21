@@ -33,7 +33,9 @@ function useArrivals(stopId: string | undefined, locale: string) {
 
 export function JourneyCard({ plan, locale }: { plan: JourneyPlan; locale: string }) {
   const t = useTranslations("transit");
-  const firstTransit = plan.legs.find((l) => l.mode === "bus" || l.mode === "metro");
+  const firstTransit = plan.legs.find(
+    (l) => (l.mode === "bus" || l.mode === "metro") && l.fromStopId
+  );
   const arrivals = useArrivals(firstTransit?.fromStopId, locale);
   const nextMin = arrivals?.find((a) => typeof a.minutes === "number")?.minutes;
 
