@@ -137,6 +137,24 @@
     "routesFound": "routes found",
     "redirecting": "Redirecting to payment…"
   },
+  "transit": {
+    "planTitle": "Plan a route",
+    "planSubtitle": "Get public-transport directions across Tbilisi.",
+    "fromPlaceholder": "From — e.g. Rustaveli Avenue",
+    "toPlaceholder": "To — e.g. Freedom Square",
+    "swap": "Swap",
+    "plan": "Get directions",
+    "planning": "Finding routes…",
+    "noResults": "No routes found. Try nearby landmarks.",
+    "unavailable": "Live transit data is temporarily unavailable. Try again later or use the TTC app.",
+    "walk": "Walk",
+    "bus": "Bus",
+    "metro": "Metro",
+    "transfer": "Transfer",
+    "nextArrival": "Next in {min} min",
+    "scheduled": "Scheduled",
+    "min": "min"
+  },
   "deals": {
     "eyebrow": "Exclusive Offers",
     "heading": "Best",
