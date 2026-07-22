@@ -184,7 +184,8 @@
     "mapHint": "Select a route to preview it on the map.",
     "followMe": "Follow me",
     "stopFollowing": "Stop following",
-    "recenter": "Recenter"
+    "recenter": "Recenter",
+    "myLocation": "My location"
   },
   "deals": {
     "eyebrow": "Exclusive Offers",
