@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import type { JourneyPlan, JourneyLeg, LatLng } from "@/types/transit";
+import type { Coords } from "@/hooks/use-geolocation";
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 const TBILISI: LatLng = [41.7151, 44.8271];
@@ -24,9 +25,18 @@ function planPoints(plan: JourneyPlan): LatLng[] {
 }
 
 // ── Mapbox GL ────────────────────────────────────────────────────────────────
-function MapboxJourney({ plan }: { plan: JourneyPlan | null }) {
+function MapboxJourney({
+  plan,
+  userCoords,
+  recenterTick,
+}: {
+  plan: JourneyPlan | null;
+  userCoords: Coords | null;
+  recenterTick: number;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("mapbox-gl").Map | null>(null);
+  const userMarkerRef = useRef<import("mapbox-gl").Marker | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -109,6 +119,34 @@ function MapboxJourney({ plan }: { plan: JourneyPlan | null }) {
     return () => { cancelled = true; };
   }, [plan]);
 
+  // Live visitor dot — updates in place as coords change, without redrawing the route.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !userCoords) return;
+    let cancelled = false;
+    (async () => {
+      const mapboxgl = (await import("mapbox-gl")).default;
+      if (cancelled || !mapRef.current) return;
+      if (!userMarkerRef.current) {
+        const el = document.createElement("div");
+        el.className = "journey-user-dot";
+        el.style.cssText =
+          "width:18px;height:18px;border-radius:9999px;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 4px rgba(37,99,235,.25);";
+        userMarkerRef.current = new mapboxgl.Marker({ element: el });
+      }
+      userMarkerRef.current.setLngLat([userCoords.lng, userCoords.lat]).addTo(mapRef.current);
+    })();
+    return () => { cancelled = true; };
+  }, [userCoords]);
+
+  // Manual recenter: pan to the dot only when the tick changes (button press).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !userCoords || recenterTick === 0) return;
+    map.easeTo({ center: [userCoords.lng, userCoords.lat], zoom: 15, duration: 500 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recenterTick]);
+
   useEffect(() => () => { mapRef.current?.remove(); mapRef.current = null; }, []);
 
   return <div ref={containerRef} className="h-full w-full" />;
@@ -128,10 +166,19 @@ function addDot(
 }
 
 // ── Leaflet fallback ───────────────────────────────────────────────────────────
-function LeafletJourney({ plan }: { plan: JourneyPlan | null }) {
+function LeafletJourney({
+  plan,
+  userCoords,
+  recenterTick,
+}: {
+  plan: JourneyPlan | null;
+  userCoords: Coords | null;
+  recenterTick: number;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const layersRef = useRef<import("leaflet").Layer[]>([]);
+  const userLayerRef = useRef<import("leaflet").Layer | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -188,6 +235,31 @@ function LeafletJourney({ plan }: { plan: JourneyPlan | null }) {
     return () => { cancelled = true; };
   }, [plan]);
 
+  useEffect(() => {
+    if (!mapRef.current || !userCoords) return;
+    let cancelled = false;
+    (async () => {
+      const L = (await import("leaflet")).default;
+      if (cancelled || !mapRef.current) return;
+      if (userLayerRef.current) userLayerRef.current.remove();
+      userLayerRef.current = L.circleMarker([userCoords.lat, userCoords.lng], {
+        radius: 8,
+        color: "#fff",
+        weight: 3,
+        fillColor: "#2563eb",
+        fillOpacity: 1,
+      }).addTo(mapRef.current);
+    })();
+    return () => { cancelled = true; };
+  }, [userCoords]);
+
+  // Leaflet has no easeTo — setView with animate is the pan-to equivalent.
+  useEffect(() => {
+    if (!mapRef.current || !userCoords || recenterTick === 0) return;
+    mapRef.current.setView([userCoords.lat, userCoords.lng], 15, { animate: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recenterTick]);
+
   useEffect(() => () => { mapRef.current?.remove(); mapRef.current = null; }, []);
 
   return <div ref={containerRef} className="h-full w-full" />;
@@ -205,7 +277,17 @@ function dot(L: typeof import("leaflet"), map: import("leaflet").Map, pos: LatLn
 
 const Impl = TOKEN ? MapboxJourney : LeafletJourney;
 
-export function JourneyMap({ plan }: { plan: JourneyPlan | null }) {
+export function JourneyMap({
+  plan,
+  userCoords = null,
+  tracking = false,
+  recenterTick = 0,
+}: {
+  plan: JourneyPlan | null;
+  userCoords?: Coords | null;
+  tracking?: boolean;
+  recenterTick?: number;
+}) {
   const t = useTranslations("transit");
   const hasRoute = !!plan && planPoints(plan).length >= 2;
 
@@ -216,10 +298,10 @@ export function JourneyMap({ plan }: { plan: JourneyPlan | null }) {
     >
       {/* Persistent map — keeps the Tbilisi overview until a route is chosen.
           A stable key means the map instance survives; only the drawn route swaps. */}
-      <Impl plan={hasRoute ? plan : null} />
+      <Impl plan={hasRoute ? plan : null} userCoords={userCoords} recenterTick={recenterTick} />
 
       {/* Idle hint floats over the live overview map. */}
-      {!hasRoute && (
+      {!hasRoute && !tracking && (
         <div className="pointer-events-none absolute inset-x-3 bottom-3 flex justify-center">
           <span
             className="rounded-full px-4 py-2 text-[13px] font-medium shadow-lg backdrop-blur"

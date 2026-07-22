@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useRef, useCallback, useId } from "react";
+import { useState, useEffect, useRef, useCallback, useId } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowDownUp, MapPin, Search, Route, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { ArrowDownUp, MapPin, Search, Route, Loader2, Crosshair, LocateFixed } from "lucide-react";
 import type { GeocodeResult, JourneyPlan } from "@/types/transit";
+import { useGeolocation } from "@/hooks/use-geolocation";
 import { JourneyCard } from "./journey-card";
 import { JourneyMap } from "./journey-map";
 
@@ -32,9 +34,17 @@ function useGeocode() {
 
 export function RoutePlanner() {
   const t = useTranslations("transit");
+  const tMap = useTranslations("map");
   const params = useParams();
   const locale = typeof params?.locale === "string" ? params.locale : "en";
   const listId = useId();
+
+  const { coords: userCoords, tracking, error: geoError, watch, stop } = useGeolocation();
+  const [recenterTick, setRecenterTick] = useState(0);
+
+  useEffect(() => {
+    if (geoError) toast.error(tMap(geoError));
+  }, [geoError, tMap]);
 
   const [fromText, setFromText] = useState("");
   const [toText, setToText] = useState("");
@@ -240,8 +250,39 @@ export function RoutePlanner() {
 
       {/* ── Right: map (sticky on desktop) ── */}
       <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-        <div className="h-[420px] lg:h-[calc(100vh-8rem)]">
-          <JourneyMap plan={selectedPlan} />
+        <div className="relative h-[420px] lg:h-[calc(100vh-8rem)]">
+          <JourneyMap
+            plan={selectedPlan}
+            userCoords={userCoords}
+            tracking={tracking}
+            recenterTick={recenterTick}
+          />
+          <div className="absolute right-3 top-3 z-20 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={tracking ? stop : watch}
+              className="flex items-center gap-2 rounded-full px-3 py-2 text-[13px] font-medium shadow-lg backdrop-blur transition-colors"
+              style={{
+                background: tracking ? "#0891B2" : "var(--site-header-bg)",
+                border: "1px solid var(--site-border-10)",
+                color: tracking ? "#fff" : "var(--site-text-65)",
+              }}
+            >
+              <Crosshair className="size-3.5" />
+              {tracking ? t("stopFollowing") : t("followMe")}
+            </button>
+            {tracking && userCoords && (
+              <button
+                type="button"
+                onClick={() => setRecenterTick((n) => n + 1)}
+                className="flex items-center gap-2 rounded-full px-3 py-2 text-[13px] font-medium shadow-lg backdrop-blur transition-colors"
+                style={{ background: "var(--site-header-bg)", border: "1px solid var(--site-border-10)", color: "var(--site-text-65)" }}
+              >
+                <LocateFixed className="size-3.5" />
+                {t("recenter")}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
