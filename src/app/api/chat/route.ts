@@ -352,8 +352,8 @@ export async function POST(req: NextRequest) {
             await writer.write(sse({ type: "done", text: transitFallback }));
           } else {
             const [fromHits, toHits] = await Promise.all([
-              geocodeTbilisi(from),
-              geocodeTbilisi(to),
+              geocodeTbilisi(from, locale),
+              geocodeTbilisi(to, locale),
             ]);
             const fromHit = fromHits[0];
             const toHit = toHits[0];

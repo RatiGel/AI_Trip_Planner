@@ -5,6 +5,11 @@ const TBILISI_VIEWBOX = "44.60,41.85,45.00,41.60";
 const cache = new Map<string, { at: number; data: GeocodeResult[] }>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
+// Map a site locale to a Nominatim accept-language code. Unknown → English.
+function normalizeLang(locale: string): string {
+  return locale === "ka" || locale === "ru" || locale === "en" ? locale : "en";
+}
+
 /**
  * Geocode a free-text query, biased to the Tbilisi bounding box, via Nominatim.
  * Returns up to 5 hits (top first). Never throws — network/parse failures yield
@@ -12,22 +17,27 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
  *
  * Shared by the /api/transit/geocode route and the chat plan_transit tool.
  */
-export async function geocodeTbilisi(query: string): Promise<GeocodeResult[]> {
+export async function geocodeTbilisi(query: string, locale = "en"): Promise<GeocodeResult[]> {
   const q = query.trim();
   if (q.length < 3) return [];
 
-  const key = q.toLowerCase();
+  const lang = normalizeLang(locale);
+  const key = `${lang}:${q.toLowerCase()}`;
   const hit = cache.get(key);
   const now = Date.now();
   if (hit && now - hit.at < CACHE_TTL_MS) return hit.data;
 
   const url =
     `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5` +
+    `&accept-language=${lang}` +
     `&viewbox=${TBILISI_VIEWBOX}&bounded=1&q=${encodeURIComponent(q)}`;
 
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": "AI-Trip-Planner/1.0 (tbilisi transit planner)" },
+      headers: {
+        "User-Agent": "AI-Trip-Planner/1.0 (tbilisi transit planner)",
+        "Accept-Language": lang,
+      },
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return [];
@@ -54,19 +64,24 @@ const reverseCache = new Map<string, { at: number; data: GeocodeResult | null }>
  * Never throws: network/parse failure or no match yields null. Cached
  * in-process for 5 minutes, keyed on coords rounded to 5 decimals.
  */
-export async function reverseGeocode(lat: number, lng: number): Promise<GeocodeResult | null> {
-  const key = `${lat.toFixed(5)},${lng.toFixed(5)}`;
+export async function reverseGeocode(lat: number, lng: number, locale = "en"): Promise<GeocodeResult | null> {
+  const lang = normalizeLang(locale);
+  const key = `${lang}:${lat.toFixed(5)},${lng.toFixed(5)}`;
   const now = Date.now();
   const hit = reverseCache.get(key);
   if (hit && now - hit.at < CACHE_TTL_MS) return hit.data;
 
   const url =
     `https://nominatim.openstreetmap.org/reverse?format=jsonv2` +
+    `&accept-language=${lang}` +
     `&lat=${lat}&lon=${lng}`;
 
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": "AI-Trip-Planner/1.0 (tbilisi transit planner)" },
+      headers: {
+        "User-Agent": "AI-Trip-Planner/1.0 (tbilisi transit planner)",
+        "Accept-Language": lang,
+      },
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return null;

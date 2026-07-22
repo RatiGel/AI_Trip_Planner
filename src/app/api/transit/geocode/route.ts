@@ -5,6 +5,7 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams;
+  const locale = params.get("locale") ?? "en";
   const latRaw = params.get("lat");
   const lngRaw = params.get("lng");
 
@@ -13,13 +14,13 @@ export async function GET(req: NextRequest) {
     const lat = parseFloat(latRaw);
     const lng = parseFloat(lngRaw);
     if (Number.isFinite(lat) && Number.isFinite(lng)) {
-      const result = await reverseGeocode(lat, lng);
+      const result = await reverseGeocode(lat, lng, locale);
       return NextResponse.json(result);
     }
   }
 
   // Forward geocode (existing behavior).
   const q = params.get("q")?.trim() ?? "";
-  const data = await geocodeTbilisi(q);
+  const data = await geocodeTbilisi(q, locale);
   return NextResponse.json(data);
 }

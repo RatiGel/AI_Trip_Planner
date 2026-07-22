@@ -12,7 +12,7 @@ import { JourneyMap } from "./journey-map";
 
 type Field = "from" | "to";
 
-function useGeocode() {
+function useGeocode(locale: string) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const search = useCallback((q: string, cb: (r: GeocodeResult[]) => void) => {
     if (timer.current) clearTimeout(timer.current);
@@ -22,13 +22,13 @@ function useGeocode() {
     }
     timer.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/transit/geocode?q=${encodeURIComponent(q)}`);
+        const res = await fetch(`/api/transit/geocode?q=${encodeURIComponent(q)}&locale=${locale}`);
         cb(res.ok ? await res.json() : []);
       } catch {
         cb([]);
       }
     }, 400);
-  }, []);
+  }, [locale]);
   return search;
 }
 
@@ -60,7 +60,7 @@ export function RoutePlanner() {
   const [error, setError] = useState(false);
   const [fromLocating, setFromLocating] = useState(false);
 
-  const geocode = useGeocode();
+  const geocode = useGeocode(locale);
 
   const selectedPlan = plans?.find((p) => p.id === selectedId) ?? null;
 
@@ -95,7 +95,7 @@ export function RoutePlanner() {
         const { latitude: lat, longitude: lng } = pos.coords;
         let result: GeocodeResult | null = null;
         try {
-          const res = await fetch(`/api/transit/geocode?lat=${lat}&lng=${lng}`);
+          const res = await fetch(`/api/transit/geocode?lat=${lat}&lng=${lng}&locale=${locale}`);
           if (res.ok) result = (await res.json()) as GeocodeResult | null;
         } catch {
           result = null;
