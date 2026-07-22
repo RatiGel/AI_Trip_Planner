@@ -73,8 +73,13 @@ export function useGeolocation() {
       onPosition,
       (err) => {
         setError(errorKey(err.code));
-        clearWatch();
-        setTracking(false);
+        // Only PERMISSION_DENIED is fatal. POSITION_UNAVAILABLE / TIMEOUT are
+        // transient (signal blip, tunnel) — watchPosition keeps retrying, so
+        // leave the watch alive and let the next good fix clear the error.
+        if (err.code === 1) {
+          clearWatch();
+          setTracking(false);
+        }
       },
       OPTIONS,
     );
