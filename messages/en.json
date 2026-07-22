@@ -96,7 +96,14 @@
     "filters": "Filters",
     "openNow": "Open now",
     "distance": "Distance",
-    "showList": "Show list"
+    "showList": "Show list",
+    "locating": "Locating…",
+    "yourLocation": "Your location",
+    "kmAway": "{value} km away",
+    "mAway": "{value} m away",
+    "geoDenied": "Location permission denied. Enable it in your browser to use this.",
+    "geoUnavailable": "Location is unavailable on this device or connection.",
+    "geoTimeout": "Locating timed out. Try again."
   },
   "trips": {
     "title": "My Trips",
@@ -174,7 +181,10 @@
     "noResultsHint": "No transit routes between these points. Try nearby stops or landmarks.",
     "idleTitle": "Plan your trip",
     "idleHint": "Enter a start and destination to see public-transport routes across Tbilisi.",
-    "mapHint": "Select a route to preview it on the map."
+    "mapHint": "Select a route to preview it on the map.",
+    "followMe": "Follow me",
+    "stopFollowing": "Stop following",
+    "recenter": "Recenter"
   },
   "deals": {
     "eyebrow": "Exclusive Offers",
