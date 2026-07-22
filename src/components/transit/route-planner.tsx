@@ -58,6 +58,7 @@ export function RoutePlanner() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [fromLocating, setFromLocating] = useState(false);
 
   const geocode = useGeocode();
 
@@ -79,6 +80,39 @@ export function RoutePlanner() {
   function swap() {
     setFromText(toText); setToText(fromText);
     setFromSel(toSel); setToSel(fromSel);
+  }
+
+  // One-shot: fill the From field from the device location, reverse-geocoded.
+  // Independent of the live-tracking hook — this needs a single fix, once.
+  function fillFromWithMyLocation() {
+    if (!("geolocation" in navigator)) {
+      toast.error(tMap("geoUnavailable"));
+      return;
+    }
+    setFromLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        let result: GeocodeResult | null = null;
+        try {
+          const res = await fetch(`/api/transit/geocode?lat=${lat}&lng=${lng}`);
+          if (res.ok) result = (await res.json()) as GeocodeResult | null;
+        } catch {
+          result = null;
+        }
+        const filled: GeocodeResult = result ?? { label: t("myLocation"), lat, lng };
+        setFromText(filled.label);
+        setFromSel(filled);
+        setSuggestions((s) => ({ ...s, from: [] }));
+        setFromLocating(false);
+      },
+      (err) => {
+        const key = err.code === 1 ? "geoDenied" : err.code === 3 ? "geoTimeout" : "geoUnavailable";
+        toast.error(tMap(key));
+        setFromLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
   }
 
   async function plan() {
@@ -139,6 +173,23 @@ export function RoutePlanner() {
             onFocus={() => setActive(field)}
             onChange={(e) => onInput(field, e.target.value)}
           />
+          {field === "from" && (
+            <button
+              type="button"
+              onClick={fillFromWithMyLocation}
+              disabled={fromLocating}
+              aria-label={t("myLocation")}
+              title={t("myLocation")}
+              className="mr-8 grid size-7 shrink-0 place-items-center rounded-md transition-colors hover:bg-[var(--site-surface-08)] disabled:opacity-50"
+              style={{ color: "var(--site-text-50)" }}
+            >
+              {fromLocating ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <LocateFixed className="size-4" />
+              )}
+            </button>
+          )}
         </div>
         {active === field && sugg.length > 0 && (
           <ul
