@@ -44,3 +44,40 @@ export async function geocodeTbilisi(query: string): Promise<GeocodeResult[]> {
     return [];
   }
 }
+
+const reverseCache = new Map<string, { at: number; data: GeocodeResult | null }>();
+
+/**
+ * Reverse-geocode a coordinate to a single labeled result via Nominatim.
+ * The returned lat/lng are the PASSED coordinates (the real device position),
+ * not Nominatim's snapped echo — only the label comes from the response.
+ * Never throws: network/parse failure or no match yields null. Cached
+ * in-process for 5 minutes, keyed on coords rounded to 5 decimals.
+ */
+export async function reverseGeocode(lat: number, lng: number): Promise<GeocodeResult | null> {
+  const key = `${lat.toFixed(5)},${lng.toFixed(5)}`;
+  const now = Date.now();
+  const hit = reverseCache.get(key);
+  if (hit && now - hit.at < CACHE_TTL_MS) return hit.data;
+
+  const url =
+    `https://nominatim.openstreetmap.org/reverse?format=jsonv2` +
+    `&lat=${lat}&lon=${lng}`;
+
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "AI-Trip-Planner/1.0 (tbilisi transit planner)" },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return null;
+    const raw = (await res.json()) as { display_name?: string } | null;
+    const data: GeocodeResult | null = raw?.display_name
+      ? { label: raw.display_name, lat, lng }
+      : null;
+    reverseCache.set(key, { at: now, data });
+    return data;
+  } catch (e) {
+    console.error("[transit] reverse geocode failed:", e);
+    return null;
+  }
+}

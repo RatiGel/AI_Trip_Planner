@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
-import { geocodeTbilisi } from "@/lib/transit/geocode";
+import { geocodeTbilisi, reverseGeocode } from "@/lib/transit/geocode";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
-  const q = req.nextUrl.searchParams.get("q")?.trim() ?? "";
+  const params = req.nextUrl.searchParams;
+  const latRaw = params.get("lat");
+  const lngRaw = params.get("lng");
+
+  // Reverse geocode when both coords are present and finite.
+  if (latRaw !== null && lngRaw !== null) {
+    const lat = parseFloat(latRaw);
+    const lng = parseFloat(lngRaw);
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      const result = await reverseGeocode(lat, lng);
+      return NextResponse.json(result);
+    }
+  }
+
+  // Forward geocode (existing behavior).
+  const q = params.get("q")?.trim() ?? "";
   const data = await geocodeTbilisi(q);
   return NextResponse.json(data);
 }
