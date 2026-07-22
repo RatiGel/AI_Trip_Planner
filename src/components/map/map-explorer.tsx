@@ -6,6 +6,9 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Crosshair, ListFilter, MapPin, Star, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
+import { useGeolocation, type Coords } from "@/hooks/use-geolocation";
+import { haversine, formatDistance } from "@/lib/geo";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -51,14 +54,17 @@ function MapboxMap({
   places,
   selectedId,
   onSelect,
+  userCoords,
 }: {
   places: Place[];
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  userCoords: Coords | null;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("mapbox-gl").Map | null>(null);
   const markersRef = useRef<Map<string, import("mapbox-gl").Marker>>(new Map());
+  const userMarkerRef = useRef<import("mapbox-gl").Marker | null>(null);
 
   // Build / rebuild markers whenever places change.
   useEffect(() => {
@@ -149,6 +155,65 @@ function MapboxMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
+  // Visitor location: blue dot + accuracy circle. Separate effect so moving
+  // the dot never rebuilds the place markers.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !userCoords) return;
+    let cancelled = false;
+
+    (async () => {
+      const mapboxgl = (await import("mapbox-gl")).default;
+      if (cancelled || !mapRef.current) return;
+      const m = mapRef.current;
+
+      const paint = () => {
+        // Blue dot marker.
+        if (!userMarkerRef.current) {
+          const el = document.createElement("div");
+          el.style.cssText =
+            "width:16px;height:16px;border-radius:9999px;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 2px rgba(37,99,235,.4);";
+          userMarkerRef.current = new mapboxgl.Marker({ element: el });
+        }
+        userMarkerRef.current.setLngLat([userCoords.lng, userCoords.lat]).addTo(m);
+
+        // Accuracy circle as a GeoJSON source/layer.
+        const data = {
+          type: "Feature" as const,
+          properties: {},
+          geometry: { type: "Point" as const, coordinates: [userCoords.lng, userCoords.lat] },
+        };
+        const src = m.getSource("user-accuracy") as import("mapbox-gl").GeoJSONSource | undefined;
+        if (src) {
+          src.setData(data);
+        } else {
+          m.addSource("user-accuracy", { type: "geojson", data });
+          m.addLayer({
+            id: "user-accuracy",
+            type: "circle",
+            source: "user-accuracy",
+            paint: {
+              "circle-color": "#2563eb",
+              "circle-opacity": 0.12,
+              // Radius (px) = accuracy(m) / meters-per-pixel at this latitude/zoom.
+              "circle-radius": [
+                "interpolate", ["exponential", 2], ["zoom"],
+                0, 0,
+                22, ["/", userCoords.accuracy, ["/", 156543.03 * Math.cos(userCoords.lat * Math.PI / 180), ["^", 2, ["zoom"]]]],
+              ],
+            },
+          });
+        }
+        m.flyTo({ center: [userCoords.lng, userCoords.lat], zoom: 15, speed: 1.2 });
+      };
+
+      if (m.loaded() && m.isStyleLoaded()) paint();
+      else m.once("load", paint);
+    })();
+
+    return () => { cancelled = true; };
+  }, [userCoords]);
+
   useEffect(() => {
     return () => { mapRef.current?.remove(); mapRef.current = null; };
   }, []);
@@ -161,14 +226,17 @@ function LeafletMap({
   places,
   selectedId,
   onSelect,
+  userCoords,
 }: {
   places: Place[];
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  userCoords: Coords | null;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const markersRef = useRef<Map<string, import("leaflet").Marker>>(new Map());
+  const userLayerRef = useRef<import("leaflet").Layer[]>([]);
 
   useEffect(() => {
     if (!containerRef.current || !places.length) return;
@@ -231,6 +299,37 @@ function LeafletMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
+  // Visitor location: dot + accuracy circle (Leaflet).
+  useEffect(() => {
+    if (!mapRef.current || !userCoords) return;
+    let cancelled = false;
+    (async () => {
+      const L = (await import("leaflet")).default;
+      if (cancelled || !mapRef.current) return;
+      const map = mapRef.current;
+      userLayerRef.current.forEach((l) => l.remove());
+      userLayerRef.current = [];
+
+      const circle = L.circle([userCoords.lat, userCoords.lng], {
+        radius: userCoords.accuracy,
+        color: "#2563eb",
+        weight: 1,
+        fillColor: "#2563eb",
+        fillOpacity: 0.12,
+      }).addTo(map);
+      const dot = L.circleMarker([userCoords.lat, userCoords.lng], {
+        radius: 7,
+        color: "#fff",
+        weight: 3,
+        fillColor: "#2563eb",
+        fillOpacity: 1,
+      }).addTo(map);
+      userLayerRef.current.push(circle, dot);
+      map.flyTo([userCoords.lat, userCoords.lng], 15, { duration: 0.8 });
+    })();
+    return () => { cancelled = true; };
+  }, [userCoords]);
+
   useEffect(() => {
     return () => { mapRef.current?.remove(); mapRef.current = null; };
   }, []);
@@ -247,7 +346,13 @@ export function MapExplorer({ places }: { places: Place[] }) {
   const locale = useLocale();
   const [active, setActive] = useState<Set<CategorySlug>>(new Set());
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [nearMeLoading, setNearMeLoading] = useState(false);
+
+  const { coords: userCoords, loading: locating, error: geoError, locate } = useGeolocation();
+
+  // Surface geolocation errors as a toast.
+  useEffect(() => {
+    if (geoError) toast.error(t(geoError));
+  }, [geoError, t]);
 
   const filtered = useMemo(
     () =>
@@ -256,6 +361,15 @@ export function MapExplorer({ places }: { places: Place[] }) {
         : places.filter((p) => p.categories.some((c) => active.has(c as CategorySlug))),
     [places, active],
   );
+
+  // When we know the visitor's location, rank places nearest-first and attach
+  // a formatted distance for display.
+  const withDistance = useMemo(() => {
+    if (!userCoords) return filtered.map((p) => ({ place: p, meters: null as number | null }));
+    return filtered
+      .map((p) => ({ place: p, meters: haversine(userCoords, p.geo) }))
+      .sort((a, b) => (a.meters ?? 0) - (b.meters ?? 0));
+  }, [filtered, userCoords]);
 
   const selected = filtered.find((p) => p.id === selectedId) ?? null;
 
@@ -266,25 +380,6 @@ export function MapExplorer({ places }: { places: Place[] }) {
       return next;
     });
     setSelectedId(null);
-  }
-
-  function nearMe() {
-    if (!navigator.geolocation) return;
-    setNearMeLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setNearMeLoading(false);
-        // Sort by distance, select the closest
-        const { latitude: lat, longitude: lng } = pos.coords;
-        const closest = [...filtered].sort((a, b) => {
-          const da = Math.hypot(a.geo.lat - lat, a.geo.lng - lng);
-          const db = Math.hypot(b.geo.lat - lat, b.geo.lng - lng);
-          return da - db;
-        })[0];
-        if (closest) setSelectedId(closest.id);
-      },
-      () => setNearMeLoading(false),
-    );
   }
 
   const placeCount = filtered.length;
@@ -306,11 +401,11 @@ export function MapExplorer({ places }: { places: Place[] }) {
           variant="outline"
           size="sm"
           className="w-full"
-          onClick={nearMe}
-          disabled={nearMeLoading}
+          onClick={locate}
+          disabled={locating}
         >
           <Crosshair className="size-4" />
-          {nearMeLoading ? "Locating…" : t("nearMe")}
+          {locating ? t("locating") : t("nearMe")}
         </Button>
         <div className="mt-3 space-y-1.5">
           {mockCategories.map((c) => (
@@ -332,7 +427,7 @@ export function MapExplorer({ places }: { places: Place[] }) {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {filtered.map((p) => {
+        {withDistance.map(({ place: p, meters }) => {
           const isSel = p.id === selectedId;
           return (
             <button
@@ -346,6 +441,14 @@ export function MapExplorer({ places }: { places: Place[] }) {
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{localName(p)}</p>
                 <div className="mt-0.5 flex flex-wrap items-center gap-1">
+                  {meters !== null && (
+                    <span className="text-xs text-muted-foreground">
+                      {(() => {
+                        const d = formatDistance(meters);
+                        return t(d.unit === "km" ? "kmAway" : "mAway", { value: d.value });
+                      })()}
+                    </span>
+                  )}
                   {p.rating > 0 && (
                     <span className="flex items-center gap-0.5 text-xs text-amber-500">
                       <Star className="size-2.5 fill-current" />
@@ -399,6 +502,7 @@ export function MapExplorer({ places }: { places: Place[] }) {
           places={filtered}
           selectedId={selectedId}
           onSelect={setSelectedId}
+          userCoords={userCoords}
         />
 
         {/* Selected place card */}
