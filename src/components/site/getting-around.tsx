@@ -12,13 +12,22 @@ export function GettingAround({ tickets }: { tickets: TicketOption[] }) {
 
   return (
     <Tabs defaultValue="city" className="w-full">
-      <TabsList>
-        <TabsTrigger value="city">{t("cityTab")}</TabsTrigger>
-        <TabsTrigger value="from">{t("fromTab")}</TabsTrigger>
+      <TabsList className="mb-2 h-auto gap-2 bg-transparent p-0">
+        <TabsTrigger
+          value="city"
+          className="flex-none rounded-full border-transparent px-5 py-2.5 text-[17px] font-bold tracking-tight text-muted-foreground/60 transition-all hover:text-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-md dark:data-active:bg-primary dark:data-active:text-primary-foreground"
+        >
+          {t("cityTab")}
+        </TabsTrigger>
+        <TabsTrigger
+          value="from"
+          className="flex-none rounded-full border-transparent px-5 py-2.5 text-[17px] font-bold tracking-tight text-muted-foreground/60 transition-all hover:text-foreground data-active:bg-primary data-active:text-primary-foreground data-active:shadow-md dark:data-active:bg-primary dark:data-active:text-primary-foreground"
+        >
+          {t("fromTab")}
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="city">
-        <p className="mb-8 text-[14px]" style={{ color: "var(--site-text-50)" }}>{t("citySubtitle")}</p>
         <RoutePlanner />
       </TabsContent>
 

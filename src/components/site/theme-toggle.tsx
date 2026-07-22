@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 
-export function ThemeToggle() {
+export function ThemeToggle({ overHero = false }: { overHero?: boolean }) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -17,8 +17,8 @@ export function ThemeToggle() {
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className="flex size-9 items-center justify-center rounded-full transition-colors"
       style={{
-        background: "var(--site-surface-08)",
-        color: "var(--site-text-80)",
+        background: overHero ? "rgba(255,255,255,0.12)" : "var(--site-surface-08)",
+        color: overHero ? "rgba(255,255,255,0.9)" : "var(--site-text-80)",
       }}
       aria-label="Toggle theme"
     >

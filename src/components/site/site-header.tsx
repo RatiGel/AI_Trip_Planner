@@ -79,6 +79,26 @@ export function SiteHeader() {
   }, []);
 
   const isHome = pathname === "/";
+  // On the home hero, unscrolled header floats over a bright image behind a dark
+  // gradient — force light text there regardless of theme so it stays legible.
+  const overHero = isHome && !scrolled;
+
+  // Text/border colors: fixed light over the hero, theme tokens everywhere else.
+  const c = overHero
+    ? {
+        text: "rgba(255,255,255,1)",
+        text80: "rgba(255,255,255,0.9)",
+        text65: "rgba(255,255,255,0.75)",
+        border20: "rgba(255,255,255,0.28)",
+        surface08: "rgba(255,255,255,0.12)",
+      }
+    : {
+        text: "var(--site-text)",
+        text80: "var(--site-text-80)",
+        text65: "var(--site-text-65)",
+        border20: "var(--site-border-20)",
+        surface08: "var(--site-surface-08)",
+      };
 
   return (
     <header
@@ -87,7 +107,7 @@ export function SiteHeader() {
         background: scrolled
           ? "var(--site-header-bg)"
           : isHome
-          ? "linear-gradient(to bottom, rgba(0,0,0,0.65), transparent)"
+          ? "linear-gradient(to bottom, rgba(0,0,0,0.78), rgba(0,0,0,0.22) 70%, transparent)"
           : "var(--site-header-bg)",
         backdropFilter: scrolled || !isHome ? "blur(20px)" : "none",
         borderBottom: scrolled || !isHome ? "1px solid var(--site-border-06)" : "none",
@@ -96,7 +116,7 @@ export function SiteHeader() {
       <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-6 md:px-12 xl:grid xl:grid-cols-[1fr_auto_1fr]">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-1">
-          <span className="font-display text-[22px] tracking-[-0.5px]" style={{ color: "var(--site-text)" }}>
+          <span className="font-display text-[22px] tracking-[-0.5px]" style={{ color: c.text }}>
             Tbilisi<span style={{ color: "#E8A020" }}>.</span>
           </span>
         </Link>
@@ -113,7 +133,7 @@ export function SiteHeader() {
               <Link
                 href={item.href}
                 className="flex items-center gap-1 whitespace-nowrap rounded-md px-3 py-2 text-[14px] font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-                style={{ color: "var(--site-text-80)" }}
+                style={{ color: c.text80 }}
               >
                 {item.icon && item.icon}
                 {item.label}
@@ -154,13 +174,13 @@ export function SiteHeader() {
         </nav>
 
         {/* Right actions */}
-        <div className="flex items-center justify-end gap-2 lg:justify-self-end xl:ml-6 xl:pl-6 xl:border-l" style={{ borderColor: "var(--site-border-20)" }}>
+        <div className="flex items-center justify-end gap-2 lg:justify-self-end xl:ml-6 xl:pl-6 xl:border-l" style={{ borderColor: c.border20 }}>
           {session?.user ? (
             <div className="hidden items-center xl:flex">
               <DropdownMenu>
                 <DropdownMenuTrigger
                   className="flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3 text-[13px] font-medium outline-none transition-all hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring"
-                  style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
+                  style={{ border: `1px solid ${c.border20}`, color: c.text80 }}
                 >
                   <span
                     className="flex size-7 items-center justify-center rounded-full text-[12px] font-semibold uppercase"
@@ -229,19 +249,19 @@ export function SiteHeader() {
               aria-label={tNav("login")}
               title={tNav("login")}
               className="hidden size-9 items-center justify-center rounded-full transition-all hover:-translate-y-0.5 xl:flex"
-              style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
+              style={{ border: `1px solid ${c.border20}`, color: c.text80 }}
             >
               <User className="size-4" />
             </Link>
           )}
 
-          <ThemeToggle />
-          <LanguageSwitcher />
+          <ThemeToggle overHero={overHero} />
+          <LanguageSwitcher overHero={overHero} />
 
           {/* Mobile hamburger */}
           <button
             className="flex size-9 items-center justify-center rounded-full transition-colors xl:hidden"
-            style={{ background: "var(--site-surface-08)", color: "var(--site-text-80)" }}
+            style={{ background: c.surface08, color: c.text80 }}
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >

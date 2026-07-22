@@ -36,10 +36,7 @@ export default async function GettingAroundPage({
             backgroundPosition: "center",
           }}
         />
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-12 md:px-12">
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-[3px]" style={{ color: "#B5271D" }}>
-            {t("eyebrow")}
-          </p>
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-20 md:px-12">
           <h1 className="font-display leading-tight text-white" style={{ fontSize: "clamp(42px, 7vw, 80px)", letterSpacing: "-2px" }}>
             {t("heading")} <em className="italic" style={{ color: "#F5C842" }}>{t("headingEm")}</em>
           </h1>
