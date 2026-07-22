@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useId } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowDownUp, MapPin, Search } from "lucide-react";
+import { ArrowDownUp, MapPin, Search, Route, Loader2 } from "lucide-react";
 import type { GeocodeResult, JourneyPlan } from "@/types/transit";
 import { JourneyCard } from "./journey-card";
+import { JourneyMap } from "./journey-map";
 
 type Field = "from" | "to";
 
@@ -33,18 +34,23 @@ export function RoutePlanner() {
   const t = useTranslations("transit");
   const params = useParams();
   const locale = typeof params?.locale === "string" ? params.locale : "en";
+  const listId = useId();
 
   const [fromText, setFromText] = useState("");
   const [toText, setToText] = useState("");
   const [fromSel, setFromSel] = useState<GeocodeResult | null>(null);
   const [toSel, setToSel] = useState<GeocodeResult | null>(null);
   const [suggestions, setSuggestions] = useState<Record<Field, GeocodeResult[]>>({ from: [], to: [] });
+  const [active, setActive] = useState<Field | null>(null);
 
   const [plans, setPlans] = useState<JourneyPlan[] | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
   const geocode = useGeocode();
+
+  const selectedPlan = plans?.find((p) => p.id === selectedId) ?? null;
 
   function onInput(field: Field, value: string) {
     if (field === "from") { setFromText(value); setFromSel(null); }
@@ -56,6 +62,7 @@ export function RoutePlanner() {
     if (field === "from") { setFromText(r.label); setFromSel(r); }
     else { setToText(r.label); setToSel(r); }
     setSuggestions((s) => ({ ...s, [field]: [] }));
+    setActive(null);
   }
 
   function swap() {
@@ -79,6 +86,7 @@ export function RoutePlanner() {
       if (!res.ok) { setError(true); return; }
       const data = (await res.json()) as { plans: JourneyPlan[] };
       setPlans(data.plans);
+      setSelectedId(data.plans[0]?.id ?? null); // auto-select fastest route
     } catch {
       setError(true);
     } finally {
@@ -86,83 +94,174 @@ export function RoutePlanner() {
     }
   }
 
-  const inputCls =
-    "w-full rounded-xl px-4 py-3 text-[15px] outline-none";
-  const inputStyle = {
-    background: "var(--site-bg-elevated)",
-    border: "1px solid var(--site-border-06)",
-    color: "var(--site-text)",
-  } as const;
+  const canPlan = !!fromSel && !!toSel && !loading;
+
+  function renderField(field: Field) {
+    const text = field === "from" ? fromText : toText;
+    const dotColor = field === "from" ? "var(--site-text-40)" : "#B5271D";
+    const sugg = suggestions[field];
+    return (
+      <div className="relative">
+        <div
+          className="flex items-center gap-3 rounded-xl px-3 transition-colors"
+          style={{
+            background: "var(--site-bg-elevated)",
+            border: `1px solid ${active === field ? "var(--site-border-20)" : "var(--site-border-06)"}`,
+          }}
+        >
+          {field === "from" ? (
+            <span className="grid size-4 shrink-0 place-items-center">
+              <span className="size-2.5 rounded-full ring-2" style={{ background: "transparent", color: dotColor, boxShadow: `inset 0 0 0 2px ${dotColor}` }} />
+            </span>
+          ) : (
+            <MapPin className="size-4 shrink-0" style={{ color: dotColor, fill: "rgba(181,39,29,0.15)" }} />
+          )}
+          <input
+            className="w-full bg-transparent py-3 text-[15px] outline-none"
+            style={{ color: "var(--site-text)" }}
+            placeholder={field === "from" ? t("fromPlaceholder") : t("toPlaceholder")}
+            value={text}
+            role="combobox"
+            aria-expanded={active === field && sugg.length > 0}
+            aria-controls={`${listId}-${field}`}
+            autoComplete="off"
+            onFocus={() => setActive(field)}
+            onChange={(e) => onInput(field, e.target.value)}
+          />
+        </div>
+        {active === field && sugg.length > 0 && (
+          <ul
+            id={`${listId}-${field}`}
+            role="listbox"
+            className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-xl shadow-lg"
+            style={{ background: "var(--site-bg-surface)", border: "1px solid var(--site-border-10)" }}
+          >
+            {sugg.map((r, i) => (
+              <li key={i} role="option" aria-selected={false}>
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13px] transition-colors hover:bg-[var(--site-surface-08)]"
+                  style={{ color: "var(--site-text)" }}
+                  onMouseDown={(e) => { e.preventDefault(); pick(field, r); }}
+                >
+                  <MapPin className="size-3.5 shrink-0" style={{ color: "var(--site-text-40)" }} />
+                  <span className="truncate">{r.label}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold" style={{ color: "var(--site-text)" }}>{t("planTitle")}</h2>
-      <p className="mt-1 text-[14px]" style={{ color: "var(--site-text-50)" }}>{t("planSubtitle")}</p>
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,420px)_1fr]">
+      {/* ── Left: search + results ── */}
+      <div className="min-w-0">
+        <h2 className="text-2xl font-bold" style={{ color: "var(--site-text)" }}>{t("planTitle")}</h2>
+        <p className="mt-1 text-[14px]" style={{ color: "var(--site-text-50)" }}>{t("planSubtitle")}</p>
 
-      <div className="mt-6 flex flex-col gap-3">
-        {(["from", "to"] as Field[]).map((field) => (
-          <div key={field} className="relative">
-            <div className="flex items-center gap-2">
-              <MapPin className="size-4 shrink-0" style={{ color: "var(--site-text-40)" }} />
-              <input
-                className={inputCls}
-                style={inputStyle}
-                placeholder={field === "from" ? t("fromPlaceholder") : t("toPlaceholder")}
-                value={field === "from" ? fromText : toText}
-                onChange={(e) => onInput(field, e.target.value)}
-              />
-            </div>
-            {suggestions[field].length > 0 && (
-              <ul
-                className="absolute z-20 mt-1 w-full overflow-hidden rounded-xl"
-                style={{ background: "var(--site-bg-elevated)", border: "1px solid var(--site-border-06)" }}
-              >
-                {suggestions[field].map((r, i) => (
-                  <li key={i}>
-                    <button
-                      className="block w-full px-4 py-2.5 text-left text-[13px] hover:opacity-80"
-                      style={{ color: "var(--site-text)" }}
-                      onClick={() => pick(field, r)}
-                    >
-                      {r.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+        <div className="mt-6">
+          <div className="relative flex flex-col gap-2.5">
+            {renderField("from")}
+            {renderField("to")}
+            {/* Vertical connector + swap */}
+            <button
+              type="button"
+              onClick={swap}
+              aria-label={t("swap")}
+              className="absolute right-3 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full transition-transform hover:rotate-180"
+              style={{ background: "var(--site-bg-surface)", border: "1px solid var(--site-border-10)", color: "var(--site-text-60)" }}
+            >
+              <ArrowDownUp className="size-3.5" />
+            </button>
           </div>
-        ))}
 
-        <div className="flex items-center gap-3">
           <button
-            onClick={swap}
-            className="flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px]"
-            style={{ background: "var(--site-bg-elevated)", color: "var(--site-text-50)" }}
-          >
-            <ArrowDownUp className="size-3.5" /> {t("swap")}
-          </button>
-          <button
+            type="button"
             onClick={plan}
-            disabled={!fromSel || !toSel || loading}
-            className="flex items-center gap-2 rounded-full px-6 py-2.5 text-[13px] font-semibold text-white transition-all hover:-translate-y-0.5 disabled:opacity-40"
-            style={{ background: "#0891B2", boxShadow: "0 4px 16px rgba(8,145,178,0.25)" }}
+            disabled={!canPlan}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-[14px] font-semibold text-white transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:brightness-100"
+            style={{ background: "#0891B2", boxShadow: canPlan ? "0 4px 20px rgba(8,145,178,0.3)" : "none" }}
           >
-            <Search className="size-4" /> {loading ? t("planning") : t("plan")}
+            {loading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
+            {loading ? t("planning") : t("plan")}
           </button>
+        </div>
+
+        {/* ── Results list ── */}
+        <div className="mt-8">
+          {loading && (
+            <div className="flex flex-col gap-4">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="h-[132px] animate-pulse rounded-2xl"
+                  style={{ background: "var(--site-bg-elevated)", border: "1px solid var(--site-border-06)" }}
+                />
+              ))}
+            </div>
+          )}
+
+          {!loading && error && (
+            <div
+              className="flex items-start gap-3 rounded-2xl p-5 text-[14px]"
+              style={{ background: "rgba(181,39,29,0.1)", border: "1px solid rgba(181,39,29,0.2)", color: "#e06a60" }}
+            >
+              <Route className="mt-0.5 size-5 shrink-0" />
+              <span>{t("unavailable")}</span>
+            </div>
+          )}
+
+          {!loading && plans && plans.length === 0 && !error && (
+            <EmptyResults title={t("noResults")} hint={t("noResultsHint")} />
+          )}
+
+          {!loading && !plans && !error && (
+            <EmptyResults idle title={t("idleTitle")} hint={t("idleHint")} />
+          )}
+
+          {!loading && plans && plans.length > 0 && (
+            <div className="flex flex-col gap-4">
+              {plans.map((p) => (
+                <JourneyCard
+                  key={p.id}
+                  plan={p}
+                  locale={locale}
+                  selected={p.id === selectedId}
+                  onSelect={() => setSelectedId(p.id)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="mt-8 flex flex-col gap-4">
-        {error && (
-          <p className="rounded-xl p-4 text-[14px]" style={{ background: "rgba(181,39,29,0.1)", color: "#B5271D" }}>
-            {t("unavailable")}
-          </p>
-        )}
-        {plans && plans.length === 0 && !error && (
-          <p className="text-[14px]" style={{ color: "var(--site-text-50)" }}>{t("noResults")}</p>
-        )}
-        {plans?.map((p) => <JourneyCard key={p.id} plan={p} locale={locale} />)}
+      {/* ── Right: map (sticky on desktop) ── */}
+      <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
+        <div className="h-[420px] lg:h-[calc(100vh-8rem)]">
+          <JourneyMap plan={selectedPlan} />
+        </div>
       </div>
+    </div>
+  );
+}
+
+function EmptyResults({ title, hint, idle }: { title: string; hint: string; idle?: boolean }) {
+  return (
+    <div
+      className="flex flex-col items-center justify-center rounded-2xl px-6 py-16 text-center"
+      style={{
+        background: idle ? "transparent" : "var(--site-bg-elevated)",
+        border: `1px dashed ${idle ? "var(--site-border-10)" : "var(--site-border-06)"}`,
+      }}
+    >
+      <span className="grid size-12 place-items-center rounded-full" style={{ background: "var(--site-surface-08)" }}>
+        <Route className="size-5" style={{ color: "var(--site-text-40)" }} />
+      </span>
+      <p className="mt-4 text-[15px] font-semibold" style={{ color: "var(--site-text)" }}>{title}</p>
+      <p className="mt-1 max-w-xs text-[13px]" style={{ color: "var(--site-text-50)" }}>{hint}</p>
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import type { JourneyPlan } from "./transit";
+
 export type CategorySlug =
   | "museum"
   | "sight"
@@ -212,11 +214,14 @@ export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  type?: "place-selection" | "route-plan";
+  type?: "place-selection" | "route-plan" | "journey";
   previewPlaces?: PlacePreviewCard[];
   pendingItinerary?: AIItinerary;
   itineraryPlaces?: Place[];
   itinerary?: SavedItinerary;
+  journeyPlans?: JourneyPlan[];
+  journeyFrom?: string;
+  journeyTo?: string;
 }
 
 export interface ItineraryItem {

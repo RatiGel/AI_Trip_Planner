@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CalendarDays, ChevronDown, LayoutDashboard, LogOut, MapPinned, Menu, Shield, Ticket, User, X } from "lucide-react";
+import { CalendarDays, ChevronDown, LayoutDashboard, LogOut, MapPinned, Menu, Shield, User, X } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
@@ -69,6 +69,7 @@ export function SiteHeader() {
       ],
     },
     { label: t("deals"), href: "/deals", children: [] },
+    { label: t("gettingAround"), href: "/tickets", children: [] },
   ];
 
   useEffect(() => {
@@ -154,17 +155,6 @@ export function SiteHeader() {
 
         {/* Right actions */}
         <div className="flex items-center justify-end gap-2 lg:justify-self-end xl:ml-6 xl:pl-6 xl:border-l" style={{ borderColor: "var(--site-border-20)" }}>
-          {session?.user && (
-            <Link
-              href="/tickets"
-              className="hidden items-center gap-1.5 rounded-full px-4 py-2 text-[13px] font-semibold transition-all hover:-translate-y-0.5 sm:flex"
-              style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
-            >
-              <Ticket className="size-3.5" />
-              {t("gettingAround")}
-            </Link>
-          )}
-
           {session?.user ? (
             <div className="hidden items-center xl:flex">
               <DropdownMenu>
@@ -236,10 +226,12 @@ export function SiteHeader() {
           ) : (
             <Link
               href="/login"
-              className="hidden rounded-md px-3 py-1.5 text-[13px] transition-colors xl:block"
-              style={{ color: "var(--site-text-50)" }}
+              aria-label={tNav("login")}
+              title={tNav("login")}
+              className="hidden size-9 items-center justify-center rounded-full transition-all hover:-translate-y-0.5 xl:flex"
+              style={{ border: "1px solid var(--site-border-20)", color: "var(--site-text-80)" }}
             >
-              {tNav("login")}
+              <User className="size-4" />
             </Link>
           )}
 

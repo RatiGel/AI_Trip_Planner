@@ -1,7 +1,7 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { connectDB } from "@/lib/db";
 import { TicketModel } from "@/lib/models/ticket";
-import { mockBusTickets, mockRailTickets, mockTransitPasses } from "@/lib/mock/tickets";
+import { mockBusTickets, mockRailTickets } from "@/lib/mock/tickets";
 import { GettingAround } from "@/components/site/getting-around";
 import { serializeDoc } from "@/lib/serialize";
 import type { TicketOption } from "@/types";
@@ -17,8 +17,10 @@ export default async function GettingAroundPage({
   await connectDB();
   let tickets = serializeDoc<TicketOption[]>(await TicketModel.find().lean());
   if (tickets.length === 0) {
-    tickets = [...mockBusTickets, ...mockRailTickets, ...mockTransitPasses];
+    tickets = [...mockBusTickets, ...mockRailTickets];
   }
+  // Transit passes retired from Getting Around — intercity bus/rail only.
+  tickets = tickets.filter((x) => x.type !== "transit-pass");
 
   const t = await getTranslations({ locale, namespace: "gettingAround" });
 

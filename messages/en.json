@@ -70,6 +70,7 @@
   },
   "chat": {
     "title": "AI Trip Planner",
+    "journeyHeader": "Getting from {from} to {to}",
     "subtitle": "Tell me about your trip. I'll build a day-by-day plan from real places.",
     "placeholder": "e.g. I have 3 days in Tbilisi and I love museums and good coffee",
     "send": "Send",
@@ -141,12 +142,11 @@
     "eyebrow": "Getting Around",
     "heading": "Getting",
     "headingEm": "Around",
-    "description": "Plan public-transport routes across Tbilisi, buy transit passes, and book intercity tickets.",
+    "description": "Plan public-transport routes across Tbilisi and book intercity tickets.",
     "cityTab": "City Transportation",
-    "citySubtitle": "Public transport within Tbilisi — passes and route planning.",
+    "citySubtitle": "Public transport within Tbilisi — plan a route stop by stop.",
     "fromTab": "Travel from Tbilisi",
-    "fromSubtitle": "Bus and railway tickets to other Georgian cities.",
-    "passes": "Transit passes"
+    "fromSubtitle": "Bus and railway tickets to other Georgian cities."
   },
   "transit": {
     "planTitle": "Plan a route",
@@ -164,7 +164,17 @@
     "transfer": "Transfer",
     "nextArrival": "Next in {min} min",
     "scheduled": "Scheduled",
-    "min": "min"
+    "min": "min",
+    "depart": "Depart",
+    "arrive": "Arrive",
+    "duration": "Duration",
+    "minShort": "{min} min",
+    "departingFrom": "Departing from {stop}",
+    "routeFound": "Route found",
+    "noResultsHint": "No transit routes between these points. Try nearby stops or landmarks.",
+    "idleTitle": "Plan your trip",
+    "idleHint": "Enter a start and destination to see public-transport routes across Tbilisi.",
+    "mapHint": "Select a route to preview it on the map."
   },
   "deals": {
     "eyebrow": "Exclusive Offers",

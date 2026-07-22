@@ -13,15 +13,17 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RouteMap } from "@/components/planner/route-map";
 import { ItinerarySidebar } from "@/components/planner/itinerary-sidebar";
 import { PlaceSelectionCards } from "@/components/chat/place-selection-cards";
+import { JourneyCard } from "@/components/transit/journey-card";
 import { dayMapUrl } from "@/lib/google-maps";
 import type { AIItinerary, ChatMessage, Place, PlacePreviewCard, RoutePlan } from "@/types";
+import type { JourneyPlan } from "@/types/transit";
 
 type SseEvent =
   | { type: "token"; delta: string }
@@ -34,6 +36,7 @@ type SseEvent =
       itineraryPlaces: Place[];
       mock: boolean;
     }
+  | { type: "journey"; plans: JourneyPlan[]; from: string; to: string }
   | { type: "error"; message: string }
   | { type: "done"; text?: string };
 
@@ -59,6 +62,7 @@ function AssistantAvatar({ className = "" }: { className?: string }) {
 export function ChatUI() {
   const t = useTranslations("chat");
   const tp = useTranslations("planner");
+  const locale = useLocale();
   const [messages, setMessages] = useState<ChatMessage[]>([STARTER]);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
@@ -92,7 +96,7 @@ export function ChatUI() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: nextMessages }),
+        body: JSON.stringify({ messages: nextMessages, locale }),
       });
 
       if (!res.ok) {
@@ -146,6 +150,21 @@ export function ChatUI() {
               },
             ]);
             setIsMock(payload.mock);
+          } else if (payload.type === "journey") {
+            setStreamingMsg("");
+            accumulated = "";
+            setMessages((m) => [
+              ...m,
+              {
+                id: `j-${Date.now()}`,
+                role: "assistant" as const,
+                content: "",
+                type: "journey" as const,
+                journeyPlans: payload.plans,
+                journeyFrom: payload.from,
+                journeyTo: payload.to,
+              },
+            ]);
           } else if (payload.type === "error") {
             toast.error(payload.message ?? "Error generating response");
             setStreamingMsg("");
@@ -402,6 +421,19 @@ export function ChatUI() {
                 />
               </div>
             )}
+
+          {m.type === "journey" && m.journeyPlans && (
+            <div className="w-full sm:pl-10">
+              <p className="mb-3 text-[14px] font-semibold" style={{ color: "var(--site-text)" }}>
+                {t("journeyHeader", { from: m.journeyFrom ?? "", to: m.journeyTo ?? "" })}
+              </p>
+              <div className="flex flex-col gap-4">
+                {m.journeyPlans.map((p) => (
+                  <JourneyCard key={p.id} plan={p} locale={locale} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ))}
       {streamingBubble}

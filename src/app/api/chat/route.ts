@@ -6,6 +6,8 @@ import { getCandidatePlaces } from "@/lib/places/candidates";
 import { generateItinerary } from "@/lib/ai/route-planner";
 import { aiClient, hasLLM, CHAT_MODEL } from "@/lib/ai/client";
 import { buildRoutePlan } from "@/lib/route/optimize";
+import { geocodeTbilisi } from "@/lib/transit/geocode";
+import { planJourney } from "@/lib/transit/client";
 import type {
   AIItinerary,
   CategorySlug,
@@ -34,6 +36,7 @@ Tone rules:
 
 Rules:
 - Only call create_trip_plan when you have BOTH the number of days AND what the user enjoys. Ask for missing info first.
+- When the user asks how to get between two specific places WITHIN a city (e.g. "how do I get from Rustaveli to the airport?"), call plan_transit with the two place names. Do not use it for travel between different cities — that's the intercity tickets page.
 - Pace: "relaxed" if they mention slow/easy, "packed" if busy/full/action, otherwise "balanced".
 - City: default "tbilisi" unless they name another Georgian city.
 - confirmationMessage: a short, plain message with no emoji, e.g. "Here's a 3-day Tbilisi plan based on what you're after — take a look and confirm if it works."
@@ -70,6 +73,29 @@ const CREATE_TRIP_PLAN_TOOL: ChatCompletionTool = {
         },
       },
       required: ["days", "interests", "confirmationMessage"],
+    },
+  },
+};
+
+const PLAN_TRANSIT_TOOL: ChatCompletionTool = {
+  type: "function",
+  function: {
+    name: "plan_transit",
+    description:
+      "Plan public-transit directions between two places within a city. Call when the user asks how to get from one place to another (walking + bus + metro).",
+    parameters: {
+      type: "object",
+      properties: {
+        from: {
+          type: "string",
+          description: "Origin place name, e.g. 'Rustaveli metro station'",
+        },
+        to: {
+          type: "string",
+          description: "Destination place name, e.g. 'Tbilisi International Airport'",
+        },
+      },
+      required: ["from", "to"],
     },
   },
 };
@@ -176,6 +202,7 @@ export async function POST(req: NextRequest) {
     selectedPlaceIds?: string[];
     pendingItinerary?: AIItinerary;
     itineraryPlaces?: Place[];
+    locale?: string;
   };
 
   try {
@@ -220,6 +247,7 @@ export async function POST(req: NextRequest) {
   // ── Chat stage (SSE streaming) ───────────────────────────────────────
   const messages: ChatMessage[] = body.messages ?? [];
   const citySlug = body.citySlug ?? "tbilisi";
+  const locale = body.locale ?? "en";
 
   if (!Array.isArray(messages) || !messages.length) {
     return NextResponse.json({ error: "messages required" }, { status: 400 });
@@ -293,7 +321,7 @@ export async function POST(req: NextRequest) {
       const stream = await aiClient.chat.completions.create({
         model: CHAT_MODEL,
         max_tokens: 1024,
-        tools: [CREATE_TRIP_PLAN_TOOL],
+        tools: [CREATE_TRIP_PLAN_TOOL, PLAN_TRANSIT_TOOL],
         messages: [{ role: "system", content: CHAT_SYSTEM }, ...chatMessages],
         stream: true,
       });
@@ -315,7 +343,42 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      if (toolName === "create_trip_plan" && toolInputJson) {
+      if (toolName === "plan_transit" && toolInputJson) {
+        try {
+          const { from, to } = JSON.parse(toolInputJson) as { from?: string; to?: string };
+          const transitFallback =
+            "I couldn't find a route for that. Try the route planner on the Getting Around page.";
+          if (!from || !to) {
+            await writer.write(sse({ type: "done", text: transitFallback }));
+          } else {
+            const [fromHits, toHits] = await Promise.all([
+              geocodeTbilisi(from),
+              geocodeTbilisi(to),
+            ]);
+            const fromHit = fromHits[0];
+            const toHit = toHits[0];
+            if (!fromHit || !toHit) {
+              await writer.write(sse({ type: "done", text: transitFallback }));
+            } else {
+              const plans = await planJourney(
+                [fromHit.lat, fromHit.lng],
+                [toHit.lat, toHit.lng],
+                locale,
+              );
+              if (plans && plans.length > 0) {
+                await writer.write(
+                  sse({ type: "journey", plans, from, to }),
+                );
+              } else {
+                await writer.write(sse({ type: "done", text: transitFallback }));
+              }
+            }
+          }
+        } catch (e) {
+          console.error("[chat transit tool]", e);
+          await writer.write(sse({ type: "done" }));
+        }
+      } else if (toolName === "create_trip_plan" && toolInputJson) {
         try {
           const toolInput = JSON.parse(toolInputJson) as TripPlanInput;
           const payload = await buildPreview(toolInput, citySlug);

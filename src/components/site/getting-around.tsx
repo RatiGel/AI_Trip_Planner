@@ -9,7 +9,6 @@ import type { TicketOption } from "@/types";
 export function GettingAround({ tickets }: { tickets: TicketOption[] }) {
   const t = useTranslations("gettingAround");
   const intercity = tickets.filter((x) => x.type === "bus" || x.type === "rail");
-  const passes = tickets.filter((x) => x.type === "transit-pass");
 
   return (
     <Tabs defaultValue="city" className="w-full">
@@ -20,15 +19,7 @@ export function GettingAround({ tickets }: { tickets: TicketOption[] }) {
 
       <TabsContent value="city">
         <p className="mb-8 text-[14px]" style={{ color: "var(--site-text-50)" }}>{t("citySubtitle")}</p>
-        <div className="grid gap-12 lg:grid-cols-2">
-          <RoutePlanner />
-          <div>
-            <h2 className="text-2xl font-bold" style={{ color: "var(--site-text)" }}>{t("passes")}</h2>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-              <TicketsSearch tickets={passes} />
-            </div>
-          </div>
-        </div>
+        <RoutePlanner />
       </TabsContent>
 
       <TabsContent value="from">

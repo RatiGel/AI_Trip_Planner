@@ -22,6 +22,30 @@ test("maps the BUS leg's route, stops, and stopId", () => {
   assert.equal(busLeg.fromStopId, "1946", "from.stopId → fromStopId");
   assert.equal(busLeg.durationMin, 24, "1440s → 24min");
   assert.equal(busLeg.distanceM, 3200);
+  assert.equal(busLeg.color, "0033B4", "route.color → color");
+});
+
+test("maps itinerary and leg clock times + walk total", () => {
+  const plan = normalizePlan(sample)[0];
+  assert.equal(plan.startTime, "2026-07-21T09:00:00.000Z");
+  assert.equal(plan.endTime, "2026-07-21T09:34:00.000Z");
+  assert.equal(plan.walkMin, 9, "540s → 9min");
+  assert.equal(plan.legs[1].startTime, "2026-07-21T09:05:00.000Z");
+  assert.equal(plan.legs[1].endTime, "2026-07-21T09:29:00.000Z");
+});
+
+test("builds leg points from → intermediate stops → to", () => {
+  const busLeg = normalizePlan(sample)[0].legs[1];
+  assert.deepEqual(busLeg.points, [
+    [41.7005, 44.8009], // from
+    [41.71, 44.8],      // intermediate: Kostava St
+    [41.7285, 44.8011], // to
+  ]);
+  // walk leg with no intermediates → just from/to
+  assert.deepEqual(normalizePlan(sample)[0].legs[0].points, [
+    [41.6977, 44.8015],
+    [41.7005, 44.8009],
+  ]);
 });
 
 test("maps SUBWAY mode to 'metro'", () => {
