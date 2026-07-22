@@ -352,7 +352,8 @@ export function MapExplorer({ places }: { places: Place[] }) {
   // Surface geolocation errors as a toast.
   useEffect(() => {
     if (geoError) toast.error(t(geoError));
-  }, [geoError, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geoError]);
 
   const filtered = useMemo(
     () =>

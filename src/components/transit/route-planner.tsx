@@ -44,7 +44,8 @@ export function RoutePlanner() {
 
   useEffect(() => {
     if (geoError) toast.error(tMap(geoError));
-  }, [geoError, tMap]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geoError]);
 
   const [fromText, setFromText] = useState("");
   const [toText, setToText] = useState("");
