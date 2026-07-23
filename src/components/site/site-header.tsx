@@ -115,7 +115,13 @@ export function SiteHeader() {
     >
       <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-6 md:px-12 xl:grid xl:grid-cols-[1fr_auto_1fr]">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-1">
+        <Link href="/" className="flex flex-col items-start leading-none" aria-label="explore Tbilisi — home">
+          <span
+            className="font-display italic text-[15px] tracking-[0.5px] -mb-1"
+            style={{ color: "#E8A020" }}
+          >
+            explore
+          </span>
           <span className="font-display text-[22px] tracking-[-0.5px]" style={{ color: c.text }}>
             Tbilisi<span style={{ color: "#E8A020" }}>.</span>
           </span>

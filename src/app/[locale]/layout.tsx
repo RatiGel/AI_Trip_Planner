@@ -61,6 +61,21 @@ export async function generateMetadata({
       canonical: `${SITE_URL}/${locale}`,
       languages,
     },
+    icons: {
+      icon: [
+        {
+          url: "/explore-tbilisi-favicon.png",
+          type: "image/png",
+          media: "(prefers-color-scheme: light)",
+        },
+        {
+          url: "/explore-tbilisi-favicon-dark.png",
+          type: "image/png",
+          media: "(prefers-color-scheme: dark)",
+        },
+      ],
+      apple: "/explore-tbilisi-favicon-dark.png",
+    },
     verification: {
       google: "wsGn1a6OGiXV4KIA9TcxFKcgThC6J4Q1iHmyTNBs9u0",
     },
