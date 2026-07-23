@@ -43,7 +43,17 @@ export default async function HomePage({
           "@context": "https://schema.org",
           "@type": "WebSite",
           name: "ExploreTbilisi",
+          alternateName: "Explore Tbilisi",
           url: `${SITE_URL}/${locale}`,
+          inLanguage: locale,
+          potentialAction: {
+            "@type": "SearchAction",
+            target: {
+              "@type": "EntryPoint",
+              urlTemplate: `${SITE_URL}/${locale}/discover?q={search_term_string}`,
+            },
+            "query-input": "required name=search_term_string",
+          },
         }}
       />
       <JsonLd
@@ -52,6 +62,9 @@ export default async function HomePage({
           "@type": "Organization",
           name: "ExploreTbilisi",
           url: `${SITE_URL}/${locale}`,
+          logo: `${SITE_URL}/explore-tbilisi-favicon.png`,
+          description:
+            "AI trip planner and travel guide for Tbilisi, Georgia — attractions, food, neighborhoods, maps and public-transit routes.",
         }}
       />
       <HeroSection />

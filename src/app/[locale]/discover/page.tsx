@@ -5,7 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { Star, Filter } from "lucide-react";
 import { mockPlaces } from "@/lib/mock/places";
 import { mockCategories } from "@/lib/mock/categories";
-import { buildMetadata } from "@/lib/seo";
+import { buildMetadata, SITE_URL } from "@/lib/seo";
 import { JsonLd } from "@/components/site/json-ld";
 import { FaqBlock } from "@/components/site/faq-block";
 import { RelatedGuides } from "@/components/site/related-guides";
@@ -48,7 +48,7 @@ export default async function DiscoverPage({
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     name: "Tbilisi Attractions",
-    url: "https://exploretbilisi.online/en/discover",
+    url: `${SITE_URL}/${locale}/discover`,
   };
 
   return (
