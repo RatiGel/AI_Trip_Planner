@@ -32,7 +32,7 @@ export async function planJourney(
       fromPlace: `${from[0]},${from[1]}`,
       toPlace: `${to[0]},${to[1]}`,
       departMode: "leaveNow",
-      modes: "WALK,BUS",
+      modes: "WALK,BUS,SUBWAY",
       optimize: "quick",
       locale: ttcLocale(locale),
     });

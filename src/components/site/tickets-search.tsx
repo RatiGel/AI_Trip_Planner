@@ -3,13 +3,22 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowRight, Bus, Clock, Search, Train, Wallet } from "lucide-react";
+import { ArrowRight, Bus, Clock, ExternalLink, Search, Train, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { payNow } from "@/lib/pay";
 import type { TicketOption } from "@/types";
 
 const CITIES = ["Tbilisi", "Batumi", "Kazbegi", "Kutaisi"];
+
+// tre.ge is the official Georgian Railway & intercity bus booking platform.
+// It exposes no public API or documented deep-link params, so we send users to
+// the locale-appropriate landing page to complete a real, guaranteed booking.
+// ka is the site default (no prefix); en and ru have path prefixes.
+function treUrl(locale: string) {
+  const path = locale === "ka" ? "" : locale === "ru" ? "/ru" : "/en";
+  return `https://tre.ge${path}`;
+}
 
 function fmtDuration(min?: number) {
   if (!min) return "";
@@ -18,7 +27,7 @@ function fmtDuration(min?: number) {
   return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
-function TicketCard({ option, onBuy, index }: { option: TicketOption; onBuy: () => void; index: number }) {
+function TicketCard({ option, onBuy, index, treHref }: { option: TicketOption; onBuy: () => void; index: number; treHref: string }) {
   const t = useTranslations("tickets");
   const isRail = option.type === "rail";
   return (
@@ -55,13 +64,25 @@ function TicketCard({ option, onBuy, index }: { option: TicketOption; onBuy: () 
         <p className="text-2xl font-bold" style={{ color: "#E8A020" }}>
           {option.priceGEL}<span className="ml-0.5 text-base">₾</span>
         </p>
-        <button
-          onClick={onBuy}
-          className="rounded-full px-5 py-2.5 text-[13px] font-semibold text-white transition-all hover:-translate-y-0.5"
-          style={{ background: "#B5271D", boxShadow: "0 4px 16px rgba(181,39,29,0.35)" }}
-        >
-          {t("buy")}
-        </button>
+        <div className="flex items-center gap-2">
+          <a
+            href={treHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 rounded-full px-4 py-2.5 text-[13px] font-semibold transition-all hover:-translate-y-0.5"
+            style={{ background: "var(--site-bg-surface)", color: "var(--site-text)", border: "1px solid var(--site-border-08)" }}
+          >
+            {t("bookOnTre")}
+            <ExternalLink className="size-3.5" style={{ color: "var(--site-text-40)" }} />
+          </a>
+          <button
+            onClick={onBuy}
+            className="rounded-full px-5 py-2.5 text-[13px] font-semibold text-white transition-all hover:-translate-y-0.5"
+            style={{ background: "#B5271D", boxShadow: "0 4px 16px rgba(181,39,29,0.35)" }}
+          >
+            {t("buy")}
+          </button>
+        </div>
       </div>
     </motion.div>
   );
@@ -189,6 +210,35 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
         </div>
       )}
 
+      {/* Official-booking banner — intercity (bus/rail) only. tre.ge is the
+          real ticket source; our fares are indicative previews. */}
+      {showRouteForm && (
+        <a
+          href={treUrl(locale)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-col gap-4 rounded-2xl p-5 transition-all hover:-translate-y-0.5 sm:flex-row sm:items-center sm:justify-between"
+          style={{ background: "var(--site-bg-elevated)", border: "1px solid rgba(8,145,178,0.3)" }}
+        >
+          <div className="flex items-start gap-4">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-full" style={{ background: "rgba(8,145,178,0.15)" }}>
+              <Train className="size-5" style={{ color: "#0891B2" }} />
+            </div>
+            <div>
+              <p className="text-[15px] font-semibold" style={{ color: "var(--site-text)" }}>{t("officialBannerTitle")}</p>
+              <p className="mt-0.5 max-w-xl text-[13px]" style={{ color: "var(--site-text-50)" }}>{t("officialBannerBody")}</p>
+            </div>
+          </div>
+          <span
+            className="flex shrink-0 items-center justify-center gap-1.5 rounded-full px-5 py-2.5 text-[13px] font-semibold text-white"
+            style={{ background: "#0891B2", boxShadow: "0 4px 16px rgba(8,145,178,0.25)" }}
+          >
+            {t("officialBannerCta")}
+            <ExternalLink className="size-3.5" />
+          </span>
+        </a>
+      )}
+
       {/* Route form — bus/rail only */}
       <AnimatePresence mode="wait">
         {showRouteForm && (
@@ -306,7 +356,7 @@ export function TicketsSearch({ tickets }: { tickets: TicketOption[] }) {
               {results.length} {t("routesFound")} · {activeFrom} → {activeTo}
             </p>
             {results.map((o, i) => (
-              <TicketCard key={o.id} option={o} onBuy={() => buy(o)} index={i} />
+              <TicketCard key={o.id} option={o} onBuy={() => buy(o)} index={i} treHref={treUrl(locale)} />
             ))}
           </motion.div>
         )}

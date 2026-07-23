@@ -24,6 +24,37 @@ function planPoints(plan: JourneyPlan): LatLng[] {
   return plan.legs.flatMap((l) => l.points ?? []);
 }
 
+// Inline SVG glyphs (lucide Bus / TramFront paths) for map markers — the map
+// libs render raw HTML, so we can't use the React icon components here.
+const BUS_SVG =
+  '<path d="M8 6v6M15 6v6M2 12h19.6M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3M11 18h5" fill="none"/><circle cx="7" cy="18" r="2" fill="none"/><circle cx="17" cy="18" r="2" fill="none"/>';
+const TRAM_SVG =
+  '<rect width="16" height="16" x="4" y="3" rx="2" fill="none"/><path d="M4 11h16M12 3v8M8 19l-2 3M18 22l-2-3M2 21h20" fill="none"/><circle cx="8" cy="15" r="1" fill="currentColor" stroke="none"/><circle cx="16" cy="15" r="1" fill="currentColor" stroke="none"/>';
+
+/**
+ * Marker HTML for a transit boarding stop — a colored teardrop pin with the
+ * mode glyph inside. `color` is the leg's brand/mode color.
+ */
+function stopMarkerHTML(mode: JourneyLeg["mode"], color: string): string {
+  const glyph = mode === "metro" ? TRAM_SVG : BUS_SVG;
+  return (
+    `<div style="position:relative;width:30px;height:30px;">` +
+    `<div style="width:30px;height:30px;border-radius:9999px 9999px 9999px 2px;transform:rotate(45deg);` +
+    `background:${color};border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);"></div>` +
+    `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" ` +
+    `stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ` +
+    `style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;">${glyph}</svg>` +
+    `</div>`
+  );
+}
+
+/** Transit legs (bus/metro) with a valid boarding coordinate. */
+function transitStops(plan: JourneyPlan): { pos: LatLng; mode: JourneyLeg["mode"]; color: string }[] {
+  return plan.legs
+    .filter((l) => (l.mode === "bus" || l.mode === "metro") && l.points && l.points.length >= 1)
+    .map((l) => ({ pos: l.points![0], mode: l.mode, color: legColor(l) }));
+}
+
 // ── Mapbox GL ────────────────────────────────────────────────────────────────
 function MapboxJourney({
   plan,
@@ -95,6 +126,15 @@ function MapboxJourney({
               ...(leg.mode === "walk" ? { "line-dasharray": [1, 1.8] } : {}),
             },
           });
+        });
+
+        // Transit boarding stops — mode-icon pins.
+        transitStops(plan).forEach(({ pos: [lat, lng], mode, color }) => {
+          const el = document.createElement("div");
+          el.className = "journey-marker";
+          el.style.cssText = "cursor:pointer;";
+          el.innerHTML = stopMarkerHTML(mode, color);
+          new mapboxgl.Marker({ element: el, anchor: "bottom" }).setLngLat([lng, lat]).addTo(map);
         });
 
         const pts = planPoints(plan);
@@ -221,6 +261,17 @@ function LeafletJourney({
           lineJoin: "round",
         }).addTo(map);
         layersRef.current.push(line);
+      });
+
+      // Transit boarding stops — mode-icon pins.
+      transitStops(plan).forEach(({ pos, mode, color }) => {
+        const icon = L.divIcon({
+          html: stopMarkerHTML(mode, color),
+          className: "",
+          iconSize: [30, 30],
+          iconAnchor: [15, 30], // bottom tip of the teardrop
+        });
+        layersRef.current.push(L.marker(pos, { icon }).addTo(map));
       });
 
       const pts = planPoints(plan);

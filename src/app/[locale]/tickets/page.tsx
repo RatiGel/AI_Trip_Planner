@@ -1,10 +1,5 @@
 import { setRequestLocale, getTranslations } from "next-intl/server";
-import { connectDB } from "@/lib/db";
-import { TicketModel } from "@/lib/models/ticket";
-import { mockBusTickets, mockRailTickets } from "@/lib/mock/tickets";
 import { GettingAround } from "@/components/site/getting-around";
-import { serializeDoc } from "@/lib/serialize";
-import type { TicketOption } from "@/types";
 
 export default async function GettingAroundPage({
   params,
@@ -13,14 +8,6 @@ export default async function GettingAroundPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-
-  await connectDB();
-  let tickets = serializeDoc<TicketOption[]>(await TicketModel.find().lean());
-  if (tickets.length === 0) {
-    tickets = [...mockBusTickets, ...mockRailTickets];
-  }
-  // Transit passes retired from Getting Around — intercity bus/rail only.
-  tickets = tickets.filter((x) => x.type !== "transit-pass");
 
   const t = await getTranslations({ locale, namespace: "gettingAround" });
 
@@ -40,14 +27,11 @@ export default async function GettingAroundPage({
           <h1 className="font-display leading-tight text-white" style={{ fontSize: "clamp(42px, 7vw, 80px)", letterSpacing: "-2px" }}>
             {t("heading")} <em className="italic" style={{ color: "#F5C842" }}>{t("headingEm")}</em>
           </h1>
-          <p className="mt-3 max-w-xl text-white/60" style={{ fontSize: "clamp(14px, 1.5vw, 16px)" }}>
-            {t("description")}
-          </p>
         </div>
       </div>
 
       <div className="mx-auto max-w-7xl px-6 py-12 md:px-12">
-        <GettingAround tickets={tickets} />
+        <GettingAround />
       </div>
     </div>
   );

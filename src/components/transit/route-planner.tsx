@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, useId } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { ArrowDownUp, MapPin, Search, Route, Loader2, Crosshair, LocateFixed } from "lucide-react";
+import { ArrowDownUp, MapPin, Search, Route, Loader2, Crosshair, LocateFixed, Footprints, Bus, TrainFront, Pencil, PanelLeftOpen } from "lucide-react";
 import type { GeocodeResult, JourneyPlan } from "@/types/transit";
 import { useGeolocation } from "@/hooks/use-geolocation";
 import { JourneyCard } from "./journey-card";
@@ -56,17 +56,26 @@ export function RoutePlanner() {
 
   const [plans, setPlans] = useState<JourneyPlan[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // After planning, the left panel collapses to give the map full width.
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [fromLocating, setFromLocating] = useState(false);
+  // From field mode. "address" = user chose to type; otherwise focusing the
+  // empty From field shows the chooser (My location / Enter address).
+  const [fromMode, setFromMode] = useState<"address" | null>(null);
+  const fromInputRef = useRef<HTMLInputElement>(null);
 
   const geocode = useGeocode(locale);
 
   const selectedPlan = plans?.find((p) => p.id === selectedId) ?? null;
 
   function onInput(field: Field, value: string) {
-    if (field === "from") { setFromText(value); setFromSel(null); }
-    else { setToText(value); setToSel(null); }
+    if (field === "from") {
+      setFromText(value); setFromSel(null);
+      // Emptying the address input returns the field to the chooser.
+      if (value === "") setFromMode(null);
+    } else { setToText(value); setToSel(null); }
     geocode(value, (r) => setSuggestions((s) => ({ ...s, [field]: r })));
   }
 
@@ -105,6 +114,7 @@ export function RoutePlanner() {
         setFromSel(filled);
         setSuggestions((s) => ({ ...s, from: [] }));
         setFromLocating(false);
+        setActive(null);
       },
       (err) => {
         const key = err.code === 1 ? "geoDenied" : err.code === 3 ? "geoTimeout" : "geoUnavailable";
@@ -130,8 +140,17 @@ export function RoutePlanner() {
       });
       if (!res.ok) { setError(true); return; }
       const data = (await res.json()) as { plans: JourneyPlan[] };
-      setPlans(data.plans);
-      setSelectedId(data.plans[0]?.id ?? null); // auto-select fastest route
+      // Sort by least walking first, then shortest total duration. Least walk
+      // to the stop is the primary rank; duration breaks ties.
+      const sorted = [...data.plans].sort((a, b) => {
+        const wa = a.walkMin ?? Infinity;
+        const wb = b.walkMin ?? Infinity;
+        if (wa !== wb) return wa - wb;
+        return (a.durationMin ?? Infinity) - (b.durationMin ?? Infinity);
+      });
+      setPlans(sorted);
+      setSelectedId(sorted[0]?.id ?? null); // auto-select least-walk route
+      setPanelCollapsed(false); // show the options list; Go collapses the panel
     } catch {
       setError(true);
     } finally {
@@ -141,17 +160,31 @@ export function RoutePlanner() {
 
   const canPlan = !!fromSel && !!toSel && !loading;
 
+  // Choose "type an address" mode: reveal a normal text input and focus it.
+  function chooseAddressMode() {
+    setFromMode("address");
+    setSuggestions((s) => ({ ...s, from: [] }));
+    // Focus after the input renders.
+    requestAnimationFrame(() => fromInputRef.current?.focus());
+  }
+
   function renderField(field: Field) {
     const text = field === "from" ? fromText : toText;
     const dotColor = field === "from" ? "var(--site-text-40)" : "#B5271D";
     const sugg = suggestions[field];
+    const focused = active === field;
+
+    // From field, no mode chosen yet, nothing typed → show the chooser menu.
+    const showChooser = field === "from" && fromMode === null && !fromSel && fromText === "";
+
     return (
       <div className="relative">
         <div
-          className="flex items-center gap-3 rounded-xl px-3 transition-colors"
+          className="flex items-center gap-3 rounded-xl px-3 transition-all"
           style={{
             background: "var(--site-bg-elevated)",
-            border: `1px solid ${active === field ? "var(--site-border-20)" : "var(--site-border-06)"}`,
+            border: `1px solid ${focused ? "#0891B2" : "var(--site-border-06)"}`,
+            boxShadow: focused ? "0 0 0 3px rgba(8,145,178,0.15)" : "none",
           }}
         >
           {field === "from" ? (
@@ -161,37 +194,76 @@ export function RoutePlanner() {
           ) : (
             <MapPin className="size-4 shrink-0" style={{ color: dotColor, fill: "rgba(181,39,29,0.15)" }} />
           )}
-          <input
-            className="w-full bg-transparent py-3 text-[15px] outline-none"
-            style={{ color: "var(--site-text)" }}
-            placeholder={field === "from" ? t("fromPlaceholder") : t("toPlaceholder")}
-            value={text}
-            role="combobox"
-            aria-expanded={active === field && sugg.length > 0}
-            aria-controls={`${listId}-${field}`}
-            autoComplete="off"
-            onFocus={() => setActive(field)}
-            onChange={(e) => onInput(field, e.target.value)}
-          />
-          {field === "from" && (
+
+          {showChooser ? (
+            // Read-only trigger — clicking opens the chooser menu below.
             <button
               type="button"
-              onClick={fillFromWithMyLocation}
-              disabled={fromLocating}
-              aria-label={t("myLocation")}
-              title={t("myLocation")}
-              className="mr-8 grid size-7 shrink-0 place-items-center rounded-md transition-colors hover:bg-[var(--site-surface-08)] disabled:opacity-50"
-              style={{ color: "var(--site-text-50)" }}
+              className="flex w-full items-center py-3 text-left text-[15px] outline-none"
+              style={{ color: "var(--site-text-40)" }}
+              aria-haspopup="listbox"
+              aria-expanded={focused}
+              onFocus={() => setActive("from")}
+              onClick={() => setActive("from")}
             >
-              {fromLocating ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <LocateFixed className="size-4" />
-              )}
+              {t("fromPlaceholder")}
             </button>
+          ) : (
+            <input
+              ref={field === "from" ? fromInputRef : undefined}
+              className="w-full bg-transparent py-3 text-[15px] outline-none"
+              style={{ color: "var(--site-text)" }}
+              placeholder={field === "from" ? t("fromPlaceholder") : t("toPlaceholder")}
+              value={text}
+              role="combobox"
+              aria-expanded={focused && sugg.length > 0}
+              aria-controls={`${listId}-${field}`}
+              autoComplete="off"
+              onFocus={() => setActive(field)}
+              onChange={(e) => onInput(field, e.target.value)}
+            />
           )}
         </div>
-        {active === field && sugg.length > 0 && (
+
+        {/* Chooser menu — My location / Enter address */}
+        {showChooser && focused && (
+          <ul
+            role="listbox"
+            className="absolute z-30 mt-1.5 w-full overflow-hidden rounded-xl shadow-lg"
+            style={{ background: "var(--site-bg-surface)", border: "1px solid var(--site-border-10)" }}
+          >
+            <li role="option" aria-selected={false}>
+              <button
+                type="button"
+                disabled={fromLocating}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left text-[14px] transition-colors hover:bg-[var(--site-surface-08)] disabled:opacity-60"
+                style={{ color: "var(--site-text)" }}
+                onMouseDown={(e) => { e.preventDefault(); fillFromWithMyLocation(); }}
+              >
+                {fromLocating ? (
+                  <Loader2 className="size-4 shrink-0 animate-spin" style={{ color: "#0891B2" }} />
+                ) : (
+                  <LocateFixed className="size-4 shrink-0" style={{ color: "#0891B2" }} />
+                )}
+                <span className="font-medium">{fromLocating ? t("locating") : t("useMyLocation")}</span>
+              </button>
+            </li>
+            <li role="option" aria-selected={false} style={{ borderTop: "1px solid var(--site-border-06)" }}>
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 px-4 py-3 text-left text-[14px] transition-colors hover:bg-[var(--site-surface-08)]"
+                style={{ color: "var(--site-text)" }}
+                onMouseDown={(e) => { e.preventDefault(); chooseAddressMode(); }}
+              >
+                <Pencil className="size-4 shrink-0" style={{ color: "var(--site-text-50)" }} />
+                <span className="font-medium">{t("enterAddress")}</span>
+              </button>
+            </li>
+          </ul>
+        )}
+
+        {/* Address suggestions */}
+        {!showChooser && focused && sugg.length > 0 && (
           <ul
             id={`${listId}-${field}`}
             role="listbox"
@@ -218,11 +290,63 @@ export function RoutePlanner() {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,420px)_1fr]">
-      {/* ── Left: search + results ── */}
-      <div className="min-w-0">
+    <div
+      className={`grid gap-8 transition-[grid-template-columns] duration-300 ease-out ${
+        panelCollapsed ? "lg:grid-cols-[52px_1fr]" : "lg:grid-cols-[minmax(0,420px)_1fr]"
+      }`}
+    >
+      {/* ── Collapsed: thin strip to reopen the search panel ── */}
+      {panelCollapsed && (
+        <div className="hidden lg:flex lg:flex-col lg:items-center lg:gap-3 lg:pt-1">
+          <button
+            type="button"
+            onClick={() => setPanelCollapsed(false)}
+            aria-label={t("editRoute")}
+            title={t("editRoute")}
+            className="grid size-11 place-items-center rounded-xl transition-colors hover:brightness-110"
+            style={{ background: "#0891B2", color: "#fff", boxShadow: "0 4px 16px rgba(8,145,178,0.3)" }}
+          >
+            <PanelLeftOpen className="size-5" />
+          </button>
+          {plans && plans.length > 0 && (
+            <span
+              className="rounded-full px-2 py-1 text-[11px] font-semibold tabular-nums"
+              style={{ background: "var(--site-surface-08)", color: "var(--site-text-65)" }}
+            >
+              {plans.length}
+            </span>
+          )}
+          <span
+            className="mt-1 text-[11px] font-medium uppercase tracking-wide"
+            style={{ color: "var(--site-text-45)", writingMode: "vertical-rl" }}
+          >
+            {t("editRoute")}
+          </span>
+        </div>
+      )}
+
+      {/* ── Left: search + results (hidden on desktop when collapsed) ── */}
+      <div className={`min-w-0 ${panelCollapsed ? "lg:hidden" : ""}`}>
         <h2 className="text-2xl font-bold" style={{ color: "var(--site-text)" }}>{t("planTitle")}</h2>
         <p className="mt-1 text-[14px]" style={{ color: "var(--site-text-50)" }}>{t("planSubtitle")}</p>
+
+        {/* Transport-mode legend */}
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {[
+            { icon: Footprints, label: t("walk"), color: "var(--site-text-50)" },
+            { icon: Bus, label: t("bus"), color: "#0891B2" },
+            { icon: TrainFront, label: t("metro"), color: "#7C3AED" },
+          ].map(({ icon: Icon, label, color }) => (
+            <span
+              key={label}
+              className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[12px] font-medium"
+              style={{ background: "var(--site-surface-08)", color: "var(--site-text-65)" }}
+            >
+              <Icon className="size-3.5" style={{ color }} />
+              {label}
+            </span>
+          ))}
+        </div>
 
         <div className="mt-6">
           <div className="relative flex flex-col gap-2.5">
@@ -293,6 +417,7 @@ export function RoutePlanner() {
                   locale={locale}
                   selected={p.id === selectedId}
                   onSelect={() => setSelectedId(p.id)}
+                  onGo={() => { setSelectedId(p.id); setPanelCollapsed(true); }}
                 />
               ))}
             </div>

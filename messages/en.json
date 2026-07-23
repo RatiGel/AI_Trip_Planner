@@ -143,7 +143,11 @@
     "searching": "Searching…",
     "searchPrompt": "Select origin, destination and date, then press Search.",
     "routesFound": "routes found",
-    "redirecting": "Redirecting to payment…"
+    "redirecting": "Redirecting to payment…",
+    "bookOnTre": "Book on tre.ge",
+    "officialBannerTitle": "Official train & bus tickets",
+    "officialBannerBody": "Intercity fares shown here are indicative. Book and pay on tre.ge — the official Georgian Railway & bus platform — for live schedules, seat selection and guaranteed tickets.",
+    "officialBannerCta": "Open tre.ge"
   },
   "gettingAround": {
     "eyebrow": "Getting Around",
@@ -153,7 +157,26 @@
     "cityTab": "City Transportation",
     "citySubtitle": "Public transport within Tbilisi — plan a route stop by stop.",
     "fromTab": "Travel from Tbilisi",
-    "fromSubtitle": "Bus and railway tickets to other Georgian cities."
+    "fromSubtitle": "Bus and railway tickets to other Georgian cities.",
+    "trePanelTitle": "Book intercity travel on tre.ge",
+    "trePanelBody": "Trains and buses from Tbilisi to Batumi, Kutaisi, Zugdidi, Poti and more are sold on tre.ge — the official Georgian Railway & bus platform.",
+    "treFeature1": "Live schedules & real-time availability",
+    "treFeature2": "Seat selection and guaranteed tickets",
+    "treFeature3": "Secure payment in GEL, USD or EUR",
+    "trePanelCta": "Search & book on tre.ge",
+    "destHeading": "Popular escapes",
+    "destSubtitle": "Top day-trips and getaways from the capital.",
+    "destByRail": "Rail",
+    "destByBus": "Bus",
+    "destExplore": "See tickets",
+    "destBatumiName": "Batumi",
+    "destBatumiTagline": "Black Sea beaches & nightlife",
+    "destKazbegiName": "Kazbegi",
+    "destKazbegiTagline": "Gergeti church & the high Caucasus",
+    "destKutaisiName": "Kutaisi",
+    "destKutaisiTagline": "Canyons, caves & ancient cathedrals",
+    "destMtskhetaName": "Mtskheta",
+    "destMtskhetaTagline": "Georgia's spiritual old capital"
   },
   "transit": {
     "planTitle": "Plan a route",
@@ -177,6 +200,8 @@
     "duration": "Duration",
     "minShort": "{min} min",
     "departingFrom": "Departing from {stop}",
+    "editRoute": "Edit route",
+    "go": "Go",
     "routeFound": "Route found",
     "noResultsHint": "No transit routes between these points. Try nearby stops or landmarks.",
     "idleTitle": "Plan your trip",
@@ -185,7 +210,10 @@
     "followMe": "Follow me",
     "stopFollowing": "Stop following",
     "recenter": "Recenter",
-    "myLocation": "My location"
+    "myLocation": "My location",
+    "useMyLocation": "From my location",
+    "enterAddress": "Enter an address",
+    "locating": "Locating…"
   },
   "deals": {
     "eyebrow": "Exclusive Offers",

@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useTranslations } from "next-intl";
 
 type T = ReturnType<typeof useTranslations<"transit">>;
-import { Bus, Footprints, TramFront, ChevronDown, Dot } from "lucide-react";
+import { Bus, Footprints, TramFront, ChevronDown, Dot, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import type { JourneyPlan, JourneyLeg, Arrival } from "@/types/transit";
 
@@ -23,6 +23,13 @@ function onColor(hex: string): string {
   // perceived luminance
   const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return lum > 0.6 ? "#111" : "#fff";
+}
+
+/** Per-mode accent color — used by icons, the rail, and dot tints. */
+function modeColor(mode: JourneyLeg["mode"]): string {
+  if (mode === "metro") return "#7C3AED";
+  if (mode === "bus") return "#0891B2";
+  return "var(--site-text-45)"; // walk / unknown
 }
 
 function ModeIcon({ mode, size = 15 }: { mode: JourneyLeg["mode"]; size?: number }) {
@@ -103,11 +110,13 @@ export function JourneyCard({
   locale,
   selected,
   onSelect,
+  onGo,
 }: {
   plan: JourneyPlan;
   locale: string;
   selected?: boolean;
   onSelect?: () => void;
+  onGo?: () => void;
 }) {
   const t = useTranslations("transit");
   const reduce = useReducedMotion();
@@ -147,6 +156,7 @@ export function JourneyCard({
         type="button"
         onClick={() => { onSelect?.(); setOpen((v) => !v); }}
         aria-expanded={open}
+        aria-pressed={selected}
         className="block w-full cursor-pointer p-5 text-left transition-colors"
         style={{ background: "transparent" }}
       >
@@ -197,9 +207,24 @@ export function JourneyCard({
                 {t("nextArrival", { min: nextMin })}
               </span>
             )}
+            {/* Go — selects this trip and expands the map (span, not <button>, to
+                avoid nesting inside the card's outer button). */}
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => { e.stopPropagation(); onGo?.(); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); onGo?.(); }
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[13px] font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98]"
+              style={{ background: "#0891B2", boxShadow: "0 2px 10px rgba(8,145,178,0.3)" }}
+            >
+              {t("go")}
+              <ArrowRight className="size-3.5" />
+            </span>
             <ChevronDown
               className="size-4 shrink-0 transition-transform duration-200"
-              style={{ color: "var(--site-text-40)", transform: open ? "rotate(180deg)" : "none" }}
+              style={{ color: "var(--site-text-45)", transform: open ? "rotate(180deg)" : "none" }}
             />
           </span>
         </div>
@@ -217,24 +242,42 @@ export function JourneyCard({
             style={{ overflow: "hidden" }}
           >
             <div className="border-t px-5 pb-5 pt-4" style={{ borderColor: "var(--site-border-06)" }}>
-              <ol className="flex flex-col gap-3">
+              <ol className="flex flex-col">
                 {plan.legs.map((leg, i) => {
                   const legTime = clock(leg.startTime, locale);
+                  const color = modeColor(leg.mode);
+                  const dashed = leg.mode === "walk" || leg.mode === "unknown";
                   return (
-                    <li key={i} className="flex items-start gap-3">
-                      <div
-                        className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full"
-                        style={{ background: "var(--site-bg-base)" }}
-                      >
-                        <ModeIcon mode={leg.mode} />
+                    <li key={i} className="flex items-stretch gap-3">
+                      {/* Rail: icon node + connecting segment down to the next leg */}
+                      <div className="flex w-8 shrink-0 flex-col items-center">
+                        <span
+                          className="flex size-8 items-center justify-center rounded-full"
+                          style={{
+                            background: "var(--site-bg-base)",
+                            border: `1.5px solid ${color}`,
+                          }}
+                        >
+                          <ModeIcon mode={leg.mode} size={14} />
+                        </span>
+                        {i < plan.legs.length - 1 && (
+                          <span
+                            className="w-0 flex-1"
+                            style={{
+                              minHeight: 22,
+                              borderLeft: `2px ${dashed ? "dotted" : "solid"} ${color}`,
+                              opacity: dashed ? 0.5 : 0.75,
+                            }}
+                          />
+                        )}
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[14px]" style={{ color: "var(--site-text)" }}>
-                          {label(leg.mode)}
-                          {leg.line ? ` ${leg.line}` : ""}
-                          {leg.toStop ? ` → ${leg.toStop}` : ""}
+                      <div className="min-w-0 flex-1 pb-4">
+                        <p className="text-[14px] leading-snug" style={{ color: "var(--site-text)" }}>
+                          <span className="font-semibold">{label(leg.mode)}</span>
+                          {leg.line ? <span className="font-semibold" style={{ color }}> {leg.line}</span> : ""}
+                          {leg.toStop ? <span style={{ color: "var(--site-text-60)" }}> → {leg.toStop}</span> : ""}
                         </p>
-                        <p className="text-[12px]" style={{ color: "var(--site-text-50)" }}>
+                        <p className="mt-0.5 text-[12px] tabular-nums" style={{ color: "var(--site-text-45)" }}>
                           {legTime ? `${legTime} · ` : ""}
                           {typeof leg.durationMin === "number" ? t("minShort", { min: leg.durationMin }) : ""}
                         </p>
@@ -242,6 +285,18 @@ export function JourneyCard({
                     </li>
                   );
                 })}
+                {/* Destination endpoint — closes the rail with a solid pin. */}
+                <li className="flex items-center gap-3">
+                  <span className="flex w-8 shrink-0 justify-center">
+                    <span
+                      className="size-3 rounded-full"
+                      style={{ background: "#B5271D", boxShadow: "0 0 0 3px rgba(181,39,29,0.18)" }}
+                    />
+                  </span>
+                  <p className="text-[13px] font-medium" style={{ color: "var(--site-text-60)" }}>
+                    {arrive ? `${t("arrive")} · ${arrive}` : t("arrive")}
+                  </p>
+                </li>
               </ol>
             </div>
           </motion.div>
