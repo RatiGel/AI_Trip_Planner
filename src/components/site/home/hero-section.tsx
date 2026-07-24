@@ -1,8 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+
+const HERO_IMAGE =
+  "https://images.unsplash.com/photo-1565008576549-57569a49371d?w=1920&q=70";
 
 export function HeroSection() {
   const t = useTranslations("hero");
@@ -15,13 +19,26 @@ export function HeroSection() {
         initial={{ scale: 1.08 }}
         animate={{ scale: 1 }}
         transition={{ duration: 1.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-        style={{
-          backgroundImage:
-            "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.75) 100%), url('https://images.unsplash.com/photo-1565008576549-57569a49371d?w=2000&q=85')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      />
+      >
+        <Image
+          src={HERO_IMAGE}
+          alt=""
+          fill
+          priority
+          fetchPriority="high"
+          sizes="100vw"
+          quality={70}
+          className="object-cover object-center"
+        />
+        {/* Gradient overlay for text contrast */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.75) 100%)",
+          }}
+        />
+      </motion.div>
 
       {/* Content */}
       <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center">
