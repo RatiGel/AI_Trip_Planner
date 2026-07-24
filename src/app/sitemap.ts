@@ -34,6 +34,7 @@ function entry(
   for (const l of routing.locales) {
     languages[l] = `${SITE_URL}/${l}${path}`;
   }
+  languages["x-default"] = `${SITE_URL}/${routing.defaultLocale}${path}`;
   return {
     url: `${SITE_URL}/${locale}${path}`,
     alternates: { languages },

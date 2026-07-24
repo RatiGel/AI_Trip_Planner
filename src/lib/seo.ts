@@ -25,6 +25,10 @@ export function buildMetadata({
   for (const l of routing.locales) {
     languages[l] = localizedPath(l, path);
   }
+  // x-default tells Google the language-neutral entry point. Without it,
+  // Google treats the redirecting root ("/") as the default and overrides
+  // our declared canonical. Point it at the default locale.
+  languages["x-default"] = localizedPath(routing.defaultLocale, path);
 
   return {
     title: { absolute: `${title} · ExploreTbilisi` },
