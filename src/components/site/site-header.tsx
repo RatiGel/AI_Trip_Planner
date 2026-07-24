@@ -117,12 +117,12 @@ export function SiteHeader() {
         {/* Logo */}
         <Link href="/" className="flex flex-col items-start leading-none" aria-label="explore Tbilisi — home">
           <span
-            className="font-display italic text-[15px] tracking-[0.5px] -mb-1"
+            className="font-display italic text-[19px] tracking-[0.5px] -mb-1"
             style={{ color: "#E8A020" }}
           >
             explore
           </span>
-          <span className="font-display text-[22px] tracking-[-0.5px]" style={{ color: c.text }}>
+          <span className="font-display text-[30px] tracking-[-0.5px]" style={{ color: c.text }}>
             Tbilisi<span style={{ color: "#E8A020" }}>.</span>
           </span>
         </Link>
