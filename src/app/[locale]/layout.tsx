@@ -50,6 +50,8 @@ export async function generateMetadata({
   for (const l of routing.locales) {
     languages[l] = `${SITE_URL}/${l}`;
   }
+  // x-default → default locale so Google doesn't pick the redirecting root.
+  languages["x-default"] = `${SITE_URL}/${routing.defaultLocale}`;
   return {
     metadataBase: new URL(SITE_URL),
     title: {
