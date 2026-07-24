@@ -274,7 +274,12 @@
     "noAccount": "No account?",
     "hasAccount": "Already have an account?",
     "createOne": "Create one",
-    "signInLink": "Sign in"
+    "signInLink": "Sign in",
+    "panelTagline": "Your city guide, wherever the trip takes you.",
+    "perkTrips": "Save trips & itineraries",
+    "perkBook": "Book experiences & tickets",
+    "perkAI": "Plan with the AI guide",
+    "or": "or"
   },
   "common": {
     "search": "Search",
