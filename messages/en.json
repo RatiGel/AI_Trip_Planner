@@ -979,5 +979,11 @@
         }
       ]
     }
+  },
+  "myDeals": {
+    "heading": "My Deals",
+    "codeLabel": "Code",
+    "active": "Active",
+    "redeemed": "Redeemed"
   }
 }
