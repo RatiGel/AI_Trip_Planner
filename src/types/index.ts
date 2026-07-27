@@ -287,3 +287,15 @@ export interface Reservation {
   priceGEL?: number;
   paymentStatus?: "unpaid" | "paid";
 }
+
+export interface Voucher {
+  id: string;
+  code: string;
+  userId: string;
+  dealId: string;
+  dealTitle: string;
+  amountGEL: number;
+  paymentOrderId: string;
+  status: "active" | "redeemed";
+  createdAt: string;
+}
