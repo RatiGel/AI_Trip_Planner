@@ -7,6 +7,8 @@ import { Clock } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
+import { useSession } from "next-auth/react";
+import { useRouter } from "@/i18n/navigation";
 import { payNow } from "@/lib/pay";
 import type { DealCategory, DealOption } from "@/types";
 
@@ -23,8 +25,14 @@ function DealCard({ deal, index }: { deal: DealOption; index: number }) {
   const params = useParams();
   const locale = typeof params?.locale === "string" ? params.locale : "en";
   const [loading, setLoading] = useState(false);
+  const { status } = useSession();
+  const router = useRouter();
 
   async function grab() {
+    if (status !== "authenticated") {
+      router.push(`/login?callbackUrl=/${locale}/deals`);
+      return;
+    }
     setLoading(true);
     toast.success(`${deal.title} · ${deal.priceGEL}₾`, { description: t("redirecting") });
     try {
