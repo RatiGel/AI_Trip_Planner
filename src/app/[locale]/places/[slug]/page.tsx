@@ -68,22 +68,102 @@ function PlaceContent({ place, similar }: { place: Place; similar: Place[] }) {
   const name = locale === "ka" ? place.nameKa : place.name;
   const description = locale === "ka" ? place.descriptionKa : place.description;
   const dayNames = locale === "ka" ? DAY_NAMES_KA : DAY_NAMES_EN;
+  const pageUrl = `${SITE_URL}/${locale}/places/${place.slug}`;
+  // Absolute image URLs — Google requires fully-qualified URLs in JSON-LD.
+  const absImages = (place.images ?? []).map((src) =>
+    src.startsWith("http") ? src : `${SITE_URL}${src.startsWith("/") ? "" : "/"}${src}`
+  );
   const placeSchema = {
     "@context": "https://schema.org",
     "@type": "TouristAttraction",
     name,
     description,
-    url: `${SITE_URL}/${locale}/places/${place.slug}`,
-    image: place.images,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: place.geo.address,
-    },
+    url: pageUrl,
+    image: absImages,
+    ...(place.geo?.address || place.geo?.lat != null
+      ? {
+          address: {
+            "@type": "PostalAddress",
+            ...(place.geo?.address ? { streetAddress: place.geo.address } : {}),
+            addressLocality: place.citySlug,
+            addressCountry: "GE",
+          },
+        }
+      : {}),
+    ...(place.geo?.lat != null && place.geo?.lng != null
+      ? {
+          geo: {
+            "@type": "GeoCoordinates",
+            latitude: place.geo.lat,
+            longitude: place.geo.lng,
+          },
+        }
+      : {}),
+    ...(place.rating > 0 && place.reviewCount > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: place.rating,
+            reviewCount: place.reviewCount,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
+    ...(place.priceLevel ? { priceRange: "$".repeat(place.priceLevel) } : {}),
+    ...(place.phone ? { telephone: place.phone } : {}),
+    ...(place.website ? { sameAs: place.website } : {}),
+    ...(place.openingHours?.length
+      ? {
+          openingHoursSpecification: place.openingHours
+            .filter((h) => !h.closed && h.open && h.close)
+            .map((h) => ({
+              "@type": "OpeningHoursSpecification",
+              // schema.org uses full English day names.
+              dayOfWeek: [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+              ][h.day],
+              opens: h.open,
+              closes: h.close,
+            })),
+        }
+      : {}),
+  };
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "ExploreTbilisi",
+        item: `${SITE_URL}/${locale}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: place.citySlug,
+        item: `${SITE_URL}/${locale}/cities/${place.citySlug}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name,
+        item: pageUrl,
+      },
+    ],
   };
 
   return (
     <article className="container mx-auto grid gap-8 px-4 py-10 lg:grid-cols-3">
       <JsonLd data={placeSchema} />
+      <JsonLd data={breadcrumbSchema} />
       <div className="lg:col-span-2 space-y-6">
         <div className="grid gap-2 sm:grid-cols-3">
           <div className="relative col-span-2 row-span-2 aspect-[4/3] overflow-hidden rounded-2xl bg-muted">
@@ -93,7 +173,7 @@ function PlaceContent({ place, similar }: { place: Place; similar: Place[] }) {
           </div>
           {place.images.slice(1, 3).map((src, i) => (
             <div key={i} className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
-              <Image src={src} alt="" fill className="object-cover" />
+              <Image src={src} alt={`${name} — photo ${i + 2}`} fill className="object-cover" />
             </div>
           ))}
         </div>

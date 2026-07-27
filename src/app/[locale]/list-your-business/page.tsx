@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import { setRequestLocale } from "next-intl/server";
+import { buildMetadata } from "@/lib/seo";
 import {
   BadgeCheck,
   CalendarClock,
@@ -51,6 +53,21 @@ const STEPS = [
     body: "Once approved, pay a one-time 50 GEL listing fee and your business goes live instantly.",
   },
 ];
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  return buildMetadata({
+    locale,
+    path: "/list-your-business",
+    title: "List Your Business on ExploreTbilisi",
+    description:
+      "Reach travelers planning their Tbilisi trip. List your restaurant, café, tour, shop, or stay and get discovered through our AI planner, maps, and city guides.",
+  });
+}
 
 export default async function ListYourBusinessPage({
   params,
