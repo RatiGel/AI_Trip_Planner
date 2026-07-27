@@ -417,7 +417,9 @@
     "failedBody": "Your payment could not be completed. Please try again.",
     "pendingTitle": "Payment pending",
     "pendingBody": "We are confirming your payment. This page will reflect the final status shortly.",
-    "backHome": "Back to home"
+    "backHome": "Back to home",
+    "voucherLabel": "Your voucher code",
+    "voucherHint": "Show this code at the venue to redeem your deal."
   },
   "travelInfoPage": {
     "meta": {
