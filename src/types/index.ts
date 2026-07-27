@@ -299,3 +299,18 @@ export interface Voucher {
   status: "active" | "redeemed";
   createdAt: string;
 }
+
+export interface Notification {
+  id: string;
+  ownerId: string;
+  type: "deal_purchase";
+  dealId: string;
+  dealTitle: string;
+  voucherCode: string;
+  buyerName: string;
+  buyerEmail: string;
+  amountGEL: number;
+  paymentOrderId: string;
+  read: boolean;
+  createdAt: string;
+}
