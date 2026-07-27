@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
+  Bell,
   Building2,
   CalendarCheck,
   ChevronLeft,
@@ -30,6 +31,7 @@ const NAV = [
   { href: "/admin/places", label: "places", Icon: MapPin, exact: false },
   { href: "/admin/cities", label: "cities", Icon: Building2, exact: false },
   { href: "/admin/reservations", label: "reservations", Icon: CalendarCheck, exact: false },
+  { href: "/admin/notifications", label: "notifications", Icon: Bell, exact: false },
   { href: "/admin/orders", label: "ticketOrders", Icon: Receipt, exact: false },
   { href: "/admin/users", label: "users", Icon: Users, exact: false },
   { href: "/admin/media", label: "media", Icon: Image, exact: false },
