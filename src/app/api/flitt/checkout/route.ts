@@ -2,10 +2,12 @@ import { randomUUID } from "crypto";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { createCheckout } from "@/lib/flitt";
+import { mockDeals } from "@/lib/mock/deals";
 import { PaymentModel, type PaymentPurpose } from "@/lib/models/payment";
 import { PlaceModel } from "@/lib/models/place";
 import { ReservationModel } from "@/lib/models/reservation";
 import { TicketModel } from "@/lib/models/ticket";
+import { UserModel } from "@/lib/models/user";
 
 const LISTING_FEE_TETRI = 5000; // 50 GEL
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -76,11 +78,18 @@ async function resolve(
       return { amount: Math.round(svc.priceGEL * 100), desc: `Service: ${svc.name}`, businessOwnerId: place.ownerId };
     }
     case "deal": {
-      // Deals are mock-data only — no DB record to resolve against, and guests
-      // may buy without an account. Trust client-supplied amount/desc here only.
-      const gel = Number(body.amount);
-      if (!Number.isFinite(gel) || gel <= 0) return { error: "Deal has no valid price", status: 400 };
-      return { amount: Math.round(gel * 100), desc: body.desc?.slice(0, 120) || `Deal ${body.targetId}` };
+      const deal = mockDeals.find((d) => d.id === body.targetId);
+      if (!deal) return { error: "Deal not found", status: 404 };
+      if (!deal.priceGEL || deal.priceGEL <= 0) return { error: "Deal has no valid price", status: 400 };
+      // Resolve owner email → user id so the notification later targets a real owner.
+      const owner = await UserModel.findOne({ email: deal.ownerEmail })
+        .select("_id")
+        .lean<{ _id: unknown }>();
+      return {
+        amount: Math.round(deal.priceGEL * 100),
+        desc: `Deal: ${deal.title}`,
+        businessOwnerId: owner ? String(owner._id) : undefined,
+      };
     }
     default:
       return { error: "Invalid purpose", status: 400 };
@@ -98,9 +107,9 @@ export async function POST(req: Request) {
     return Response.json({ error: "purpose and targetId required" }, { status: 400 });
   }
 
-  // Deals are public — guests may buy. All other purposes require login.
+  // All purposes (including deals) require login — a voucher is keyed to the buyer.
   const session = await auth();
-  if (!session?.user && body.purpose !== "deal") {
+  if (!session?.user) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   const userId = (session?.user as { id?: string } | undefined)?.id;
