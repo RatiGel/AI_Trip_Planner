@@ -254,6 +254,8 @@ export type DealCategory = "attraction" | "food" | "transport" | "experience";
 
 export interface DealOption {
   id: string;
+  /** Email of the business-owner UserModel that listed this deal; resolved to userId server-side. */
+  ownerEmail: string;
   title: string;
   description: string;
   priceOriginal: number;

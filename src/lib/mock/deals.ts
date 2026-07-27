@@ -3,6 +3,7 @@ import type { DealOption } from "@/types";
 export const mockDeals: DealOption[] = [
   {
     id: "deal-1",
+    ownerEmail: "biz@test.local",
     title: "Narikala Fortress Entry",
     description: "Skip the queue and get discounted entry to Tbilisi's iconic hilltop fortress.",
     priceOriginal: 20,
@@ -15,6 +16,7 @@ export const mockDeals: DealOption[] = [
   },
   {
     id: "deal-2",
+    ownerEmail: "admin@test.local",
     title: "Georgian Wine Tasting Set",
     description: "5-wine qvevri tasting with a sommelier at a boutique winery in the Old Town.",
     priceOriginal: 55,
@@ -26,6 +28,7 @@ export const mockDeals: DealOption[] = [
   },
   {
     id: "deal-3",
+    ownerEmail: "gelashvili.rat@gmail.com",
     title: "Tbilisi Open-Top Bus",
     description: "Hop-on hop-off sightseeing bus covering 20+ stops across the city.",
     priceOriginal: 30,
@@ -38,6 +41,7 @@ export const mockDeals: DealOption[] = [
   },
   {
     id: "deal-4",
+    ownerEmail: "biz@test.local",
     title: "Botanical Garden Entry",
     description: "Explore 128 hectares of rare plants and stunning Tbilisi gorge views.",
     priceOriginal: 10,
@@ -49,6 +53,7 @@ export const mockDeals: DealOption[] = [
   },
   {
     id: "deal-5",
+    ownerEmail: "admin@test.local",
     title: "Traditional Georgian Dinner",
     description: "Full khinkali & khachapuri feast with wine for two at a top-rated restaurant.",
     priceOriginal: 120,
@@ -61,6 +66,7 @@ export const mockDeals: DealOption[] = [
   },
   {
     id: "deal-6",
+    ownerEmail: "gelashvili.rat@gmail.com",
     title: "Airport Transfer Tbilisi",
     description: "Private sedan transfer between Tbilisi International Airport and city centre.",
     priceOriginal: 50,
