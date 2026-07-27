@@ -50,6 +50,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             await UserModel.create({
               name: user.name?.trim() || email.split("@")[0],
               email,
+              avatar: user.image ?? undefined,
               role: isSuperAdminEmail(email) ? "superadmin" : "tourist",
               suspended: false,
             });
@@ -58,8 +59,16 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             const code = (err as { code?: number }).code;
             if (code !== 11000) throw err;
           }
-        } else if (isSuperAdminEmail(email) && existing.role !== "superadmin") {
-          await UserModel.findByIdAndUpdate(existing._id, { role: "superadmin" });
+        } else {
+          const patch: Record<string, string> = {};
+          // Backfill the Google avatar if we don't already have one stored
+          if (user.image && !existing.avatar) patch.avatar = user.image;
+          if (isSuperAdminEmail(email) && existing.role !== "superadmin") {
+            patch.role = "superadmin";
+          }
+          if (Object.keys(patch).length) {
+            await UserModel.findByIdAndUpdate(existing._id, patch);
+          }
         }
       } else {
         if (isSuperAdminEmail(email)) {
@@ -77,10 +86,13 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         if (dbUser) {
           token.id = dbUser._id.toString();
           token.role = dbUser.role ?? "tourist";
+          // Prefer the stored avatar; fall back to the fresh Google image
+          token.avatar = dbUser.avatar ?? user.image ?? undefined;
         } else {
           // Fallback: store Google OAuth id temporarily; pages must handle non-ObjectId ids
           token.id = user.id;
           token.role = "tourist";
+          token.avatar = user.image ?? undefined;
         }
         if (isSuperAdminEmail(email)) {
           token.role = "superadmin";
@@ -95,6 +107,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           if (dbUser) {
             token.id = dbUser._id.toString();
             token.role = dbUser.role ?? token.role;
+            token.avatar = dbUser.avatar ?? token.avatar;
           }
         } catch {
           // Non-critical: role stays as-is in the token
@@ -108,6 +121,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     session({ session, token }) {
       if (token.id) session.user.id = token.id as string;
       if (token.role) session.user.role = token.role as string;
+      if (token.avatar) session.user.image = token.avatar as string;
       if (isSuperAdminEmail(session.user.email)) {
         session.user.role = "superadmin";
       }

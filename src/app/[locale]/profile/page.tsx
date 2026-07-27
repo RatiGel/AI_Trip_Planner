@@ -29,7 +29,7 @@ export default async function ProfilePage({
     <ProfileClient
       name={session!.user.name ?? ""}
       email={session!.user.email ?? ""}
-      avatar={user?.avatar ?? session!.user.image ?? ""}
+      avatarUrl={user?.avatar ?? session!.user.image ?? ""}
       role={(session!.user as { role?: string }).role ?? "tourist"}
       bizRequestStatus={bizRequest?.status ?? null}
       bizRejectionReason={bizRequest?.rejectionReason ?? null}

@@ -26,6 +26,36 @@ export function SiteHeader() {
   const t = useTranslations("header");
   const tNav = useTranslations("nav");
 
+  // Menu items: gold icon on hover/focus, a touch more breathing room
+  const menuItemClass =
+    "py-2 [&_svg]:text-muted-foreground focus:[&_svg]:text-[var(--color-gold)]";
+
+  // Role credential shown in the account menu, matching the profile page's stamp
+  const role = (session?.user as { role?: string })?.role ?? "tourist";
+  const ROLE_LABEL: Record<string, string> = {
+    superadmin: "Super Admin",
+    admin: "Admin",
+    business: "Business Owner",
+  };
+  const roleStamp =
+    role in ROLE_LABEL
+      ? {
+          label: ROLE_LABEL[role],
+          style:
+            role === "business"
+              ? {
+                  background: "color-mix(in oklch, #E8A020 18%, transparent)",
+                  color: "#E8A020",
+                  boxShadow: "inset 0 0 0 1px color-mix(in oklch, #E8A020 30%, transparent)",
+                }
+              : {
+                  background: "color-mix(in oklch, #B5271D 20%, transparent)",
+                  color: "#f0857c",
+                  boxShadow: "inset 0 0 0 1px color-mix(in oklch, #B5271D 30%, transparent)",
+                },
+        }
+      : null;
+
   const NAV: { label: string; href: string; icon?: React.ReactNode; children: { label: string; href: string }[] }[] = [
     { label: t("travelInfo"), href: "/travel-info", children: [] },
     {
@@ -188,64 +218,129 @@ export function SiteHeader() {
                   className="flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3 text-[13px] font-medium outline-none transition-all hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring"
                   style={{ border: `1px solid ${c.border20}`, color: c.text80 }}
                 >
-                  <span
-                    className="flex size-7 items-center justify-center rounded-full text-[12px] font-semibold uppercase"
-                    style={{ background: "#E8A020", color: "#1a1a1a" }}
-                  >
-                    {session.user.name?.[0] ?? <User className="size-3.5" />}
-                  </span>
+                  {session.user.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- Google avatar host not in next.config remotePatterns
+                    <img
+                      src={session.user.image}
+                      alt={session.user.name ?? "Account"}
+                      className="size-7 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span
+                      className="flex size-7 items-center justify-center rounded-full text-[12px] font-semibold uppercase"
+                      style={{ background: "#E8A020", color: "#1a1a1a" }}
+                    >
+                      {session.user.name?.[0] ?? <User className="size-3.5" />}
+                    </span>
+                  )}
                   {session.user.name?.split(" ")[0] ?? "Account"}
                   <ChevronDown className="size-3.5 opacity-60" />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="flex flex-col">
-                    <span className="text-sm font-medium">{session.user.name}</span>
-                    {session.user.email && (
-                      <span className="truncate text-xs font-normal text-muted-foreground">
-                        {session.user.email}
+                <DropdownMenuContent
+                  align="end"
+                  sideOffset={8}
+                  className="w-64 overflow-hidden p-0"
+                >
+                  {/* Identity header — mirrors the profile page's passport motif */}
+                  <div className="relative overflow-hidden px-3.5 pb-3.5 pt-4">
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 opacity-80"
+                      style={{
+                        background:
+                          "radial-gradient(120% 130% at 0% 0%, color-mix(in oklch, var(--color-wine) 24%, transparent), transparent 58%), radial-gradient(110% 130% at 100% 100%, color-mix(in oklch, var(--color-gold) 18%, transparent), transparent 58%)",
+                      }}
+                    />
+                    <div className="relative flex items-center gap-3">
+                      {session.user.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- Google avatar host not in next.config remotePatterns
+                        <img
+                          src={session.user.image}
+                          alt={session.user.name ?? "Account"}
+                          className="size-11 shrink-0 rounded-xl object-cover ring-1 ring-white/15"
+                        />
+                      ) : (
+                        <span
+                          className="flex size-11 shrink-0 items-center justify-center rounded-xl font-display text-lg uppercase"
+                          style={{ background: "#B5271D", color: "#fff" }}
+                        >
+                          {session.user.name?.[0] ?? <User className="size-4" />}
+                        </span>
+                      )}
+                      <div className="min-w-0">
+                        <p className="truncate font-display text-base leading-tight tracking-[-0.2px]">
+                          {session.user.name}
+                        </p>
+                        {session.user.email && (
+                          <p className="truncate text-xs text-muted-foreground">
+                            {session.user.email}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {roleStamp && (
+                      <span
+                        className="relative mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider"
+                        style={roleStamp.style}
+                      >
+                        <Shield className="size-3" />
+                        {roleStamp.label}
                       </span>
                     )}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem render={<Link href="/trips" />}>
-                    <MapPinned className="size-4" /> My Trips
-                  </DropdownMenuItem>
-                  <DropdownMenuItem render={<Link href="/reservations" />}>
-                    <CalendarDays className="size-4" /> Reservations
-                  </DropdownMenuItem>
-                  <DropdownMenuItem render={<Link href="/profile" />}>
-                    <User className="size-4" /> Profile
-                  </DropdownMenuItem>
+                  </div>
 
-                  {(["business", "admin", "superadmin"] as string[]).includes(
-                    (session.user as { role?: string }).role ?? ""
-                  ) && <DropdownMenuSeparator />}
+                  <div className="px-1 pb-1">
+                    <DropdownMenuLabel className="px-1.5 pt-1.5 text-[0.65rem] uppercase tracking-[0.16em]">
+                      Account
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem render={<Link href="/trips" />} className={menuItemClass}>
+                      <MapPinned className="size-4" /> My Trips
+                    </DropdownMenuItem>
+                    <DropdownMenuItem render={<Link href="/reservations" />} className={menuItemClass}>
+                      <CalendarDays className="size-4" /> Reservations
+                    </DropdownMenuItem>
+                    <DropdownMenuItem render={<Link href="/profile" />} className={menuItemClass}>
+                      <User className="size-4" /> Profile
+                    </DropdownMenuItem>
 
-                  {(session.user as { role?: string }).role === "business" && (
-                    <DropdownMenuItem render={<Link href="/business" />}>
-                      <LayoutDashboard className="size-4" /> {tNav("myBusiness")}
-                    </DropdownMenuItem>
-                  )}
-                  {(["admin", "superadmin"] as string[]).includes(
-                    (session.user as { role?: string }).role ?? ""
-                  ) && (
-                    <DropdownMenuItem render={<Link href="/admin" />}>
-                      <Shield className="size-4" /> {tNav("admin")}
-                    </DropdownMenuItem>
-                  )}
-                  {(session.user as { role?: string }).role === "superadmin" && (
-                    <DropdownMenuItem render={<Link href="/superadmin" />}>
-                      <Shield className="size-4" /> {tNav("superadmin")}
-                    </DropdownMenuItem>
-                  )}
+                    {(["business", "admin", "superadmin"] as string[]).includes(
+                      (session.user as { role?: string }).role ?? ""
+                    ) && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel className="px-1.5 text-[0.65rem] uppercase tracking-[0.16em]">
+                          Manage
+                        </DropdownMenuLabel>
+                      </>
+                    )}
 
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => signOut({ callbackUrl: "/" })}
-                  >
-                    <LogOut className="size-4" /> {tNav("logout")}
-                  </DropdownMenuItem>
+                    {(session.user as { role?: string }).role === "business" && (
+                      <DropdownMenuItem render={<Link href="/business" />} className={menuItemClass}>
+                        <LayoutDashboard className="size-4" /> {tNav("myBusiness")}
+                      </DropdownMenuItem>
+                    )}
+                    {(["admin", "superadmin"] as string[]).includes(
+                      (session.user as { role?: string }).role ?? ""
+                    ) && (
+                      <DropdownMenuItem render={<Link href="/admin" />} className={menuItemClass}>
+                        <Shield className="size-4" /> {tNav("admin")}
+                      </DropdownMenuItem>
+                    )}
+                    {(session.user as { role?: string }).role === "superadmin" && (
+                      <DropdownMenuItem render={<Link href="/superadmin" />} className={menuItemClass}>
+                        <Shield className="size-4" /> {tNav("superadmin")}
+                      </DropdownMenuItem>
+                    )}
+
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => signOut({ callbackUrl: "/" })}
+                      className="py-2"
+                    >
+                      <LogOut className="size-4" /> {tNav("logout")}
+                    </DropdownMenuItem>
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
