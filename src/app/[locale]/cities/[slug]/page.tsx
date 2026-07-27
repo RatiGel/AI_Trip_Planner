@@ -71,10 +71,29 @@ function CityContent({ city, places }: { city: City; places: Place[] }) {
       addressCountry: city.country,
     },
   };
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "ExploreTbilisi",
+        item: `${SITE_URL}/${locale}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name,
+        item: `${SITE_URL}/${locale}/cities/${city.slug}`,
+      },
+    ],
+  };
 
   return (
     <>
       <JsonLd data={citySchema} />
+      <JsonLd data={breadcrumbSchema} />
       <section className="relative h-[40vh] min-h-72 w-full overflow-hidden">
         <Image src={city.heroImage} alt={name} fill priority className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />

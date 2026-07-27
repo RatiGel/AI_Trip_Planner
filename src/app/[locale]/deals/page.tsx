@@ -1,6 +1,23 @@
+import type { Metadata } from "next";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { mockDeals } from "@/lib/mock/deals";
 import { DealsGrid } from "@/components/site/deals-grid";
+import { buildMetadata } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  return buildMetadata({
+    locale,
+    path: "/deals",
+    title: "Tbilisi Deals & Discounts",
+    description:
+      "Save on Tbilisi attractions, tours, dining, and experiences. Exclusive discounted offers for your Georgia trip, updated regularly.",
+  });
+}
 
 export default async function DealsPage({
   params,
