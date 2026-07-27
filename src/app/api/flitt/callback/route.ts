@@ -49,9 +49,12 @@ export async function POST(req: Request) {
     return Response.json({ ok: true, status: "failed" });
   }
 
+  // Run the side effect BEFORE marking the payment terminal. If it throws, the
+  // payment stays non-terminal so Flitt's redelivery re-runs it (all side
+  // effects are idempotent). Only after it succeeds do we persist "paid".
+  await applySideEffect(payment);
   payment.status = "paid";
   await payment.save();
-  await applySideEffect(payment);
 
   return Response.json({ ok: true, status: "paid" });
 }
@@ -76,37 +79,42 @@ async function applySideEffect(payment: IPayment) {
       // userId, targetId/serviceId). No extra collection needed this phase.
       break;
     case "deal": {
-      // Idempotency: callbacks may fire more than once. The Voucher's unique
-      // paymentOrderId index is the backstop; check first to avoid noisy errors.
-      const existing = await VoucherModel.findOne({ paymentOrderId: payment.orderId })
-        .select("_id")
-        .lean();
-      if (existing) break;
       if (!payment.userId) break; // deals require login; nothing to key a voucher to
 
       const deal = mockDeals.find((d) => d.id === payment.targetId);
       const dealTitle = deal?.title ?? "Deal";
       const amountGEL = Math.round(payment.amount) / 100;
 
-      const voucher = await createUniqueVoucher({
-        userId: payment.userId,
-        dealId: payment.targetId,
-        dealTitle,
-        amountGEL,
-        paymentOrderId: payment.orderId,
-      });
+      // Idempotent voucher: reuse an existing one (redelivery) or create it.
+      // The Voucher's unique paymentOrderId index is the backstop for races.
+      const existing = await VoucherModel.findOne({ paymentOrderId: payment.orderId })
+        .select("code")
+        .lean<{ code: string } | null>();
+      const voucherCode = existing
+        ? existing.code
+        : (
+            await createUniqueVoucher({
+              userId: payment.userId,
+              dealId: payment.targetId,
+              dealTitle,
+              amountGEL,
+              paymentOrderId: payment.orderId,
+            })
+          ).code;
 
-      const buyer = await UserModel.findById(payment.userId)
-        .select("name email")
-        .lean<{ name?: string; email?: string }>();
-
+      // Notification is created even if the voucher already existed, so a
+      // partial prior failure (voucher saved, notification not) self-heals on
+      // redelivery. Its unique paymentOrderId index prevents a duplicate.
       if (payment.businessOwnerId) {
+        const buyer = await UserModel.findById(payment.userId)
+          .select("name email")
+          .lean<{ name?: string; email?: string }>();
         await NotificationModel.create({
           ownerId: payment.businessOwnerId,
           type: "deal_purchase",
           dealId: payment.targetId,
           dealTitle,
-          voucherCode: voucher.code,
+          voucherCode,
           buyerName: buyer?.name ?? "",
           buyerEmail: buyer?.email ?? "",
           amountGEL,
