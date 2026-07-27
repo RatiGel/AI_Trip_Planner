@@ -3,6 +3,11 @@ import { verifyCallback } from "@/lib/flitt";
 import { PaymentModel, type IPayment } from "@/lib/models/payment";
 import { PlaceModel } from "@/lib/models/place";
 import { ReservationModel } from "@/lib/models/reservation";
+import { VoucherModel } from "@/lib/models/voucher";
+import { NotificationModel } from "@/lib/models/notification";
+import { UserModel } from "@/lib/models/user";
+import { createUniqueVoucher } from "@/lib/voucher";
+import { mockDeals } from "@/lib/mock/deals";
 
 /**
  * Flitt server-to-server webhook. Flat JSON POST.
@@ -70,5 +75,49 @@ async function applySideEffect(payment: IPayment) {
       // Ownership is recorded by the Payment record itself (status=paid,
       // userId, targetId/serviceId). No extra collection needed this phase.
       break;
+    case "deal": {
+      // Idempotency: callbacks may fire more than once. The Voucher's unique
+      // paymentOrderId index is the backstop; check first to avoid noisy errors.
+      const existing = await VoucherModel.findOne({ paymentOrderId: payment.orderId })
+        .select("_id")
+        .lean();
+      if (existing) break;
+      if (!payment.userId) break; // deals require login; nothing to key a voucher to
+
+      const deal = mockDeals.find((d) => d.id === payment.targetId);
+      const dealTitle = deal?.title ?? "Deal";
+      const amountGEL = Math.round(payment.amount) / 100;
+
+      const voucher = await createUniqueVoucher({
+        userId: payment.userId,
+        dealId: payment.targetId,
+        dealTitle,
+        amountGEL,
+        paymentOrderId: payment.orderId,
+      });
+
+      const buyer = await UserModel.findById(payment.userId)
+        .select("name email")
+        .lean<{ name?: string; email?: string }>();
+
+      if (payment.businessOwnerId) {
+        await NotificationModel.create({
+          ownerId: payment.businessOwnerId,
+          type: "deal_purchase",
+          dealId: payment.targetId,
+          dealTitle,
+          voucherCode: voucher.code,
+          buyerName: buyer?.name ?? "",
+          buyerEmail: buyer?.email ?? "",
+          amountGEL,
+          paymentOrderId: payment.orderId,
+        }).catch((e: unknown) => {
+          // Duplicate notification (11000) is fine under re-delivery; rethrow others.
+          const err = e as { code?: number };
+          if (err.code !== 11000) throw e;
+        });
+      }
+      break;
+    }
   }
 }
