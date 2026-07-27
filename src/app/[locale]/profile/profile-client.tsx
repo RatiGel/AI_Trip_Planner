@@ -112,6 +112,7 @@ export function ProfileClient({
                 <img
                   src={avatarUrl}
                   alt={name}
+                  referrerPolicy="no-referrer"
                   className="size-full object-cover"
                 />
               ) : (

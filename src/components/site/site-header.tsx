@@ -223,6 +223,7 @@ export function SiteHeader() {
                     <img
                       src={session.user.image}
                       alt={session.user.name ?? "Account"}
+                      referrerPolicy="no-referrer"
                       className="size-7 rounded-full object-cover"
                     />
                   ) : (
@@ -257,6 +258,7 @@ export function SiteHeader() {
                         <img
                           src={session.user.image}
                           alt={session.user.name ?? "Account"}
+                          referrerPolicy="no-referrer"
                           className="size-11 shrink-0 rounded-xl object-cover ring-1 ring-white/15"
                         />
                       ) : (
