@@ -19,7 +19,7 @@ interface Body {
   targetId: string;
   serviceId?: string;
   locale?: string;
-  amount?: number; // GEL, only honored for mock "deal" purpose (no DB record)
+  amount?: number; // GEL, sent by client but ignored server-side; price is resolved from the target record
   desc?: string;
 }
 
