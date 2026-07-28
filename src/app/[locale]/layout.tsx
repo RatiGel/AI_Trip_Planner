@@ -104,7 +104,15 @@ export default async function LocaleLayout({
       className={`${inter.variable} ${georgian.variable} ${dmSerif.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
+      {/* Browser extensions (Grammarly, password managers) stamp attributes
+          onto body before React hydrates, which reads as a mismatch we cannot
+          fix from here. suppressHydrationWarning does not inherit from html, so
+          body needs its own — it silences the attribute diff on this element
+          only, not on anything rendered inside it. */}
+      <body
+        className="min-h-full flex flex-col font-sans bg-background text-foreground"
+        suppressHydrationWarning
+      >
         {themeCss && (
           <style dangerouslySetInnerHTML={{ __html: themeCss }} />
         )}
