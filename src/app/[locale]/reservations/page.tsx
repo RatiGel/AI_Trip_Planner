@@ -102,6 +102,13 @@ export default async function ReservationsPage({
   // shows a short order number instead of a blank field.
   const backfilled = await backfillOrderNumbers(rawVouchers);
 
+  // Vouchers issued before the buyer snapshot existed have no name to print as
+  // the holder. These are this user's own vouchers, so fall back to the signed-in
+  // account rather than leaving the holder line blank.
+  const sessionUser = session!.user as { name?: string | null; email?: string | null };
+  const fallbackBuyerName = sessionUser.name ?? "";
+  const fallbackBuyerEmail = sessionUser.email ?? "";
+
   const vouchers: VoucherView[] = rawVouchers.map((v) => {
     const view: VoucherView = {
       id: String(v._id),
@@ -112,8 +119,8 @@ export default async function ReservationsPage({
       status: v.status,
       createdAt: v.createdAt.toISOString(),
       validUntil: v.validUntil?.toISOString(),
-      buyerName: v.buyerName,
-      buyerEmail: v.buyerEmail,
+      buyerName: v.buyerName || fallbackBuyerName,
+      buyerEmail: v.buyerEmail || fallbackBuyerEmail,
       recipientFirstName: v.recipientFirstName,
       recipientLastName: v.recipientLastName,
       recipientAge: v.recipientAge,
