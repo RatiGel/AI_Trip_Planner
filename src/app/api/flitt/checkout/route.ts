@@ -8,6 +8,8 @@ import { PlaceModel } from "@/lib/models/place";
 import { ReservationModel } from "@/lib/models/reservation";
 import { TicketModel } from "@/lib/models/ticket";
 import { UserModel } from "@/lib/models/user";
+import { parseRecipients } from "@/lib/recipients";
+import type { VoucherRecipient } from "@/types";
 
 const LISTING_FEE_TETRI = 5000; // 50 GEL
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
@@ -21,6 +23,8 @@ interface Body {
   locale?: string;
   amount?: number; // GEL, sent by client but ignored server-side; price is resolved from the target record
   desc?: string;
+  /** Deal purchases only: who the passes are for. One voucher per entry. */
+  recipients?: unknown;
 }
 
 /**
@@ -30,7 +34,8 @@ interface Body {
 async function resolve(
   body: Body,
   userId: string | undefined,
-  role: string
+  role: string,
+  recipients: VoucherRecipient[]
 ): Promise<{ amount: number; desc: string; businessOwnerId?: string } | { error: string; status: number }> {
   switch (body.purpose) {
     case "listing_fee": {
@@ -85,9 +90,11 @@ async function resolve(
       const owner = await UserModel.findOne({ email: deal.ownerEmail })
         .select("_id")
         .lean<{ _id: unknown }>();
+      // One pass per recipient, so charge the unit price that many times.
+      const qty = recipients.length;
       return {
-        amount: Math.round(deal.priceGEL * 100),
-        desc: `Deal: ${deal.title}`,
+        amount: Math.round(deal.priceGEL * 100) * qty,
+        desc: qty > 1 ? `Deal: ${deal.title} × ${qty}` : `Deal: ${deal.title}`,
         businessOwnerId: owner ? String(owner._id) : undefined,
       };
     }
@@ -120,7 +127,31 @@ export async function POST(req: Request) {
 
   try {
     await connectDB();
-    const resolved = await resolve(body, userId, role);
+
+    // Deals issue named passes. The client's recipient list is untrusted, so
+    // re-validate it here; when the buyer didn't name anyone, the pass is for
+    // themselves and their account name is used.
+    let recipients: VoucherRecipient[] = [];
+    if (body.purpose === "deal") {
+      if (body.recipients != null) {
+        const parsed = parseRecipients(body.recipients);
+        if (!parsed.ok) {
+          return Response.json(
+            { error: parsed.errors[0].message, errors: parsed.errors },
+            { status: 400 }
+          );
+        }
+        recipients = parsed.recipients;
+      } else {
+        const buyer = await UserModel.findById(userId)
+          .select("name")
+          .lean<{ name?: string } | null>();
+        const [first = "", ...rest] = (buyer?.name ?? "").trim().split(/\s+/);
+        recipients = [{ firstName: first, lastName: rest.join(" ") }];
+      }
+    }
+
+    const resolved = await resolve(body, userId, role, recipients);
     if ("error" in resolved) {
       return Response.json({ error: resolved.error }, { status: resolved.status });
     }
@@ -135,6 +166,7 @@ export async function POST(req: Request) {
       amount: resolved.amount,
       currency: "GEL",
       status: "pending",
+      ...(recipients.length ? { recipients } : {}),
     });
 
     const { checkoutUrl, paymentId } = await createCheckout({

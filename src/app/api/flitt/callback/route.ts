@@ -8,6 +8,7 @@ import { NotificationModel } from "@/lib/models/notification";
 import { UserModel } from "@/lib/models/user";
 import { createUniqueVoucher } from "@/lib/voucher";
 import { mockDeals } from "@/lib/mock/deals";
+import type { VoucherRecipient } from "@/types";
 
 /**
  * Flitt server-to-server webhook. Flat JSON POST.
@@ -83,41 +84,68 @@ async function applySideEffect(payment: IPayment) {
 
       const deal = mockDeals.find((d) => d.id === payment.targetId);
       const dealTitle = deal?.title ?? "Deal";
-      const amountGEL = Math.round(payment.amount) / 100;
 
-      // Idempotent voucher: reuse an existing one (redelivery) or create it.
-      // The Voucher's unique paymentOrderId index is the backstop for races.
-      const existing = await VoucherModel.findOne({ paymentOrderId: payment.orderId })
-        .select("code")
-        .lean<{ code: string } | null>();
-      const voucherCode = existing
-        ? existing.code
-        : (
-            await createUniqueVoucher({
-              userId: payment.userId,
-              dealId: payment.targetId,
-              dealTitle,
-              amountGEL,
-              paymentOrderId: payment.orderId,
-            })
-          ).code;
+      // One pass per recipient. Orders placed before gifting existed have no
+      // recipients array — treat those as a single unnamed pass for the buyer.
+      const recipients: VoucherRecipient[] = payment.recipients?.length
+        ? payment.recipients
+        : [{ firstName: "", lastName: "" }];
+      // payment.amount covers every pass, so each one carries the unit price.
+      const unitGEL = Math.round(payment.amount) / 100 / recipients.length;
 
-      // Notification is created even if the voucher already existed, so a
+      // Buyer identity is snapshotted onto the voucher (it is printed on the
+      // pass), so look it up before creating the voucher rather than only for
+      // the notification.
+      const buyer = await UserModel.findById(payment.userId)
+        .select("name email")
+        .lean<{ name?: string; email?: string }>();
+
+      // Idempotent per recipient: reuse existing passes (redelivery) and create
+      // only the missing ones. The unique (paymentOrderId, recipientIndex)
+      // index is the backstop for races.
+      const existing = await VoucherModel.find({ paymentOrderId: payment.orderId })
+        .select("code recipientIndex")
+        .lean<{ code: string; recipientIndex: number }[]>();
+      const byIndex = new Map(existing.map((v) => [v.recipientIndex, v.code]));
+
+      const voucherCodes: string[] = [];
+      for (const [recipientIndex, r] of recipients.entries()) {
+        const found = byIndex.get(recipientIndex);
+        if (found) {
+          voucherCodes.push(found);
+          continue;
+        }
+        const created = await createUniqueVoucher({
+          userId: payment.userId,
+          dealId: payment.targetId,
+          dealTitle,
+          amountGEL: unitGEL,
+          paymentOrderId: payment.orderId,
+          recipientIndex,
+          buyerName: buyer?.name ?? "",
+          buyerEmail: buyer?.email ?? "",
+          recipientFirstName: r.firstName,
+          recipientLastName: r.lastName,
+          recipientAge: r.age,
+          businessName: deal?.businessName ?? "",
+          businessAddress: deal?.address ?? "",
+        });
+        voucherCodes.push(created.code);
+      }
+
+      // Notification is created even if the vouchers already existed, so a
       // partial prior failure (voucher saved, notification not) self-heals on
       // redelivery. Its unique paymentOrderId index prevents a duplicate.
       if (payment.businessOwnerId) {
-        const buyer = await UserModel.findById(payment.userId)
-          .select("name email")
-          .lean<{ name?: string; email?: string }>();
         await NotificationModel.create({
           ownerId: payment.businessOwnerId,
           type: "deal_purchase",
           dealId: payment.targetId,
           dealTitle,
-          voucherCode,
+          voucherCode: voucherCodes.join(", "),
           buyerName: buyer?.name ?? "",
           buyerEmail: buyer?.email ?? "",
-          amountGEL,
+          amountGEL: Math.round(payment.amount) / 100,
           paymentOrderId: payment.orderId,
         }).catch((e: unknown) => {
           // Duplicate notification (11000) is fine under re-delivery; rethrow others.

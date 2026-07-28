@@ -983,8 +983,34 @@
   },
   "myDeals": {
     "heading": "ჩემი შეთავაზებები",
-    "codeLabel": "კოდი",
+    "codeLabel": "ვაუჩერის კოდი",
     "active": "აქტიური",
-    "redeemed": "გამოყენებული"
+    "redeemed": "გამოყენებული",
+    "expiredLabel": "ვადაგასული",
+    "orderLabel": "შეკვეთის ნომერი",
+    "purchasedLabel": "შეძენის თარიღი",
+    "validUntilLabel": "ძალაშია",
+    "issuedByLabel": "შეძენილია საიტზე",
+    "purchasedByLabel": "მყიდველი",
+    "businessLabel": "ატრაქცია",
+    "addressLabel": "მისამართი",
+    "howToUseTitle": "როგორ გამოვიყენოთ",
+    "howToUseBody": "ატრაქციაზე შესასვლელად წარადგინეთ ბილეთი მობილურზე ან დაბეჭდილი სახით.",
+    "validForLabel": "მფლობელი",
+    "ageLabel": "ასაკი"
+  },
+  "recipients": {
+    "title": "ვისთვის არის ეს ბილეთები?",
+    "description": "შეიყვანეთ თითოეული მომხმარებლის სახელი. შეგიძლიათ სხვისთვისაც შეიძინოთ.",
+    "firstName": "სახელი",
+    "lastName": "გვარი",
+    "isMinor": "18 წლამდე",
+    "age": "ასაკი",
+    "addPerson": "სხვისი დამატება",
+    "remove": "წაშლა",
+    "passLabel": "ბილეთი",
+    "cancel": "გაუქმება",
+    "confirm": "გადახდაზე გადასვლა",
+    "total": "სულ:"
   }
 }

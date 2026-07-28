@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PayButton } from "@/components/site/pay-button";
 import { DealVouchers, type VoucherView } from "@/components/site/deal-vouchers";
+import { isPassExpired, passLabels } from "@/components/site/explorer-pass";
+import { backfillOrderNumbers } from "@/lib/voucher";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   pending: "secondary",
@@ -75,23 +77,55 @@ export default async function ReservationsPage({
 
   const rawVouchers = await VoucherModel.find({ userId })
     .sort({ createdAt: -1 })
-    .lean<{ _id: unknown; code: string; dealTitle: string; amountGEL: number; status: string; createdAt: Date }[]>();
-  const vouchers: VoucherView[] = rawVouchers.map((v) => ({
-    id: String(v._id),
-    code: v.code,
-    dealTitle: v.dealTitle,
-    amountGEL: v.amountGEL,
-    status: v.status,
-    createdAt: v.createdAt.toISOString(),
-  }));
+    .lean<
+      {
+        _id: unknown;
+        code: string;
+        dealId: string;
+        dealTitle: string;
+        amountGEL: number;
+        status: string;
+        createdAt: Date;
+        validUntil?: Date;
+        buyerName?: string;
+        buyerEmail?: string;
+        recipientFirstName?: string;
+        recipientLastName?: string;
+        recipientAge?: number;
+        businessName?: string;
+        businessAddress?: string;
+        orderNo?: number;
+      }[]
+    >();
+
+  // Vouchers issued before orderNo existed get one assigned now, so every pass
+  // shows a short order number instead of a blank field.
+  const backfilled = await backfillOrderNumbers(rawVouchers);
+
+  const vouchers: VoucherView[] = rawVouchers.map((v) => {
+    const view: VoucherView = {
+      id: String(v._id),
+      code: v.code,
+      dealId: v.dealId,
+      dealTitle: v.dealTitle,
+      amountGEL: v.amountGEL,
+      status: v.status,
+      createdAt: v.createdAt.toISOString(),
+      validUntil: v.validUntil?.toISOString(),
+      buyerName: v.buyerName,
+      buyerEmail: v.buyerEmail,
+      recipientFirstName: v.recipientFirstName,
+      recipientLastName: v.recipientLastName,
+      recipientAge: v.recipientAge,
+      businessName: v.businessName,
+      businessAddress: v.businessAddress,
+      orderNo: v.orderNo ?? backfilled.get(String(v._id)),
+    };
+    return { ...view, expired: isPassExpired(view) };
+  });
 
   const td = await getTranslations({ locale, namespace: "myDeals" });
-  const voucherLabels = {
-    heading: td("heading"),
-    active: td("active"),
-    redeemed: td("redeemed"),
-    codeLabel: td("codeLabel"),
-  };
+  const voucherLabels = { heading: td("heading"), ...passLabels(td) };
 
   if (!reservations.length && !vouchers.length) {
     return (

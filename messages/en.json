@@ -983,8 +983,34 @@
   },
   "myDeals": {
     "heading": "My Deals",
-    "codeLabel": "Code",
+    "codeLabel": "Voucher code",
     "active": "Active",
-    "redeemed": "Redeemed"
+    "redeemed": "Redeemed",
+    "expiredLabel": "Expired",
+    "orderLabel": "Order number",
+    "purchasedLabel": "Purchase date",
+    "validUntilLabel": "Valid until",
+    "issuedByLabel": "Purchased on",
+    "purchasedByLabel": "Purchased by",
+    "businessLabel": "Attraction",
+    "addressLabel": "Address",
+    "howToUseTitle": "How to use",
+    "howToUseBody": "Simply present either your mobile tickets or your printed tickets for entry to the attraction.",
+    "validForLabel": "Valid for",
+    "ageLabel": "Age"
+  },
+  "recipients": {
+    "title": "Who are these passes for?",
+    "description": "Enter the name of each person who will use a pass. You can buy passes for other people.",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "isMinor": "This person is under 18",
+    "age": "Age",
+    "addPerson": "Add another person",
+    "remove": "Remove",
+    "passLabel": "Pass",
+    "cancel": "Cancel",
+    "confirm": "Continue to payment",
+    "total": "Total:"
   }
 }

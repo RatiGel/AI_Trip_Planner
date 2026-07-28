@@ -983,8 +983,34 @@
   },
   "myDeals": {
     "heading": "Мои предложения",
-    "codeLabel": "Код",
+    "codeLabel": "Код ваучера",
     "active": "Активен",
-    "redeemed": "Использован"
+    "redeemed": "Использован",
+    "expiredLabel": "Истёк",
+    "orderLabel": "Номер заказа",
+    "purchasedLabel": "Дата покупки",
+    "validUntilLabel": "Действителен до",
+    "issuedByLabel": "Куплено на",
+    "purchasedByLabel": "Покупатель",
+    "businessLabel": "Достопримечательность",
+    "addressLabel": "Адрес",
+    "howToUseTitle": "Как использовать",
+    "howToUseBody": "Просто предъявите билет на телефоне или распечатанный билет при входе на объект.",
+    "validForLabel": "Действителен для",
+    "ageLabel": "Возраст"
+  },
+  "recipients": {
+    "title": "Для кого эти билеты?",
+    "description": "Укажите имя каждого, кто воспользуется билетом. Можно купить билеты для других людей.",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "isMinor": "Младше 18 лет",
+    "age": "Возраст",
+    "addPerson": "Добавить человека",
+    "remove": "Удалить",
+    "passLabel": "Билет",
+    "cancel": "Отмена",
+    "confirm": "Перейти к оплате",
+    "total": "Итого:"
   }
 }
