@@ -48,43 +48,61 @@ function VoucherRow({
       ? labels.expiredLabel
       : labels.active;
 
+  const live = !redeemed && !expired;
+  const spent = redeemed || expired;
+
   return (
-    <div className="min-w-0">
+    <div className="ticket-rail-row min-w-0">
+      {/* The state dot rides the spine itself, so a stack of rows prints one
+          scannable column of state. It replaces the row border: on a rail, a
+          box around each row fights the spine it hangs from. It is a sibling of
+          the button, not a child — inside the button it would anchor to the
+          button's own box and the row's hover fill would clip it. */}
+      <span
+        className="ticket-dot absolute left-[2.5px] top-[21px] z-[1] size-[9px] rounded-full"
+        style={
+          {
+            background: accent,
+            "--dot-halo": live
+              ? `color-mix(in srgb, ${accent} 22%, transparent)`
+              : "transparent",
+          } as React.CSSProperties
+        }
+        aria-hidden
+      />
+
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="group flex w-full items-center gap-2.5 rounded-[14px] px-3 py-3 text-left transition-colors sm:gap-4 sm:px-4"
+        className="group flex w-full items-center gap-3 rounded-r-[10px] py-[13px] pl-5 pr-3 text-left transition-colors sm:gap-4"
         style={{
           background: open ? "var(--site-surface-08)" : "transparent",
-          border: "1px solid var(--site-border-06)",
         }}
       >
-        {/* State carried as a dot, so the row reads without a badge eating the
-            width the deal name needs on a phone. */}
-        <span
-          className="size-2 shrink-0 rounded-full"
-          style={{ background: accent }}
-          aria-hidden
-        />
-
         <span className="min-w-0 flex-1">
           <span
-            className="block truncate text-[15px] font-semibold leading-tight"
+            className="block truncate text-[15px] font-semibold leading-tight transition-colors group-hover:opacity-80"
             style={{ color: "var(--site-text)" }}
           >
             {voucher.dealTitle}
           </span>
           <span
-            className="mt-0.5 block truncate text-[11px] font-medium uppercase tracking-[0.12em]"
+            className="mt-1 block truncate font-mono text-[10.5px] uppercase tracking-[0.16em]"
             style={{ color: "var(--site-text-40)" }}
           >
             {stateLabel} · {shortDate(voucher.createdAt)}
           </span>
         </span>
 
+        {/* Face value set in the display serif — on a ticket the amount is
+            printed, not labelled, and the serif is what separates it from the
+            row's utility type. Right-aligned in a fixed slot so the amounts
+            form a column that can be totalled by eye. */}
         <span
-          className="shrink-0 text-[15px] font-bold tabular-nums"
+          className={`font-display w-[68px] shrink-0 text-right text-[18px] leading-none tabular-nums ${
+            spent ? "line-through decoration-1" : ""
+          }`}
           style={{ color: accent }}
         >
           ₾{voucher.amountGEL}
@@ -102,9 +120,10 @@ function VoucherRow({
 
       {/* The pass is mounted only while open. It is a physical object standing
           in for a ticket, so it appears whole rather than sliding out of the
-          row — and unmounting keeps a long wallet cheap to render. */}
+          row — and unmounting keeps a long wallet cheap to render. Indented to
+          the spine so the opened pass reads as hanging off the same rail. */}
       {open && (
-        <div className="voucher-reveal mt-2.5">
+        <div className="voucher-reveal mb-1 ml-5 mt-2">
           <ExplorerPass pass={voucher} labels={labels} compact />
         </div>
       )}
@@ -140,40 +159,56 @@ export function DealVouchers({
 
   return (
     <section
-      className="mt-16 rounded-[28px] px-4 pb-8 pt-7 sm:px-8 sm:pb-10 sm:pt-9"
+      className="mt-16"
       style={
         {
-          // The wallet gets the site's own base surface rather than the shadcn
-          // page background, so the passes read as elevated off it and their
-          // seam punches show the right colour.
-          background: "var(--site-bg-base)",
-          border: "1px solid var(--site-border-06)",
+          // The passes punch notches through to whatever is behind them, so the
+          // page surface has to be declared even though the wallet draws no
+          // panel of its own.
           "--pass-page": "var(--site-bg-base)",
         } as React.CSSProperties
       }
     >
-      <header
-        className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 pb-5"
-        style={{ borderBottom: "1px solid var(--site-border-08)" }}
-      >
+      {/* The count is set as a fraction, not a total: what a holder wants to
+          know opening a wallet is how many passes are still good out of how
+          many they hold. Mono and tabular so the digits sit still. */}
+      <header className="flex max-w-[520px] flex-wrap items-end justify-between gap-x-6 gap-y-2 pr-3">
         <h2
-          className="font-display text-[27px] leading-tight sm:text-[31px]"
+          className="font-display text-[30px] leading-none sm:text-[34px]"
           style={{ color: "var(--site-text)" }}
         >
           {labels.heading}
         </h2>
-        <p
-          className="text-[11px] font-semibold uppercase tracking-[0.18em] tabular-nums"
-          style={{ color: "var(--site-text-40)" }}
-        >
-          {usable.length} {labels.active}
+        <p className="flex items-baseline gap-1.5 font-mono tabular-nums">
+          <span
+            className="text-[15px] font-semibold leading-none"
+            style={{ color: "var(--color-gold)" }}
+          >
+            {usable.length}
+          </span>
+          <span
+            className="text-[11px] leading-none"
+            style={{ color: "var(--site-text-35)" }}
+          >
+            / {vouchers.length}
+          </span>
+          <span
+            className="ml-0.5 text-[10px] uppercase tracking-[0.18em] leading-none"
+            style={{ color: "var(--site-text-40)" }}
+          >
+            {labels.active}
+          </span>
         </p>
       </header>
 
       {/* A pass is a hand-held object, so the opened card is capped at a
           ticket's width — the list stays a single column at every size rather
-          than pairing up, which would put an opened pass beside a bare row. */}
-      <div className="mx-auto mt-6 max-w-[520px] space-y-2.5">
+          than pairing up, which would put an opened pass beside a bare row.
+
+          Pulled left by the row's own text indent, so the row title lands on
+          the page's left edge — shared with the header logo and the heading —
+          and the spine hangs just outside it in the margin. */}
+      <div className="ticket-rail -ml-5 mt-7 w-[520px] max-w-full">
         {usable.map((v) => (
           <VoucherRow
             key={v.id}
@@ -185,15 +220,18 @@ export function DealVouchers({
         ))}
       </div>
 
+      {/* Spent and expired passes keep the same rail but drop back: a holder
+          scrolls past them to reach what still works, so they are quieter
+          rather than hidden — a redeemed pass is still a receipt. */}
       {archived.length > 0 && (
-        <div className="mx-auto mt-9 max-w-[520px]">
+        <div className="mt-10 w-[520px] max-w-full">
           <p
-            className="mb-4 text-[10px] font-bold uppercase tracking-[0.22em]"
+            className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em]"
             style={{ color: "var(--site-text-35)" }}
           >
             {labels.redeemed} · {labels.expiredLabel}
           </p>
-          <div className="space-y-2.5">
+          <div className="ticket-rail -ml-5">
             {archived.map((v) => (
               <VoucherRow
                 key={v.id}

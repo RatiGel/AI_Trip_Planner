@@ -454,6 +454,83 @@
   z-index: 1;
 }
 
+/* ── The ticket rail ──────────────────────────────────────────────────────
+   A wallet of passes is a ticket book, not a list: stubs hang off a ruled
+   spine in the order they were torn. The spine is a real hairline the state
+   dots sit on, so the dots read as one scannable column of state — gold for
+   live, wine for expired, grey for spent — before a single word is read.
+
+   The rule is drawn as a gradient rather than a border so it can fade out at
+   both ends instead of stopping dead, which is what makes it read as a spine
+   the rows hang from rather than as a table divider. */
+.ticket-rail {
+  --rail-x: 7px;
+  /* The spine has to be visible at a 1px hairline on both a #fafafa and a
+     #0a0a0a page, which the 10%-alpha border tokens are not — they vanish.
+     These are tuned per theme to land at the same apparent weight. */
+  --rail-line: rgba(0, 0, 0, 0.16);
+  --rail-tick: rgba(0, 0, 0, 0.14);
+  position: relative;
+}
+:root.dark .ticket-rail,
+:root:not(.light) .ticket-rail {
+  --rail-line: rgba(255, 255, 255, 0.14);
+  --rail-tick: rgba(255, 255, 255, 0.12);
+}
+.ticket-rail::before {
+  content: "";
+  position: absolute;
+  left: var(--rail-x);
+  top: 10px;
+  bottom: 10px;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--rail-line) 5%,
+    var(--rail-line) 95%,
+    transparent
+  );
+}
+
+/* The tick joining each row to the spine, plus a hairline separating one stub
+   from the next — a ticket book is a stack of perforated tears, so the rows
+   need a real edge between them rather than only whitespace. */
+.ticket-rail-row {
+  position: relative;
+}
+.ticket-rail-row::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  /* Meets the dot's centre: the dot is 9px tall at top 21px. */
+  top: 25px;
+  width: 10px;
+  height: 1px;
+  background: var(--rail-tick);
+}
+.ticket-rail-row + .ticket-rail-row::after {
+  content: "";
+  position: absolute;
+  /* Starts at the row's text indent, so the tear lines up with the titles
+     rather than crossing the margin the spine sits in. */
+  left: 20px;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: var(--rail-tick);
+  opacity: 0.55;
+}
+
+/* The state dot rides the spine, so a stack of rows prints a column of
+   state. A live pass gets a faint halo so gold reads first at a glance; the
+   ring is punched in the page colour so the dot sits on the rule cleanly. */
+.ticket-dot {
+  box-shadow:
+    0 0 0 2.5px var(--pass-page, transparent),
+    0 0 0 5.5px var(--dot-halo, transparent);
+}
+
 /* A pass opening out of its wallet row: it lifts into place rather than
    sliding, so it reads as a card taken out and held up, not as a drawer. */
 @keyframes voucher-reveal {

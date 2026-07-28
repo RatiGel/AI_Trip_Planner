@@ -136,7 +136,7 @@ export default async function ReservationsPage({
 
   if (!reservations.length && !vouchers.length) {
     return (
-      <div className="container mx-auto flex min-h-[60vh] flex-col items-center justify-center px-4 py-16 text-center">
+      <div className="mx-auto flex min-h-[60vh] max-w-7xl flex-col items-center justify-center px-6 py-16 text-center md:px-12">
         <CalendarDays className="mb-4 size-10 text-primary" />
         <h1 className="text-2xl font-semibold">My Reservations</h1>
         <p className="mt-2 max-w-md text-muted-foreground">
@@ -150,7 +150,10 @@ export default async function ReservationsPage({
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    // Same measurements as the site header (max-w-7xl, px-6/md:px-12) so the
+    // page's left edge lands on the logo's rather than on the shadcn
+    // container's narrower gutter.
+    <div className="mx-auto max-w-7xl px-6 py-12 md:px-12">
       {reservations.length > 0 && (
         <>
           <h1 className="text-3xl font-semibold tracking-tight">My Reservations</h1>
