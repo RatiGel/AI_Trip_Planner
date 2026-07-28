@@ -46,14 +46,10 @@ export interface IVoucher {
   updatedAt: Date;
 }
 
-/** Vouchers are valid for two weeks from the purchase date. */
-export const VOUCHER_VALIDITY_DAYS = 14;
-
-export function voucherValidUntil(purchasedAt: Date): Date {
-  const d = new Date(purchasedAt);
-  d.setDate(d.getDate() + VOUCHER_VALIDITY_DAYS);
-  return d;
-}
+// The validity rule itself lives in a driver-free module so client components
+// can use it; re-exported here because server code reaches for it alongside the
+// model.
+export { VOUCHER_VALIDITY_DAYS, voucherValidUntil } from "@/lib/voucher-validity";
 
 const VoucherSchema = new Schema<IVoucher>(
   {

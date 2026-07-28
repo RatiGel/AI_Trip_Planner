@@ -252,7 +252,14 @@ export default async function PaymentResultPage({
           {passes.length > 0 && (
             <div
               className="result-rise px-3 pb-3 md:px-4 md:pb-4"
-              style={{ animationDelay: "0.46s" }}
+              style={
+                {
+                  animationDelay: "0.46s",
+                  // The pass sits on the counterfoil here, not the page, so its
+                  // seam punches must show the counterfoil's surface.
+                  "--pass-page": "var(--site-bg-surface)",
+                } as React.CSSProperties
+              }
             >
               <ExplorerPass pass={passes[0]} labels={passLabels(td)} />
             </div>

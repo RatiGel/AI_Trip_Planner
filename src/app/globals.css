@@ -400,6 +400,81 @@
   --site-surface-15: rgba(0, 0, 0, 0.1);
 }
 
+/* ── Explorer PASS card ──────────────────────────────────────────────
+   The pass is drawn as the object it stands in for: a counterfoil stub
+   torn off along a perforated seam. Two notches are cut clean out of the
+   card at the seam, top and bottom, so the tear reads as physical rather
+   than as a dashed border.
+
+   The notches are cut with a mask rather than drawn as circles of page
+   colour: a circle laid on top only matches when the page behind it is
+   exactly one flat colour, and this card sits on several surfaces (the
+   wallet, the payment counterfoil). Masking removes the pixels, so
+   whatever is behind shows through and the cut is always correct. */
+.pass-card {
+  --pass-stub: 52px;
+  --pass-notch: 11px;
+  /* Circle at each seam corner is subtracted; the rest of the card stays. */
+  --pass-cut: radial-gradient(
+      circle var(--pass-notch) at var(--pass-stub) 0,
+      transparent 99%,
+      #000 100%
+    ),
+    radial-gradient(
+      circle var(--pass-notch) at var(--pass-stub) 100%,
+      transparent 99%,
+      #000 100%
+    );
+  -webkit-mask-image: var(--pass-cut);
+  mask-image: var(--pass-cut);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  transition:
+    border-color 0.25s ease,
+    transform 0.25s ease;
+}
+@media (min-width: 640px) {
+  .pass-card {
+    --pass-stub: 60px;
+  }
+}
+.pass-card:hover {
+  transform: translateY(-2px);
+}
+
+/* The seam itself, drawn as a perforation the notches bite into. Sits above
+   the stub fill so the dashes stay crisp at any stub tint. */
+.pass-seam {
+  position: absolute;
+  top: var(--pass-notch);
+  bottom: var(--pass-notch);
+  left: calc(var(--pass-stub) - 1px);
+  width: 0;
+  border-left: 1px dashed var(--pass-seam-color, var(--site-border-20));
+  z-index: 1;
+}
+
+/* A pass opening out of its wallet row: it lifts into place rather than
+   sliding, so it reads as a card taken out and held up, not as a drawer. */
+@keyframes voucher-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.voucher-reveal {
+  animation: voucher-reveal 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .voucher-reveal {
+    animation: none;
+  }
+}
+
 /* Hide scrollbar for horizontal scroll containers */
 .scrollbar-hide {
   -ms-overflow-style: none;
