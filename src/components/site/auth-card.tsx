@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { signIn } from "next-auth/react";
 import { Bookmark, Sparkles, Ticket } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
 import { toast } from "sonner";
 import { Link } from "@/i18n/navigation";
+import { useReducedMotionSafe } from "@/hooks/use-reduced-motion-safe";
 
 const PANEL_IMAGE =
   "https://images.unsplash.com/photo-1565008576549-57569a49371d?w=1400&q=70";
@@ -16,7 +17,7 @@ const PANEL_IMAGE =
 export function AuthCard({ mode }: { mode: "signin" | "signup" }) {
   const t = useTranslations("auth");
   const router = useRouter();
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");

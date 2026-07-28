@@ -5,8 +5,9 @@ import { useTranslations } from "next-intl";
 
 type T = ReturnType<typeof useTranslations<"transit">>;
 import { Bus, Footprints, TramFront, ChevronDown, Dot, ArrowRight } from "lucide-react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import type { JourneyPlan, JourneyLeg, Arrival } from "@/types/transit";
+import { useReducedMotionSafe } from "@/hooks/use-reduced-motion-safe";
 
 /** ISO → locale HH:MM, or null when unavailable / unparseable. */
 function clock(iso: string | undefined, locale: string): string | null {
@@ -119,7 +120,7 @@ export function JourneyCard({
   onGo?: () => void;
 }) {
   const t = useTranslations("transit");
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const [open, setOpen] = useState(false);
 
   const firstTransit = plan.legs.find(
