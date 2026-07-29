@@ -14,7 +14,7 @@ import type {
   RouteStop,
 } from "@/types";
 
-const DAY_COLORS = [
+export const DAY_COLORS = [
   "#B5271D",
   "#1D6FB5",
   "#2E9E5B",

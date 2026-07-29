@@ -6,6 +6,9 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
+import { DayRouteActions } from "@/components/trips/day-route-actions";
+import { TripMap } from "@/components/trips/trip-map";
+import { savedDayToRouteDay, savedTripToRoutePlan } from "@/lib/route/from-saved";
 import { cn } from "@/lib/utils";
 import type { SavedItinerary, Place } from "@/types";
 
@@ -76,6 +79,8 @@ function TripCard({
     [trip.days]
   );
   const [open, setOpen] = useState<Set<string>>(() => new Set([firstKey]));
+  // Stable across renders so the map doesn't redraw on every day toggle.
+  const plan = useMemo(() => savedTripToRoutePlan(trip, placesMap), [trip, placesMap]);
 
   function toggle(key: string) {
     setOpen((prev) => {
@@ -126,6 +131,8 @@ function TripCard({
           </Button>
         </div>
       </header>
+
+      {plan && <TripMap plan={plan} />}
 
       {/* Signature: the trip spine — a wine→gold rail threading numbered day nodes */}
       <div className="relative px-5 py-2 sm:px-6">
@@ -211,6 +218,12 @@ function TripCard({
                           );
                         })}
                       </ol>
+                    )}
+                    {count > 0 && (
+                      <DayRouteActions
+                        day={savedDayToRouteDay(day, dayIndex, placesMap)}
+                        tripId={trip.id}
+                      />
                     )}
                   </div>
                 )}
