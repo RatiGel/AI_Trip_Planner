@@ -6,6 +6,8 @@ import { useEffect, useMemo, useRef } from "react";
 import type { Map as MbMap, Marker as MbMarker, LngLatBoundsLike } from "mapbox-gl";
 import { useLocale } from "next-intl";
 import type { RoutePlan } from "@/types";
+import type { DayTransitRoute, JourneyLeg, LatLng } from "@/types/transit";
+import { legColor, stopMarkerHTML, WALK_COLOR } from "@/components/transit/leg-style";
 
 const TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
@@ -18,6 +20,72 @@ type Pin = {
   name: string;
   day: number;
 };
+
+/** One drawable line: either a real TTC leg or a dashed walk fallback. */
+type TransitLine = {
+  key: string;
+  /** [lat, lng] pairs, matching JourneyLeg.points. */
+  points: LatLng[];
+  color: string;
+  walk: boolean;
+};
+
+/** Boarding pin for a bus/metro leg. */
+type BoardingPin = {
+  key: string;
+  pos: LatLng;
+  mode: JourneyLeg["mode"];
+  color: string;
+};
+
+/**
+ * Flattens the per-day TTC routes into lines + boarding pins. Segments with no
+ * TTC journey become a dashed straight walk line in the day's own colour, so
+ * the route stays continuous and the gap is visible rather than silent.
+ */
+function transitGeometry(routes: DayTransitRoute[]): {
+  lines: TransitLine[];
+  boardings: BoardingPin[];
+} {
+  const lines: TransitLine[] = [];
+  const boardings: BoardingPin[] = [];
+
+  for (const route of routes) {
+    route.segments.forEach((seg, si) => {
+      const base = `d${route.day}s${si}`;
+      if (!seg.journey) {
+        // Grey like every other walk leg — the day colour is reserved for the
+        // direct view, so a fallback reads as "walk", not "day 2".
+        lines.push({
+          key: base,
+          points: [seg.from, seg.to],
+          color: WALK_COLOR,
+          walk: true,
+        });
+        return;
+      }
+      seg.journey.legs.forEach((leg, li) => {
+        if (!leg.points || leg.points.length < 2) return;
+        lines.push({
+          key: `${base}l${li}`,
+          points: leg.points,
+          color: legColor(leg),
+          walk: leg.mode === "walk",
+        });
+        if (leg.mode === "bus" || leg.mode === "metro") {
+          boardings.push({
+            key: `${base}l${li}`,
+            pos: leg.points[0],
+            mode: leg.mode,
+            color: legColor(leg),
+          });
+        }
+      });
+    });
+  }
+
+  return { lines, boardings };
+}
 
 function flatten(plan: RoutePlan, nameOf: (id: string) => string): Pin[] {
   return plan.days.flatMap((day) =>
@@ -60,17 +128,23 @@ function makeMarkerEl(pin: Pin, selected: boolean): HTMLDivElement {
 function MapboxMap({
   pins,
   plan,
+  transitRoutes,
   selectedId,
   onSelect,
 }: {
   pins: Pin[];
   plan: RoutePlan;
+  transitRoutes: DayTransitRoute[] | null;
   selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MbMap | null>(null);
   const markersRef = useRef<Map<string, MbMarker>>(new Map());
+  const boardingsRef = useRef<MbMarker[]>([]);
+  // Transit line layer/source ids currently on the map, so a redraw can clear
+  // exactly what it added (the count varies with the number of legs).
+  const transitLayersRef = useRef<string[]>([]);
   const readyRef = useRef(false);
 
   // Init the map once, then (re)draw whenever the plan changes.
@@ -98,39 +172,92 @@ function MapboxMap({
         // Clear old markers.
         markersRef.current.forEach((m) => m.remove());
         markersRef.current.clear();
+        boardingsRef.current.forEach((m) => m.remove());
+        boardingsRef.current = [];
+        for (const id of transitLayersRef.current) {
+          if (map.getLayer(id)) map.removeLayer(id);
+          if (map.getSource(id)) map.removeSource(id);
+        }
+        transitLayersRef.current = [];
 
-        // One line per day (straight segments between consecutive stops).
-        // Swap this GeoJSON for Mapbox Directions geometry when a token route
-        // service is wired in.
-        const features = plan.days
-          .filter((d) => d.stops.length > 1)
-          .map((d) => ({
-            type: "Feature" as const,
-            properties: { color: d.color },
-            geometry: {
-              type: "LineString" as const,
-              coordinates: d.stops.map((s) => [s.place.geo.lng, s.place.geo.lat]),
-            },
-          }));
+        if (transitRoutes) {
+          // TTC view: one layer per leg so each can carry its own line colour
+          // and dash pattern. The straight-line day source is emptied so the
+          // two views never overlap.
+          const direct = map.getSource("routes") as mapboxgl.GeoJSONSource | undefined;
+          direct?.setData({ type: "FeatureCollection", features: [] });
 
-        const data = { type: "FeatureCollection" as const, features };
-        const existing = map.getSource("routes") as
-          | mapboxgl.GeoJSONSource
-          | undefined;
-        if (existing) {
-          existing.setData(data);
-        } else {
-          map.addSource("routes", { type: "geojson", data });
-          map.addLayer({
-            id: "routes",
-            type: "line",
-            source: "routes",
-            paint: {
-              "line-color": ["get", "color"],
-              "line-width": 3,
-              "line-opacity": 0.7,
-            },
+          const { lines, boardings } = transitGeometry(transitRoutes);
+          lines.forEach((line) => {
+            const id = `transit-${line.key}`;
+            map.addSource(id, {
+              type: "geojson",
+              data: {
+                type: "Feature",
+                properties: {},
+                geometry: {
+                  type: "LineString",
+                  coordinates: line.points.map(([lat, lng]) => [lng, lat]),
+                },
+              },
+            });
+            map.addLayer({
+              id,
+              type: "line",
+              source: id,
+              layout: { "line-cap": "round", "line-join": "round" },
+              paint: {
+                "line-color": line.color,
+                "line-width": line.walk ? 3 : 5,
+                "line-opacity": 0.9,
+                ...(line.walk ? { "line-dasharray": [1, 1.8] } : {}),
+              },
+            });
+            transitLayersRef.current.push(id);
           });
+
+          boardings.forEach(({ key, pos: [lat, lng], mode, color }) => {
+            const el = document.createElement("div");
+            el.innerHTML = stopMarkerHTML(mode, color, 24);
+            el.dataset.boarding = key;
+            boardingsRef.current.push(
+              new mapboxgl.Marker({ element: el, anchor: "bottom" })
+                .setLngLat([lng, lat])
+                .addTo(map),
+            );
+          });
+        } else {
+          // Direct view: one straight line per day between consecutive stops.
+          const features = plan.days
+            .filter((d) => d.stops.length > 1)
+            .map((d) => ({
+              type: "Feature" as const,
+              properties: { color: d.color },
+              geometry: {
+                type: "LineString" as const,
+                coordinates: d.stops.map((s) => [s.place.geo.lng, s.place.geo.lat]),
+              },
+            }));
+
+          const data = { type: "FeatureCollection" as const, features };
+          const existing = map.getSource("routes") as
+            | mapboxgl.GeoJSONSource
+            | undefined;
+          if (existing) {
+            existing.setData(data);
+          } else {
+            map.addSource("routes", { type: "geojson", data });
+            map.addLayer({
+              id: "routes",
+              type: "line",
+              source: "routes",
+              paint: {
+                "line-color": ["get", "color"],
+                "line-width": 3,
+                "line-opacity": 0.7,
+              },
+            });
+          }
         }
 
         // Markers.
@@ -148,9 +275,15 @@ function MapboxMap({
           markersRef.current.set(pin.id, marker);
         });
 
-        // Fit to all stops.
-        const bounds = pins.reduce(
-          (b, p) => b.extend([p.lng, p.lat]),
+        // Fit to all stops — plus the transit geometry, which can swing wide of
+        // the stops themselves (a bus detour, a metro line).
+        const extra: [number, number][] = transitRoutes
+          ? transitGeometry(transitRoutes).lines.flatMap((l) =>
+              l.points.map(([lat, lng]) => [lng, lat] as [number, number]),
+            )
+          : [];
+        const bounds = [...pins.map((p) => [p.lng, p.lat] as [number, number]), ...extra].reduce(
+          (b, c) => b.extend(c),
           new mapboxgl.LngLatBounds([pins[0].lng, pins[0].lat], [
             pins[0].lng,
             pins[0].lat,
@@ -160,7 +293,7 @@ function MapboxMap({
         readyRef.current = true;
       };
 
-      if (map.loaded()) draw();
+      if (map.loaded() && map.isStyleLoaded()) draw();
       else map.once("load", draw);
     })();
 
@@ -168,7 +301,7 @@ function MapboxMap({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plan]);
+  }, [plan, transitRoutes]);
 
   // React to selection: highlight marker + fly to it + open popup.
   useEffect(() => {
@@ -204,11 +337,13 @@ function MapboxMap({
 function FallbackMap({
   pins,
   plan,
+  transitRoutes,
   selectedId,
   onSelect,
 }: {
   pins: Pin[];
   plan: RoutePlan;
+  transitRoutes: DayTransitRoute[] | null;
   selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
@@ -216,6 +351,7 @@ function FallbackMap({
   const mapRef = useRef<import("leaflet").Map | null>(null);
   const markersRef = useRef<Map<string, import("leaflet").Marker>>(new Map());
   const polylinesRef = useRef<import("leaflet").Polyline[]>([]);
+  const boardingsRef = useRef<import("leaflet").Marker[]>([]);
 
   useEffect(() => {
     if (!containerRef.current || pins.length === 0) return;
@@ -249,20 +385,53 @@ function FallbackMap({
       markersRef.current.clear();
       polylinesRef.current.forEach((p) => p.remove());
       polylinesRef.current = [];
+      boardingsRef.current.forEach((m) => m.remove());
+      boardingsRef.current = [];
 
-      // Draw route polylines per day
-      for (const day of plan.days) {
-        if (day.stops.length < 2) continue;
-        const coords = day.stops.map(
-          (s) => [s.place.geo.lat, s.place.geo.lng] as [number, number],
-        );
-        const poly = L.polyline(coords, {
-          color: day.color,
-          weight: 3,
-          opacity: 0.7,
-          dashArray: "6 4",
-        }).addTo(map);
-        polylinesRef.current.push(poly);
+      // Extra coordinates to include in the bounds — transit geometry can swing
+      // wide of the stops themselves.
+      const extra: [number, number][] = [];
+
+      if (transitRoutes) {
+        // TTC view: one polyline per leg, dashed for walking.
+        const { lines, boardings } = transitGeometry(transitRoutes);
+        for (const line of lines) {
+          extra.push(...line.points);
+          polylinesRef.current.push(
+            L.polyline(line.points, {
+              color: line.color,
+              weight: line.walk ? 3 : 5,
+              opacity: 0.9,
+              dashArray: line.walk ? "4 7" : undefined,
+              lineCap: "round",
+              lineJoin: "round",
+            }).addTo(map),
+          );
+        }
+        for (const { pos, mode, color } of boardings) {
+          const icon = L.divIcon({
+            html: stopMarkerHTML(mode, color, 24),
+            className: "",
+            iconSize: [24, 24],
+            iconAnchor: [12, 24], // bottom tip of the teardrop
+          });
+          boardingsRef.current.push(L.marker(pos, { icon }).addTo(map));
+        }
+      } else {
+        // Direct view: one straight polyline per day.
+        for (const day of plan.days) {
+          if (day.stops.length < 2) continue;
+          const coords = day.stops.map(
+            (s) => [s.place.geo.lat, s.place.geo.lng] as [number, number],
+          );
+          const poly = L.polyline(coords, {
+            color: day.color,
+            weight: 3,
+            opacity: 0.7,
+            dashArray: "6 4",
+          }).addTo(map);
+          polylinesRef.current.push(poly);
+        }
       }
 
       // Draw numbered circle markers
@@ -288,13 +457,13 @@ function FallbackMap({
       }
 
       // Fit to all stops
-      const latLngs = pins.map((p) => [p.lat, p.lng] as [number, number]);
+      const latLngs = [...pins.map((p) => [p.lat, p.lng] as [number, number]), ...extra];
       map.fitBounds(L.latLngBounds(latLngs), { padding: [40, 40], maxZoom: 16 });
     })();
 
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plan]);
+  }, [plan, transitRoutes]);
 
   // Re-highlight selected marker without full redraw
   useEffect(() => {
@@ -338,10 +507,15 @@ function FallbackMap({
   return <div ref={containerRef} className="h-full w-full" />;
 }
 
-export function RouteMap(props: {
+export function RouteMap({
+  transitRoutes = null,
+  ...props
+}: {
   plan: RoutePlan;
   selectedId: string | null;
   onSelect: (id: string) => void;
+  /** When set, the map draws real TTC bus/metro geometry instead of straight lines. */
+  transitRoutes?: DayTransitRoute[] | null;
 }) {
   const locale = useLocale();
   const nameOf = (id: string) => {
@@ -359,5 +533,5 @@ export function RouteMap(props: {
 
   if (pins.length === 0) return null;
   const Impl = TOKEN ? MapboxMap : FallbackMap;
-  return <Impl pins={pins} {...props} />;
+  return <Impl pins={pins} transitRoutes={transitRoutes} {...props} />;
 }

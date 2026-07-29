@@ -1,4 +1,5 @@
 import mongoose, { Schema, model, models } from "mongoose";
+import type { VoucherRecipient } from "@/types";
 
 export type PaymentPurpose = "listing_fee" | "reservation" | "ticket" | "service" | "deal";
 export type PaymentStatus = "pending" | "paid" | "failed";
@@ -15,6 +16,12 @@ export interface IPayment {
   amount: number; // minor units (tetri)
   currency: string;
   status: PaymentStatus;
+  /**
+   * People the passes are issued to (purpose === "deal"). One voucher is
+   * created per entry, so amount = unit price × recipients.length. Absent for
+   * non-deal purposes and for deal payments made before gifting existed.
+   */
+  recipients?: VoucherRecipient[];
   rawCallback?: unknown;
   createdAt: Date;
   updatedAt: Date;
@@ -41,6 +48,14 @@ const PaymentSchema = new Schema<IPayment>(
       default: "pending",
       index: true,
     },
+    recipients: [
+      {
+        _id: false,
+        firstName: { type: String, required: true },
+        lastName: { type: String, required: true },
+        age: { type: Number, min: 1, max: 17 },
+      },
+    ],
     rawCallback: Schema.Types.Mixed,
   },
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }

@@ -19,8 +19,14 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { RouteMap } from "@/components/planner/route-map";
 import { ItinerarySidebar } from "@/components/planner/itinerary-sidebar";
+import {
+  RouteModeToggle,
+  TransitSummary,
+  type RouteView,
+} from "@/components/planner/route-mode-toggle";
 import { PlaceSelectionCards } from "@/components/chat/place-selection-cards";
 import { JourneyCard } from "@/components/transit/journey-card";
+import { useDayTransit } from "@/hooks/use-day-transit";
 import { dayMapUrl } from "@/lib/google-maps";
 import type { AIItinerary, ChatMessage, Place, PlacePreviewCard, RoutePlan } from "@/types";
 import type { JourneyPlan } from "@/types/transit";
@@ -73,7 +79,12 @@ export function ChatUI() {
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  // Which route rendering the map shows: straight lines, or real TTC bus/metro.
+  const [routeView, setRouteView] = useState<RouteView>("direct");
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const transit = useDayTransit(plan, routeView === "transit");
+  const transitRoutes = routeView === "transit" ? transit.routes : null;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -341,11 +352,35 @@ export function ChatUI() {
 
           {m.type === "route-plan" && plan && (
             <div className="mt-2 w-full space-y-3 sm:pl-10">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {tp("routeView")}
+                </span>
+                <RouteModeToggle
+                  view={routeView}
+                  onChange={setRouteView}
+                  loading={transit.status === "loading"}
+                />
+              </div>
+
               <div className="overflow-hidden rounded-2xl border border-border shadow-sm">
                 <div className="relative h-[400px]">
-                  <RouteMap plan={plan} selectedId={selectedId} onSelect={setSelectedId} />
+                  <RouteMap
+                    plan={plan}
+                    transitRoutes={transitRoutes}
+                    selectedId={selectedId}
+                    onSelect={setSelectedId}
+                  />
                 </div>
               </div>
+
+              {routeView === "transit" && (
+                <TransitSummary
+                  routes={transit.routes}
+                  status={transit.status}
+                  onRetry={transit.retry}
+                />
+              )}
 
               {/* Itinerary actions: save + open each day in Google Maps */}
               <div className="rounded-2xl border border-[#E8A020]/25 bg-card p-3 shadow-sm">

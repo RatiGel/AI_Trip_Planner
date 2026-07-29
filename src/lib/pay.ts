@@ -1,4 +1,5 @@
 import type { PaymentPurpose } from "@/lib/models/payment";
+import type { VoucherRecipient } from "@/types";
 
 export interface PayArgs {
   purpose: PaymentPurpose;
@@ -7,6 +8,8 @@ export interface PayArgs {
   locale: string;
   amount?: number; // GEL, only used for "deal" purpose
   desc?: string;
+  /** Deal purchases: who each pass is issued to. Validated server-side. */
+  recipients?: VoucherRecipient[];
 }
 
 /**

@@ -7,8 +7,11 @@ import { Clock } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { useTranslations } from "next-intl";
+import { useSession } from "next-auth/react";
+import { useRouter } from "@/i18n/navigation";
 import { payNow } from "@/lib/pay";
-import type { DealCategory, DealOption } from "@/types";
+import { RecipientsDialog } from "@/components/site/recipients-dialog";
+import type { DealCategory, DealOption, VoucherRecipient } from "@/types";
 
 const DEAL_CATEGORY_COLOR: Record<DealCategory, string> = {
   attraction: "#B5271D",
@@ -19,21 +22,37 @@ const DEAL_CATEGORY_COLOR: Record<DealCategory, string> = {
 
 function DealCard({ deal, index }: { deal: DealOption; index: number }) {
   const t = useTranslations("deals");
+  const tr = useTranslations("recipients");
   const color = DEAL_CATEGORY_COLOR[deal.category];
   const params = useParams();
   const locale = typeof params?.locale === "string" ? params.locale : "en";
   const [loading, setLoading] = useState(false);
+  const [pickingRecipients, setPickingRecipients] = useState(false);
+  const { status } = useSession();
+  const router = useRouter();
 
-  async function grab() {
+  function grab() {
+    if (status !== "authenticated") {
+      router.push(`/login?callbackUrl=/${locale}/deals`);
+      return;
+    }
+    // Passes are issued to named holders, so collect them before checkout.
+    setPickingRecipients(true);
+  }
+
+  async function checkout(recipients: VoucherRecipient[]) {
+    setPickingRecipients(false);
     setLoading(true);
-    toast.success(`${deal.title} · ${deal.priceGEL}₾`, { description: t("redirecting") });
+    const total = deal.priceGEL * recipients.length;
+    toast.success(`${deal.title} · ${total}₾`, { description: t("redirecting") });
     try {
       await payNow({
         purpose: "deal",
         targetId: deal.id,
-        amount: deal.priceGEL,
+        amount: total,
         desc: deal.title,
         locale,
+        recipients,
       });
       // payNow redirects to Flitt on success; keep spinner until navigation.
     } catch (e) {
@@ -113,6 +132,27 @@ function DealCard({ deal, index }: { deal: DealOption; index: number }) {
           </button>
         </div>
       </div>
+
+      <RecipientsDialog
+        open={pickingRecipients}
+        onOpenChange={setPickingRecipients}
+        unitPriceGEL={deal.priceGEL}
+        onConfirm={checkout}
+        labels={{
+          title: tr("title"),
+          description: tr("description"),
+          firstName: tr("firstName"),
+          lastName: tr("lastName"),
+          isMinor: tr("isMinor"),
+          age: tr("age"),
+          addPerson: tr("addPerson"),
+          remove: tr("remove"),
+          passLabel: tr("passLabel"),
+          cancel: tr("cancel"),
+          confirm: tr("confirm"),
+          total: tr("total"),
+        }}
+      />
     </motion.div>
   );
 }

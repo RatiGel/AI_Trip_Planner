@@ -121,7 +121,21 @@
     "day": "Day {n}",
     "stops": "{count, plural, =0 {No stops} =1 {# stop} other {# stops}}",
     "emptyDay": "No stops planned for this day yet.",
-    "saved": "Saved {date}"
+    "saved": "Saved {date}",
+    "openInGoogleMaps": "Google Maps",
+    "openInCityTransport": "City transport",
+    "routeNeedsTwoStops": "Add a second stop to get a route for this day.",
+    "viewOnMap": "View route on map",
+    "backToTrips": "Back to my trips",
+    "cityTransportRoute": "City transport route",
+    "transitPageHint": "Bus and metro lines for each leg of your trip, from Tbilisi Transport Company data.",
+    "transitNoStops": "This trip has no places with locations yet, so no transit route can be built.",
+    "transitAllWalkable": "Every leg of this trip is walkable — no bus or metro needed.",
+    "transitTotal": "{min} min by transit",
+    "rides": "{n, plural, one {# ride} other {# rides}}",
+    "walkMin": "Walk {min} min",
+    "rideMin": "{min} min ride",
+    "walkNoTransit": "Walk ~{min} min — no bus or metro on this leg"
   },
   "tickets": {
     "title": "Tickets",
@@ -241,6 +255,7 @@
     "places": "Places",
     "categories": "Categories",
     "reservations": "Reservations",
+    "notifications": "Notifications",
     "ticketOrders": "Ticket orders",
     "users": "Users",
     "media": "Media",
@@ -326,7 +341,7 @@
     "headline": "Explore",
     "sub": "Ancient city. Modern soul. Where sulphur baths meet rooftop bars, and medieval towers overlook a thriving art scene.",
     "ctaAI": "Plan My Trip with AI",
-    "ctaExplore": "Explore the City",
+    "ctaExplore": "Discover Tbilisi",
     "scroll": "Scroll"
   },
   "categoriesSection": {
@@ -408,16 +423,35 @@
     "dayN": "Day {n}",
     "totalOverview": "{days} days · {distance} · ~{time} total",
     "travelLeg": "travel",
-    "mayBeClosed": "May be closed"
+    "mayBeClosed": "May be closed",
+    "routeView": "Route view",
+    "viewDirect": "Direct",
+    "viewTransit": "TTC transit",
+    "transitLoading": "Building bus & metro route…",
+    "transitUnavailable": "TTC transit routing is unavailable right now.",
+    "retry": "Retry",
+    "transitTotal": "{min} min by transit",
+    "boardings": "{n, plural, one {# ride} other {# rides}}",
+    "walkTotal": "{min} min walking",
+    "walkFallback": "Walk ~{min} min — no transit route",
+    "transitGaps": "{n, plural, one {# leg has no transit route and is shown as a walk} other {# legs have no transit route and are shown as walks}}",
+    "walkOnly": "Walk {min} min — no bus or metro on this leg"
   },
   "payment": {
-    "successTitle": "Payment successful",
-    "successBody": "Your payment was received. Thank you!",
-    "failedTitle": "Payment failed",
-    "failedBody": "Your payment could not be completed. Please try again.",
-    "pendingTitle": "Payment pending",
-    "pendingBody": "We are confirming your payment. This page will reflect the final status shortly.",
-    "backHome": "Back to home"
+    "successTitle": "Your pass is ready",
+    "successBody": "Show it at the entrance — on your phone or printed. It also lives in My Passes, so you can pull it up any time.",
+    "failedTitle": "Payment didn't go through",
+    "failedBody": "Your card was not charged. Start the purchase again, or try a different card.",
+    "pendingTitle": "Confirming your payment",
+    "pendingBody": "Your bank is still processing this. Keep this page open — the pass appears here as soon as the payment clears.",
+    "backHome": "Back to home",
+    "browseDeals": "Browse deals",
+    "viewMyPasses": "View my passes",
+    "morePasses": "{count, plural, one {# more pass} other {# more passes}}",
+    "passCount": "Passes issued",
+    "totalPaid": "Total paid",
+    "voucherLabel": "Your voucher code",
+    "voucherHint": "Show this code at the venue to redeem your deal."
   },
   "travelInfoPage": {
     "meta": {
@@ -977,5 +1011,37 @@
         }
       ]
     }
+  },
+  "myDeals": {
+    "heading": "My Deals",
+    "codeLabel": "Voucher code",
+    "active": "Active",
+    "redeemed": "Redeemed",
+    "expiredLabel": "Expired",
+    "orderLabel": "Order number",
+    "purchasedLabel": "Purchase date",
+    "validUntilLabel": "Valid until",
+    "issuedByLabel": "Purchased on",
+    "purchasedByLabel": "Purchased by",
+    "businessLabel": "Attraction",
+    "addressLabel": "Address",
+    "howToUseTitle": "How to use",
+    "howToUseBody": "Simply present either your mobile tickets or your printed tickets for entry to the attraction.",
+    "validForLabel": "Valid for",
+    "ageLabel": "Age"
+  },
+  "recipients": {
+    "title": "Who are these passes for?",
+    "description": "Enter the name of each person who will use a pass. You can buy passes for other people.",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "isMinor": "This person is under 18",
+    "age": "Age",
+    "addPerson": "Add another person",
+    "remove": "Remove",
+    "passLabel": "Pass",
+    "cancel": "Cancel",
+    "confirm": "Continue to payment",
+    "total": "Total:"
   }
 }

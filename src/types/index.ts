@@ -256,10 +256,30 @@ export type TicketType = "bus" | "rail" | "transit-pass";
 
 export type DealCategory = "attraction" | "food" | "transport" | "experience";
 
+/**
+ * A person a voucher is issued to. The buyer may gift passes to others, so the
+ * holder named on a pass is not necessarily the account that paid.
+ */
+export interface VoucherRecipient {
+  firstName: string;
+  lastName: string;
+  /** Only collected when the recipient is a minor; 1–17. Undefined for adults. */
+  age?: number;
+}
+
+/** Recipients under this age must have their age recorded on the pass. */
+export const MINOR_AGE_LIMIT = 18;
+
 export interface DealOption {
   id: string;
+  /** Email of the business-owner UserModel that listed this deal; resolved to userId server-side. */
+  ownerEmail: string;
   title: string;
   description: string;
+  /** Trading name of the attraction/venue that honours this deal; printed on the voucher. */
+  businessName: string;
+  /** Street address where the voucher is redeemed; printed on the voucher. */
+  address: string;
   priceOriginal: number;
   priceGEL: number;
   discountPct: number;
@@ -290,4 +310,31 @@ export interface Reservation {
   status: "pending" | "confirmed" | "cancelled";
   priceGEL?: number;
   paymentStatus?: "unpaid" | "paid";
+}
+
+export interface Voucher {
+  id: string;
+  code: string;
+  userId: string;
+  dealId: string;
+  dealTitle: string;
+  amountGEL: number;
+  paymentOrderId: string;
+  status: "active" | "redeemed";
+  createdAt: string;
+}
+
+export interface Notification {
+  id: string;
+  ownerId: string;
+  type: "deal_purchase";
+  dealId: string;
+  dealTitle: string;
+  voucherCode: string;
+  buyerName: string;
+  buyerEmail: string;
+  amountGEL: number;
+  paymentOrderId: string;
+  read: boolean;
+  createdAt: string;
 }
