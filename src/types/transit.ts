@@ -36,6 +36,43 @@ export interface JourneyPlan {
   legs: JourneyLeg[];
 }
 
+/**
+ * One hop of an itinerary day: how to get from stop N to stop N+1 on TTC.
+ * `journey` is the chosen TTC plan; when it is null the pair had no transit
+ * option (too close, or the API failed) and the UI draws a dashed walk line
+ * between `from` and `to` instead.
+ */
+export interface DayTransitSegment {
+  /** 0-based index of the originating stop within the day. */
+  fromIndex: number;
+  fromName: string;
+  toName: string;
+  from: LatLng;
+  to: LatLng;
+  journey: JourneyPlan | null;
+  /** Straight-line distance, used for the walk-fallback estimate. */
+  fallbackMeters?: number;
+  fallbackWalkMin?: number;
+}
+
+/** TTC routing for a single itinerary day, stitched from N-1 /plan calls. */
+export interface DayTransitRoute {
+  day: number;
+  color: string;
+  segments: DayTransitSegment[];
+  /** Sum of routed transit minutes + fallback walk estimates. */
+  totalMin: number;
+  totalWalkMin: number;
+  /** Boardings across the day (bus + metro legs). */
+  transitLegs: number;
+  /** Segments that had no TTC route and fell back to walking. */
+  gapCount: number;
+}
+
+export interface DayTransitResponse {
+  routes: DayTransitRoute[];
+}
+
 export interface Arrival {
   line?: string;
   minutes?: number;     // minutes until arrival
