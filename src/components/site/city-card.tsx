@@ -1,12 +1,13 @@
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { pickLocalized } from "@/lib/i18n-content";
 import type { City } from "@/types";
 
 export function CityCard({ city }: { city: City }) {
   const t = useTranslations("cities");
   const locale = useLocale();
-  const name = locale === "ka" ? city.nameKa : city.name;
+  const name = pickLocalized(city, "name", locale);
 
   return (
     <Link

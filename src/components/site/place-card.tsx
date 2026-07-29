@@ -3,6 +3,7 @@ import { Star } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
+import { pickLocalized } from "@/lib/i18n-content";
 import type { Place } from "@/types";
 
 interface PlaceCardProps {
@@ -13,8 +14,8 @@ interface PlaceCardProps {
 export function PlaceCard({ place, className }: PlaceCardProps) {
   const t = useTranslations("categories");
   const locale = useLocale();
-  const name = locale === "ka" ? place.nameKa : place.name;
-  const description = locale === "ka" ? place.descriptionKa : place.description;
+  const name = pickLocalized(place, "name", locale);
+  const description = pickLocalized(place, "description", locale);
 
   return (
     <Link

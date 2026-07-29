@@ -14,8 +14,17 @@ import { PlaceModel } from "@/lib/models/place";
 import { PUBLISHED } from "@/lib/places/published";
 import { serializePlace, serializeDoc } from "@/lib/serialize";
 import { buildMetadata, SITE_URL } from "@/lib/seo";
+import { pickLocalized, hasTranslation } from "@/lib/i18n-content";
 import { JsonLd } from "@/components/site/json-ld";
 import type { Place } from "@/types";
+
+/** "old-tbilisi" -> "Old Tbilisi". Slugs leaked into titles and breadcrumbs. */
+function cityLabel(slug: string) {
+  return slug
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
 
 const DAY_NAMES_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const DAY_NAMES_KA = ["კვი", "ორშ", "სამ", "ოთხ", "ხუთ", "პარ", "შაბ"];
@@ -30,15 +39,22 @@ export async function generateMetadata({
   const placeDoc = await PlaceModel.findOne({ slug }).lean();
   if (!placeDoc) return {};
   const place = serializePlace(placeDoc);
-  const name = locale === "ka" ? place.nameKa : place.name;
-  const description = locale === "ka" ? place.descriptionKa : place.description;
-  return buildMetadata({
+  const name = pickLocalized(place, "name", locale);
+  const description = pickLocalized(place, "description", locale);
+  const meta = buildMetadata({
     locale,
     path: `/places/${slug}`,
-    title: `${name} — ${place.citySlug} Travel Guide`,
+    title: `${name} — ${cityLabel(place.citySlug)} Travel Guide`,
     description,
     image: place.images?.[0],
   });
+  // A locale with no real translation renders the English copy, so indexing it
+  // would hand Google a duplicate. Keep it crawlable (follow) but out of the
+  // index; the hreflang cluster still points at the version that is indexed.
+  if (!hasTranslation(place, locale)) {
+    meta.robots = { index: false, follow: true };
+  }
+  return meta;
 }
 
 export default async function PlacePage({
@@ -65,8 +81,8 @@ function PlaceContent({ place, similar }: { place: Place; similar: Place[] }) {
   const t = useTranslations("place");
   const tCat = useTranslations("categories");
   const locale = useLocale();
-  const name = locale === "ka" ? place.nameKa : place.name;
-  const description = locale === "ka" ? place.descriptionKa : place.description;
+  const name = pickLocalized(place, "name", locale);
+  const description = pickLocalized(place, "description", locale);
   const dayNames = locale === "ka" ? DAY_NAMES_KA : DAY_NAMES_EN;
   const pageUrl = `${SITE_URL}/${locale}/places/${place.slug}`;
   // Absolute image URLs — Google requires fully-qualified URLs in JSON-LD.
@@ -85,7 +101,7 @@ function PlaceContent({ place, similar }: { place: Place; similar: Place[] }) {
           address: {
             "@type": "PostalAddress",
             ...(place.geo?.address ? { streetAddress: place.geo.address } : {}),
-            addressLocality: place.citySlug,
+            addressLocality: cityLabel(place.citySlug),
             addressCountry: "GE",
           },
         }
@@ -148,7 +164,7 @@ function PlaceContent({ place, similar }: { place: Place; similar: Place[] }) {
       {
         "@type": "ListItem",
         position: 2,
-        name: place.citySlug,
+        name: cityLabel(place.citySlug),
         item: `${SITE_URL}/${locale}/cities/${place.citySlug}`,
       },
       {

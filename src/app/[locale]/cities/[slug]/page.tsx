@@ -13,6 +13,7 @@ import { PlaceModel } from "@/lib/models/place";
 import { PUBLISHED } from "@/lib/places/published";
 import { buildMetadata, SITE_URL } from "@/lib/seo";
 import { JsonLd } from "@/components/site/json-ld";
+import { pickLocalized, hasTranslation } from "@/lib/i18n-content";
 import type { City, Place } from "@/types";
 
 export async function generateMetadata({
@@ -24,14 +25,20 @@ export async function generateMetadata({
   await connectDB();
   const city = (await CityModel.findOne({ slug }).lean()) as unknown as City | null;
   if (!city) return {};
-  const name = locale === "ka" ? city.nameKa : city.name;
-  const description = locale === "ka" ? city.descriptionKa : city.description;
-  return buildMetadata({
+  const name = pickLocalized(city, "name", locale);
+  const description = pickLocalized(city, "description", locale);
+  const meta = buildMetadata({
     locale,
     path: `/cities/${slug}`,
     title: `Things to Do in ${name} — Attractions & Travel Guide`,
     description,
   });
+  // Untranslated locales render English copy — keep them out of the index so
+  // they don't compete with the /en original as duplicates.
+  if (!hasTranslation(city, locale)) {
+    meta.robots = { index: false, follow: true };
+  }
+  return meta;
 }
 
 export default async function CityPage({
@@ -52,8 +59,8 @@ function CityContent({ city, places }: { city: City; places: Place[] }) {
   const t = useTranslations("city");
   const tNav = useTranslations("nav");
   const locale = useLocale();
-  const name = locale === "ka" ? city.nameKa : city.name;
-  const description = locale === "ka" ? city.descriptionKa : city.description;
+  const name = pickLocalized(city, "name", locale);
+  const description = pickLocalized(city, "description", locale);
   const citySchema = {
     "@context": "https://schema.org",
     "@type": "TouristDestination",
