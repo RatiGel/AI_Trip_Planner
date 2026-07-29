@@ -34,9 +34,11 @@ export interface City {
   slug: string;
   name: string;
   nameKa: string;
+  nameRu?: string;
   country: string;
   description: string;
   descriptionKa: string;
+  descriptionRu?: string;
   heroImage: string;
   geo: Geo;
   placesCount: number;
@@ -70,8 +72,10 @@ export interface Place {
   citySlug: string;
   name: string;
   nameKa: string;
+  nameRu?: string;
   description: string;
   descriptionKa: string;
+  descriptionRu?: string;
   categories: CategorySlug[];
   images: string[];
   geo: Geo;
