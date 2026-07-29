@@ -49,8 +49,8 @@ export function AIPlannerCTA() {
           </div>
 
           <h2
-            className="font-display mb-5 leading-tight text-white"
-            style={{ fontSize: "clamp(36px, 4vw, 56px)", letterSpacing: "-1px" }}
+            className="font-display hyphens-auto mb-5 break-words leading-tight text-white"
+            style={{ fontSize: "clamp(28px, 4vw, 56px)", letterSpacing: "-0.02em" }}
           >
             {t("planPrefix")}{" "}
             <motion.span

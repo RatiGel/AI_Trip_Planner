@@ -12,7 +12,7 @@ export function HeroSection() {
   const t = useTranslations("hero");
 
   return (
-    <div className="relative w-full overflow-hidden" style={{ height: "100svh", minHeight: "700px" }}>
+    <div className="relative w-full overflow-hidden" style={{ height: "100svh", minHeight: "min(700px, 100svh)" }}>
       {/* Background image with zoom animation */}
       <motion.div
         className="absolute inset-0"
@@ -41,37 +41,38 @@ export function HeroSection() {
       </motion.div>
 
       {/* Content */}
-      <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 text-center">
+      {/* pt clears the fixed 72px header; pb clears the scroll indicator. */}
+      <div className="relative z-10 flex h-full flex-col items-center justify-center px-6 pb-24 pt-[72px] text-center">
         <motion.div
           initial={{ opacity: 0, y: 32 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
           {/* Eyebrow */}
-          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-md">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 backdrop-blur-md sm:mb-7">
             <span className="text-[10px] font-bold tracking-[2.5px] uppercase text-yellow-300">
               ✦ {t("eyebrow")}
             </span>
           </div>
 
           {/* Headline */}
-          <h1 className="font-display mb-6 leading-[0.88] tracking-[-3px] text-white"
-            style={{ fontSize: "clamp(60px, 11vw, 120px)" }}>
+          <h1 className="font-display mb-4 leading-[0.88] tracking-[-0.025em] text-white sm:mb-6"
+            style={{ fontSize: "clamp(48px, 11vw, 120px)" }}>
             {t("headline")}<br />
             <em className="text-yellow-300">Tbilisi</em>
           </h1>
 
           {/* Sub */}
-          <p className="mx-auto mb-10 max-w-lg font-light leading-relaxed text-white/80"
-            style={{ fontSize: "clamp(16px, 2vw, 20px)" }}>
+          <p className="mx-auto mb-7 max-w-lg font-light leading-relaxed text-white/80 sm:mb-10"
+            style={{ fontSize: "clamp(15px, 2vw, 20px)" }}>
             {t("sub")}
           </p>
 
           {/* CTAs */}
-          <div className="flex flex-wrap items-center justify-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
             <Link
               href="/chat"
-              className="rounded-full px-9 py-4 text-[15px] font-semibold text-white transition-all duration-250 hover:-translate-y-0.5"
+              className="rounded-full px-6 py-3.5 text-[14px] font-semibold text-white transition-all duration-250 hover:-translate-y-0.5 sm:px-9 sm:py-4 sm:text-[15px]"
               style={{
                 background: "#B5271D",
                 boxShadow: "0 8px 32px rgba(181,39,29,0.5)",
@@ -81,7 +82,7 @@ export function HeroSection() {
             </Link>
             <Link
               href="/discover"
-              className="rounded-full border border-white/30 bg-white/10 px-9 py-4 text-[15px] font-medium text-white backdrop-blur-md transition-all duration-250 hover:bg-white/20"
+              className="rounded-full border border-white/30 bg-white/10 px-6 py-3.5 text-[14px] font-medium text-white backdrop-blur-md transition-all duration-250 hover:bg-white/20 sm:px-9 sm:py-4 sm:text-[15px]"
             >
               {t("ctaExplore")}
             </Link>

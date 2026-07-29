@@ -268,6 +268,7 @@ function LeafletJourney({
         weight: 3,
         fillColor: "#2563eb",
         fillOpacity: 1,
+        className: "journey-user-dot",
       }).addTo(mapRef.current);
     })();
     return () => { cancelled = true; };

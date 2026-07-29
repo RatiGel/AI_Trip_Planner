@@ -84,10 +84,10 @@ export function FeaturedPlaces({ places }: { places: Place[] }) {
           <p className="mb-3 text-[11px] font-bold uppercase tracking-[3px]" style={{ color: "#B5271D" }}>
             {t("eyebrow")}
           </p>
-          <div className="flex items-end justify-between">
+          <div className="flex items-end justify-between gap-4">
             <h2
-              className="font-display leading-tight"
-              style={{ fontSize: "clamp(36px, 5vw, 56px)", letterSpacing: "-1.5px", color: "var(--site-text)" }}
+              className="font-display hyphens-auto min-w-0 break-words leading-tight"
+              style={{ fontSize: "clamp(28px, 5vw, 56px)", letterSpacing: "-0.02em", color: "var(--site-text)" }}
             >
               {t("heading")} <em className="italic" style={{ color: "#F5C842" }}>{t("headingEm")}</em>
             </h2>

@@ -6,6 +6,7 @@ import { CalendarDays, ChevronDown, LayoutDashboard, LogOut, MapPinned, Menu, Sh
 import { useSession, signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
+import { AnnouncementBanner } from "./announcement-banner";
 import { LanguageSwitcher } from "./language-switcher";
 import { ThemeToggle } from "./theme-toggle";
 import {
@@ -21,6 +22,7 @@ export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const { data: session } = useSession();
   const t = useTranslations("header");
@@ -105,7 +107,14 @@ export function SiteHeader() {
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    // usePathname() reports "/" during SSR for every route, so a server-rendered
+    // banner would flash on non-home pages before hydration corrects it. Flipping
+    // this on the first client frame keeps it out of the initial HTML entirely.
+    const raf = requestAnimationFrame(() => setMounted(true));
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   const isHome = pathname === "/";
@@ -143,6 +152,21 @@ export function SiteHeader() {
         borderBottom: scrolled || !isHome ? "1px solid var(--site-border-06)" : "none",
       }}
     >
+      {/* Launch banner — home page only, slides away on first scroll */}
+      <AnimatePresence>
+        {mounted && overHero && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
+            className="overflow-hidden"
+          >
+            <AnnouncementBanner />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-6 md:px-12 xl:grid xl:grid-cols-[1fr_auto_1fr]">
         {/* Logo */}
         <Link href="/" className="flex flex-col items-start leading-none" aria-label="explore Tbilisi — home">

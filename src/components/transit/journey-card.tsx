@@ -110,12 +110,15 @@ export function JourneyCard({
   plan,
   locale,
   selected,
+  going,
   onSelect,
   onGo,
 }: {
   plan: JourneyPlan;
   locale: string;
   selected?: boolean;
+  /** True when this route's map is open below the card (mobile). */
+  going?: boolean;
   onSelect?: () => void;
   onGo?: () => void;
 }) {
@@ -213,15 +216,20 @@ export function JourneyCard({
             <span
               role="button"
               tabIndex={0}
+              aria-pressed={going}
               onClick={(e) => { e.stopPropagation(); onGo?.(); }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); onGo?.(); }
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[13px] font-semibold text-white transition-all hover:brightness-110 active:scale-[0.98]"
-              style={{ background: "#0891B2", boxShadow: "0 2px 10px rgba(8,145,178,0.3)" }}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[13px] font-semibold transition-all hover:brightness-110 active:scale-[0.98]"
+              style={
+                going
+                  ? { background: "var(--site-surface-08)", color: "var(--site-text-65)", boxShadow: "none" }
+                  : { background: "#0891B2", color: "#fff", boxShadow: "0 2px 10px rgba(8,145,178,0.3)" }
+              }
             >
-              {t("go")}
-              <ArrowRight className="size-3.5" />
+              {going ? t("hideMap") : t("go")}
+              {going ? <ChevronDown className="size-3.5 rotate-180" /> : <ArrowRight className="size-3.5" />}
             </span>
             <ChevronDown
               className="size-4 shrink-0 transition-transform duration-200"

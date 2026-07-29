@@ -48,8 +48,8 @@ export function NeighborhoodsSection() {
           {t("eyebrow")}
         </p>
         <h2
-          className="font-display mb-3 leading-tight"
-          style={{ fontSize: "clamp(36px, 5vw, 56px)", letterSpacing: "-1.5px", color: "var(--site-text)" }}
+          className="font-display hyphens-auto mb-3 break-words leading-tight"
+          style={{ fontSize: "clamp(28px, 5vw, 56px)", letterSpacing: "-0.02em", color: "var(--site-text)" }}
         >
           {t("heading")} <em className="italic" style={{ color: "#F5C842" }}>{t("headingEm")}</em>
         </h2>

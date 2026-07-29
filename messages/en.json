@@ -216,6 +216,7 @@
     "departingFrom": "Departing from {stop}",
     "editRoute": "Edit route",
     "go": "Go",
+    "hideMap": "Hide map",
     "routeFound": "Route found",
     "noResultsHint": "No transit routes between these points. Try nearby stops or landmarks.",
     "idleTitle": "Plan your trip",
@@ -335,6 +336,9 @@
     "gettingAround": "Getting Around",
     "deals": "Deals",
     "travelInfo": "Travel Guide"
+  },
+  "banner": {
+    "subline": "Launching soon"
   },
   "hero": {
     "eyebrow": "Georgia, Caucasus",

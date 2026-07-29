@@ -4,9 +4,11 @@ import { useState, useEffect, useRef, useCallback, useId } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { ArrowDownUp, MapPin, Search, Route, Loader2, Crosshair, LocateFixed, Footprints, Bus, TrainFront, Pencil, PanelLeftOpen } from "lucide-react";
+import { ArrowDownUp, MapPin, Search, Route, Loader2, Crosshair, LocateFixed, Footprints, Bus, TrainFront, Pencil, PanelLeftOpen, X } from "lucide-react";
+import { motion } from "framer-motion";
 import type { GeocodeResult, JourneyPlan } from "@/types/transit";
-import { useGeolocation } from "@/hooks/use-geolocation";
+import { useGeolocation, type Coords } from "@/hooks/use-geolocation";
+import { useIsDesktop } from "@/hooks/use-media-query";
 import { JourneyCard } from "./journey-card";
 import { JourneyMap } from "./journey-map";
 
@@ -39,13 +41,31 @@ export function RoutePlanner() {
   const locale = typeof params?.locale === "string" ? params.locale : "en";
   const listId = useId();
 
-  const { coords: userCoords, tracking, error: geoError, watch, stop } = useGeolocation();
+  const { coords: userCoords, tracking, error: geoError, locate, loading: locating, watch, stop } = useGeolocation();
   const [recenterTick, setRecenterTick] = useState(0);
+  // Gates the side map: on mobile it must not mount at all (a hidden Mapbox/
+  // Leaflet instance would still be built), the inline map replaces it.
+  const isDesktop = useIsDesktop();
 
   useEffect(() => {
     if (geoError) toast.error(tMap(geoError));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geoError]);
+
+  /**
+   * Recenter the map on the user. Works whether or not Follow me is on: with a
+   * known position it zooms straight away, otherwise it requests a one-shot fix
+   * first. locate() resolves with the coords, so the pan is driven from here
+   * rather than an effect watching userCoords; a failed fix resolves null and
+   * the hook has already surfaced the error as a toast.
+   */
+  const recenter = useCallback(async () => {
+    if (!userCoords) {
+      const fix = await locate();
+      if (!fix) return;
+    }
+    setRecenterTick((n) => n + 1);
+  }, [userCoords, locate]);
 
   const [fromText, setFromText] = useState("");
   const [toText, setToText] = useState("");
@@ -56,6 +76,9 @@ export function RoutePlanner() {
 
   const [plans, setPlans] = useState<JourneyPlan[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // Plan the user pressed Go on. On mobile the map only exists once this is
+  // set, and it renders inline directly beneath that card.
+  const [goneId, setGoneId] = useState<string | null>(null);
   // After planning, the left panel collapses to give the map full width.
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -127,7 +150,7 @@ export function RoutePlanner() {
 
   async function plan() {
     if (!fromSel || !toSel) return;
-    setLoading(true); setError(false); setPlans(null);
+    setLoading(true); setError(false); setPlans(null); setGoneId(null);
     try {
       const res = await fetch("/api/transit/plan", {
         method: "POST",
@@ -411,22 +434,50 @@ export function RoutePlanner() {
           {!loading && plans && plans.length > 0 && (
             <div className="flex flex-col gap-4">
               {plans.map((p) => (
-                <JourneyCard
-                  key={p.id}
-                  plan={p}
-                  locale={locale}
-                  selected={p.id === selectedId}
-                  onSelect={() => setSelectedId(p.id)}
-                  onGo={() => { setSelectedId(p.id); setPanelCollapsed(true); }}
-                />
+                <div key={p.id} className="flex flex-col gap-4">
+                  <JourneyCard
+                    plan={p}
+                    locale={locale}
+                    selected={p.id === selectedId}
+                    going={p.id === goneId}
+                    onSelect={() => setSelectedId(p.id)}
+                    onGo={() => {
+                      setSelectedId(p.id);
+                      // Mobile: reveal the map inline under this card. Desktop:
+                      // collapse the panel so the side map gets full width.
+                      setGoneId((cur) => (cur === p.id ? null : p.id));
+                      setPanelCollapsed(true);
+                    }}
+                  />
+
+                  {/* Inline map — mobile only, directly under the chosen route.
+                      Gated on !isDesktop (not just `lg:hidden`) so desktop never
+                      builds a second map instance. */}
+                  {p.id === goneId && !isDesktop && (
+                    <div className="lg:hidden">
+                      <InlineMap
+                        plan={p}
+                        userCoords={userCoords}
+                        tracking={tracking}
+                        recenterTick={recenterTick}
+                        onToggleFollow={tracking ? stop : watch}
+                        onRecenter={recenter}
+                        locating={locating}
+                        onClose={() => setGoneId(null)}
+                      />
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           )}
         </div>
       </div>
 
-      {/* ── Right: map (sticky on desktop) ── */}
-      <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
+      {/* ── Right: map (desktop only — on mobile the map renders inline under
+             the route the user pressed Go on). ── */}
+      {isDesktop && (
+      <div className="hidden min-w-0 lg:block lg:sticky lg:top-24 lg:self-start">
         <div className="relative h-[420px] lg:h-[calc(100vh-8rem)]">
           <JourneyMap
             plan={selectedPlan}
@@ -448,21 +499,121 @@ export function RoutePlanner() {
               <Crosshair className="size-3.5" />
               {tracking ? t("stopFollowing") : t("followMe")}
             </button>
-            {tracking && userCoords && (
-              <button
-                type="button"
-                onClick={() => setRecenterTick((n) => n + 1)}
-                className="flex items-center gap-2 rounded-full px-3 py-2 text-[13px] font-medium shadow-lg backdrop-blur transition-colors"
-                style={{ background: "var(--site-header-bg)", border: "1px solid var(--site-border-10)", color: "var(--site-text-65)" }}
-              >
-                <LocateFixed className="size-3.5" />
-                {t("recenter")}
-              </button>
-            )}
+            {/* Always available — with no fix yet it requests one, then zooms. */}
+            <button
+              type="button"
+              onClick={recenter}
+              disabled={locating}
+              aria-label={t("recenter")}
+              className="flex items-center gap-2 rounded-full px-3 py-2 text-[13px] font-medium shadow-lg backdrop-blur transition-colors disabled:opacity-70"
+              style={{ background: "var(--site-header-bg)", border: "1px solid var(--site-border-10)", color: "var(--site-text-65)" }}
+            >
+              {locating ? <Loader2 className="size-3.5 animate-spin" /> : <LocateFixed className="size-3.5" />}
+              {locating ? t("locating") : t("recenter")}
+            </button>
           </div>
         </div>
       </div>
+      )}
     </div>
+  );
+}
+
+/**
+ * Mobile map panel, rendered inline beneath the route the user pressed Go on.
+ * Mounts only after Go, so no map is created while the user is still comparing
+ * options. Scrolls itself into view once so the route is visible immediately.
+ */
+function InlineMap({
+  plan,
+  userCoords,
+  tracking,
+  recenterTick,
+  onToggleFollow,
+  onRecenter,
+  locating,
+  onClose,
+}: {
+  plan: JourneyPlan;
+  userCoords: Coords | null;
+  tracking: boolean;
+  recenterTick: number;
+  onToggleFollow: () => void;
+  onRecenter: () => void;
+  locating: boolean;
+  onClose: () => void;
+}) {
+  const t = useTranslations("transit");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    // Let the map size itself before scrolling to it.
+    const id = requestAnimationFrame(() =>
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" }),
+    );
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+      className="overflow-hidden"
+    >
+      <div
+        className="relative h-[340px] overflow-hidden rounded-2xl sm:h-[400px]"
+        style={{ border: "1px solid #0891B2", boxShadow: "0 8px 24px rgba(8,145,178,0.15)" }}
+      >
+        <JourneyMap
+          plan={plan}
+          userCoords={userCoords}
+          tracking={tracking}
+          recenterTick={recenterTick}
+        />
+
+        <div className="absolute right-3 top-3 z-20 flex flex-col items-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t("hideMap")}
+            className="flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-medium shadow-lg backdrop-blur transition-colors"
+            style={{ background: "var(--site-header-bg)", border: "1px solid var(--site-border-10)", color: "var(--site-text-65)" }}
+          >
+            <X className="size-3.5" />
+            {t("hideMap")}
+          </button>
+          <button
+            type="button"
+            onClick={onToggleFollow}
+            className="flex items-center gap-2 rounded-full px-3 py-2 text-[13px] font-medium shadow-lg backdrop-blur transition-colors"
+            style={{
+              background: tracking ? "#0891B2" : "var(--site-header-bg)",
+              border: "1px solid var(--site-border-10)",
+              color: tracking ? "#fff" : "var(--site-text-65)",
+            }}
+          >
+            <Crosshair className="size-3.5" />
+            {tracking ? t("stopFollowing") : t("followMe")}
+          </button>
+          {/* Always available — with no fix yet it requests one, then zooms. */}
+          <button
+            type="button"
+            onClick={onRecenter}
+            disabled={locating}
+            aria-label={t("recenter")}
+            className="flex items-center gap-2 rounded-full px-3 py-2 text-[13px] font-medium shadow-lg backdrop-blur transition-colors disabled:opacity-70"
+            style={{ background: "var(--site-header-bg)", border: "1px solid var(--site-border-10)", color: "var(--site-text-65)" }}
+          >
+            {locating ? <Loader2 className="size-3.5 animate-spin" /> : <LocateFixed className="size-3.5" />}
+            {locating ? t("locating") : t("recenter")}
+          </button>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 

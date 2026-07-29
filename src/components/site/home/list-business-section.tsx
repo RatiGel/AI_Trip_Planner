@@ -50,8 +50,8 @@ export function ListBusinessSection() {
               </div>
 
               <h2
-                className="font-display leading-tight text-white"
-                style={{ fontSize: "clamp(30px, 3.4vw, 48px)", letterSpacing: "-1px" }}
+                className="font-display hyphens-auto break-words leading-tight text-white"
+                style={{ fontSize: "clamp(26px, 3.4vw, 48px)", letterSpacing: "-0.02em" }}
               >
                 {t("title")}
               </h2>

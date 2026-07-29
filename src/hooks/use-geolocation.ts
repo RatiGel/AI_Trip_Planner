@@ -43,23 +43,36 @@ export function useGeolocation() {
     }
   }, []);
 
-  const locate = useCallback(() => {
+  /**
+   * One-shot position fix. Resolves with the coords (null on failure) so
+   * callers can act on the result directly instead of waiting for `coords`
+   * state to propagate; state and errors are still updated as before.
+   */
+  const locate = useCallback((): Promise<Coords | null> => {
     if (!("geolocation" in navigator)) {
       setError("geoUnavailable");
-      return;
+      return Promise.resolve(null);
     }
     setLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        onPosition(pos);
-        setLoading(false);
-      },
-      (err) => {
-        setError(errorKey(err.code));
-        setLoading(false);
-      },
-      OPTIONS,
-    );
+    return new Promise((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          onPosition(pos);
+          setLoading(false);
+          resolve({
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: pos.coords.accuracy,
+          });
+        },
+        (err) => {
+          setError(errorKey(err.code));
+          setLoading(false);
+          resolve(null);
+        },
+        OPTIONS,
+      );
+    });
   }, [onPosition]);
 
   const watch = useCallback(() => {
