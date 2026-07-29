@@ -121,7 +121,21 @@
     "day": "Day {n}",
     "stops": "{count, plural, =0 {No stops} =1 {# stop} other {# stops}}",
     "emptyDay": "No stops planned for this day yet.",
-    "saved": "Saved {date}"
+    "saved": "Saved {date}",
+    "openInGoogleMaps": "Google Maps",
+    "openInCityTransport": "City transport",
+    "routeNeedsTwoStops": "Add a second stop to get a route for this day.",
+    "viewOnMap": "View route on map",
+    "backToTrips": "Back to my trips",
+    "cityTransportRoute": "City transport route",
+    "transitPageHint": "Bus and metro lines for each leg of your trip, from Tbilisi Transport Company data.",
+    "transitNoStops": "This trip has no places with locations yet, so no transit route can be built.",
+    "transitAllWalkable": "Every leg of this trip is walkable — no bus or metro needed.",
+    "transitTotal": "{min} min by transit",
+    "rides": "{n, plural, one {# ride} other {# rides}}",
+    "walkMin": "Walk {min} min",
+    "rideMin": "{min} min ride",
+    "walkNoTransit": "Walk ~{min} min — no bus or metro on this leg"
   },
   "tickets": {
     "title": "Tickets",
@@ -409,7 +423,19 @@
     "dayN": "Day {n}",
     "totalOverview": "{days} days · {distance} · ~{time} total",
     "travelLeg": "travel",
-    "mayBeClosed": "May be closed"
+    "mayBeClosed": "May be closed",
+    "routeView": "Route view",
+    "viewDirect": "Direct",
+    "viewTransit": "TTC transit",
+    "transitLoading": "Building bus & metro route…",
+    "transitUnavailable": "TTC transit routing is unavailable right now.",
+    "retry": "Retry",
+    "transitTotal": "{min} min by transit",
+    "boardings": "{n, plural, one {# ride} other {# rides}}",
+    "walkTotal": "{min} min walking",
+    "walkFallback": "Walk ~{min} min — no transit route",
+    "transitGaps": "{n, plural, one {# leg has no transit route and is shown as a walk} other {# legs have no transit route and are shown as walks}}",
+    "walkOnly": "Walk {min} min — no bus or metro on this leg"
   },
   "payment": {
     "successTitle": "Your pass is ready",
