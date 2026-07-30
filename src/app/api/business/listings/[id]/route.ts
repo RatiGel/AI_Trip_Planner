@@ -7,6 +7,16 @@ import {
   isDenied,
 } from "@/lib/permissions";
 
+/**
+ * Fields where an explicit `null` in the body means "clear this field".
+ *
+ * Deliberately an allowlist rather than a blanket rule: a future field that
+ * sends `null` meaning "leave unchanged" — an easy mistake, since `undefined`
+ * already carries that meaning here — would otherwise silently delete stored
+ * data. Anything outside this set is written literally.
+ */
+const NULL_CLEARS = new Set(["reservationPriceGEL"]);
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -21,10 +31,9 @@ export async function PATCH(
   const unset: Record<string, ""> = {};
   for (const key of writableListingFields(asSuperadmin)) {
     if (!(key in body)) continue;
-    // An explicit `null` means "clear this field" (e.g. reservationPriceGEL)
-    // rather than "leave it unset" — $set-ing null would store the literal
-    // value null instead of removing the key, so route it through $unset.
-    if (body[key] === null) {
+    // `$set`-ing null would store the literal value null rather than removing
+    // the key, so a clearable field routes through $unset instead.
+    if (body[key] === null && NULL_CLEARS.has(key)) {
       unset[key] = "";
     } else {
       update[key] = body[key];
