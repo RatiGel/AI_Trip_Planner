@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 
 const LABELS: Record<string, string> = {
   admin: "Admin",
+  superadmin: "Super Admin",
   places: "Places",
   cities: "Cities",
   users: "Users",
@@ -23,7 +24,7 @@ const LABELS: Record<string, string> = {
 export function AdminBreadcrumbs() {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
-  const adminIdx = segments.indexOf("admin");
+  const adminIdx = segments.indexOf("superadmin");
   if (adminIdx === -1) return null;
 
   const crumbs = segments.slice(adminIdx);

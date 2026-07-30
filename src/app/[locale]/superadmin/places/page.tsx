@@ -22,7 +22,7 @@ export default function AdminPlaces() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-semibold tracking-tight">{t("places")}</h1>
         <Button asChild>
-          <Link href="/admin/places/new">
+          <Link href="/superadmin/places/new">
             <Plus className="size-4" /> {t("newPlace")}
           </Link>
         </Button>

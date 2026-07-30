@@ -36,7 +36,6 @@ export function SiteHeader() {
   const role = (session?.user as { role?: string })?.role ?? "tourist";
   const ROLE_LABEL: Record<string, string> = {
     superadmin: "Super Admin",
-    admin: "Admin",
     business: "Business Owner",
   };
   const roleStamp =
@@ -329,7 +328,7 @@ export function SiteHeader() {
                       <User className="size-4" /> Profile
                     </DropdownMenuItem>
 
-                    {(["business", "admin", "superadmin"] as string[]).includes(
+                    {(["business", "superadmin"] as string[]).includes(
                       (session.user as { role?: string }).role ?? ""
                     ) && (
                       <>
@@ -343,13 +342,6 @@ export function SiteHeader() {
                     {(session.user as { role?: string }).role === "business" && (
                       <DropdownMenuItem render={<Link href="/business" />} className={menuItemClass}>
                         <LayoutDashboard className="size-4" /> {tNav("myBusiness")}
-                      </DropdownMenuItem>
-                    )}
-                    {(["admin", "superadmin"] as string[]).includes(
-                      (session.user as { role?: string }).role ?? ""
-                    ) && (
-                      <DropdownMenuItem render={<Link href="/admin" />} className={menuItemClass}>
-                        <Shield className="size-4" /> {tNav("admin")}
                       </DropdownMenuItem>
                     )}
                     {(session.user as { role?: string }).role === "superadmin" && (
