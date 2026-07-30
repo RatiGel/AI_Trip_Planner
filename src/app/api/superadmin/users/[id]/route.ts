@@ -3,6 +3,12 @@ import { UserModel } from "@/lib/models/user";
 import { AuditLogModel } from "@/lib/models/audit-log";
 import { requireSuperadmin, isDenied } from "@/lib/permissions";
 
+/**
+ * Roles a superadmin may assign. Excludes the deprecated "admin", which the
+ * schema still accepts for document compatibility but which grants no access.
+ */
+const ASSIGNABLE_ROLES = new Set(["tourist", "business", "superadmin"]);
+
 async function log(
   adminId: string,
   adminEmail: string,
@@ -35,8 +41,17 @@ export async function PATCH(
   const update: Record<string, unknown> = {};
   if (body.name !== undefined) update.name = body.name;
   if (body.email !== undefined) update.email = body.email;
-  if (body.role !== undefined) update.role = body.role;
   if (body.suspended !== undefined) update.suspended = body.suspended;
+
+  // Assignable roles exclude the deprecated "admin" — it grants no access, so
+  // assigning it would lock the account out of every panel. findByIdAndUpdate
+  // does not run schema validators, so the enum is not a backstop here.
+  if (body.role !== undefined) {
+    if (!ASSIGNABLE_ROLES.has(body.role)) {
+      return Response.json({ error: "Invalid role" }, { status: 400 });
+    }
+    update.role = body.role;
+  }
 
   const updated = await UserModel.findByIdAndUpdate(id, update, { new: true }).lean();
   if (!updated) return Response.json({ error: "Not found" }, { status: 404 });

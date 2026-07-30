@@ -111,7 +111,10 @@ export function SuperAdminUsersTable({ users: initial }: { users: SuperAdminUser
                   <Select value={editState.role} onValueChange={(v) => setEditState((s) => ({ ...s, role: v ?? s.role }))}>
                     <SelectTrigger className="h-8 w-28"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {["tourist", "business", "admin", "superadmin"].map((r) => (
+                      {/* "admin" is deprecated and grants no access anywhere —
+                          offering it here would silently lock the account out
+                          of both panels. */}
+                      {["tourist", "business", "superadmin"].map((r) => (
                         <SelectItem key={r} value={r}>{r}</SelectItem>
                       ))}
                     </SelectContent>
