@@ -3,19 +3,21 @@
 import { useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { useTranslations } from "next-intl";
-import { signIn } from "next-auth/react";
+import { useLocale, useTranslations } from "next-intl";
+import { getSession, signIn } from "next-auth/react";
 import { Bookmark, Sparkles, Ticket } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
 import { toast } from "sonner";
 import { Link } from "@/i18n/navigation";
 import { useReducedMotionSafe } from "@/hooks/use-reduced-motion-safe";
+import { postLoginPath } from "@/lib/permissions-core";
 
 const PANEL_IMAGE =
   "https://images.unsplash.com/photo-1565008576549-57569a49371d?w=1400&q=70";
 
 export function AuthCard({ mode }: { mode: "signin" | "signup" }) {
   const t = useTranslations("auth");
+  const locale = useLocale();
   const router = useRouter();
   const reduceMotion = useReducedMotionSafe();
   const [email, setEmail] = useState("");
@@ -56,7 +58,14 @@ export function AuthCard({ mode }: { mode: "signin" | "signup" }) {
       return;
     }
 
-    router.push("/trips");
+    const params = new URLSearchParams(window.location.search);
+    const callbackUrl = params.get("callbackUrl");
+    if (callbackUrl) {
+      router.push(callbackUrl);
+    } else {
+      const session = await getSession();
+      router.push(postLoginPath((session?.user as { role?: string } | undefined)?.role));
+    }
     router.refresh();
   }
 
@@ -187,7 +196,7 @@ export function AuthCard({ mode }: { mode: "signin" | "signup" }) {
             {...rise(1)}
             type="button"
             disabled={loading}
-            onClick={() => signIn("google", { callbackUrl: "/trips" })}
+            onClick={() => signIn("google", { callbackUrl: `/${locale}/after-login` })}
             className="mt-8 flex w-full items-center justify-center gap-2.5 rounded-full px-5 py-3 text-[15px] font-medium transition-all duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60"
             style={{
               color: "var(--site-text)",
