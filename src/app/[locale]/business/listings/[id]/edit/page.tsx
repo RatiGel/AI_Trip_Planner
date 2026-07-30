@@ -61,6 +61,9 @@ export default async function EditListingPage({
           socials: p.socials ?? {},
           openingHours: p.openingHours ?? [],
           reservable: p.reservable ?? false,
+          images: p.images ?? [],
+          services: p.services ?? [],
+          reservationPriceGEL: p.reservationPriceGEL ?? undefined,
         }}
       />
     </div>
