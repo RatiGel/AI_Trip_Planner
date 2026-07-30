@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import {
   BarChart3,
   Bell,
@@ -30,6 +30,38 @@ import { cn } from "@/lib/utils";
 
 type Item = { href: string; label: string; Icon: typeof Users; exact?: boolean };
 type Group = { heading?: string; items: Item[] };
+
+const SIDEBAR_COLLAPSED_KEY = "admin-sidebar-collapsed";
+
+// External store for the sidebar's collapsed state, backed by localStorage.
+// useSyncExternalStore lets the server snapshot (always `false`) and the
+// first client snapshot agree by construction, avoiding a hydration
+// mismatch, while still allowing same-tab writes (via the "collapsed"
+// local pub/sub) and cross-tab writes (via the native "storage" event)
+// to trigger a re-render without ever calling setState in an effect body.
+const sidebarCollapsedListeners = new Set<() => void>();
+
+function subscribeToSidebarCollapsed(onStoreChange: () => void) {
+  sidebarCollapsedListeners.add(onStoreChange);
+  window.addEventListener("storage", onStoreChange);
+  return () => {
+    sidebarCollapsedListeners.delete(onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+  };
+}
+
+function getSidebarCollapsedSnapshot() {
+  return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true";
+}
+
+function getSidebarCollapsedServerSnapshot() {
+  return false;
+}
+
+function setSidebarCollapsed(value: boolean) {
+  localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(value));
+  for (const listener of sidebarCollapsedListeners) listener();
+}
 
 const GROUPS: Group[] = [
   { items: [{ href: "/superadmin", label: "dashboard", Icon: LayoutDashboard, exact: true }] },
@@ -75,19 +107,18 @@ const GROUPS: Group[] = [
 ];
 
 export function SuperadminSidebar() {
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem("admin-sidebar-collapsed") === "true";
-  });
+  const collapsed = useSyncExternalStore(
+    subscribeToSidebarCollapsed,
+    getSidebarCollapsedSnapshot,
+    getSidebarCollapsedServerSnapshot
+  );
   const pathname = usePathname();
   const t = useTranslations("admin");
   const { data: session } = useSession();
 
-  const toggle = () =>
-    setCollapsed((c) => {
-      localStorage.setItem("admin-sidebar-collapsed", String(!c));
-      return !c;
-    });
+  const toggle = useCallback(() => {
+    setSidebarCollapsed(!getSidebarCollapsedSnapshot());
+  }, []);
 
   return (
     <aside
