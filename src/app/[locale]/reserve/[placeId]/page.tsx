@@ -1,4 +1,3 @@
-import Image from "next/image";
 import mongoose from "mongoose";
 import { notFound } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -44,7 +43,8 @@ function ReserveContent({ place }: { place: Place }) {
       <aside className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="relative aspect-[4/3] w-full bg-muted">
           {place.images[0] && (
-            <Image src={place.images[0]} alt={name} fill className="object-cover" />
+            // eslint-disable-next-line @next/next/no-img-element -- arbitrary owner-supplied host, not in next.config remotePatterns
+            <img src={place.images[0]} alt={name} className="absolute inset-0 size-full object-cover" />
           )}
         </div>
         <div className="p-4 text-sm">

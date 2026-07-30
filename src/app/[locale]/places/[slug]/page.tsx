@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { Clock, MapPin, Phone, Star, Globe } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
@@ -186,12 +185,14 @@ function PlaceContent({ place, similar }: { place: Place; similar: Place[] }) {
         <div className="grid gap-2 sm:grid-cols-3">
           <div className="relative col-span-2 row-span-2 aspect-[4/3] overflow-hidden rounded-2xl bg-muted">
             {place.images[0] && (
-              <Image src={place.images[0]} alt={name} fill priority className="object-cover" />
+              // eslint-disable-next-line @next/next/no-img-element -- arbitrary owner-supplied host, not in next.config remotePatterns
+              <img src={place.images[0]} alt={name} className="absolute inset-0 size-full object-cover" />
             )}
           </div>
           {place.images.slice(1, 3).map((src, i) => (
             <div key={i} className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
-              <Image src={src} alt={`${name} — photo ${i + 2}`} fill className="object-cover" />
+              {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary owner-supplied host, not in next.config remotePatterns */}
+              <img src={src} alt={`${name} — photo ${i + 2}`} className="absolute inset-0 size-full object-cover" />
             </div>
           ))}
         </div>
