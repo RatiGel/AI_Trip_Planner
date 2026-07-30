@@ -14,6 +14,8 @@ import { SuperadminEditBar } from "@/components/superadmin/edit-bar";
 import { Providers } from "@/components/providers";
 import { routing } from "@/i18n/routing";
 import { getAdminConfig, buildThemeCss } from "@/lib/get-admin-config";
+import { getSiteConfig } from "@/lib/get-site-config";
+import { resolveHeader, resolveFooter } from "@/lib/site-config-resolve";
 import { SITE_URL } from "@/lib/seo";
 import "../globals.css";
 
@@ -97,8 +99,13 @@ export default async function LocaleLayout({
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
 
-  const adminConfig = await getAdminConfig();
+  const [adminConfig, siteConfig] = await Promise.all([
+    getAdminConfig(),
+    getSiteConfig(),
+  ]);
   const themeCss = adminConfig ? buildThemeCss(adminConfig) : null;
+  const header = resolveHeader(siteConfig?.header);
+  const footer = resolveFooter(siteConfig?.footer);
 
   return (
     <html
@@ -121,9 +128,9 @@ export default async function LocaleLayout({
         <NextIntlClientProvider>
           <Providers>
             <EditTargetProvider>
-              <SiteHeader />
+              <SiteHeader config={header} />
               <main className="flex-1">{children}</main>
-              <SiteFooter />
+              <SiteFooter config={footer} />
               <AiChatFab />
               <SuperadminEditBar />
               <Toaster richColors position="top-center" />

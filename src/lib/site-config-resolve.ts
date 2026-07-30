@@ -55,10 +55,26 @@ function listOrDefault<T>(cleaned: T[], fallback: T[]): T[] {
   return cleaned.length > 0 ? cleaned : fallback;
 }
 
+/**
+ * Values the SiteConfig schema used to write as defaults on document creation.
+ * Nobody chose them, and they do not match what the site actually renders — so
+ * treating them as configured content silently downgraded the live branding
+ * (the footer read "© 2025 TbilisiTrip" instead of the real word mark and the
+ * current year). The schema no longer writes them, but documents created before
+ * that fix still carry them, so they are ignored here too.
+ */
+const STALE_SCHEMA_DEFAULTS = new Set(["TbilisiTrip", "© 2025 TbilisiTrip"]);
+
+/** Like `str`, but also treats a retired schema default as "not configured". */
+function configuredStr(raw: unknown, fallback: string): string {
+  const value = str(raw, fallback);
+  return STALE_SCHEMA_DEFAULTS.has(value) ? fallback : value;
+}
+
 export function resolveHeader(raw: unknown): ResolvedHeader {
   const h = obj(raw);
   return {
-    logoText: str(h.logoText, DEFAULT_HEADER.logoText),
+    logoText: configuredStr(h.logoText, DEFAULT_HEADER.logoText),
     logoImageUrl: str(h.logoImageUrl, DEFAULT_HEADER.logoImageUrl),
     navLinks: listOrDefault(navLinks(h.navLinks), DEFAULT_HEADER.navLinks),
   };
@@ -86,7 +102,7 @@ export function resolveFooter(raw: unknown): ResolvedFooter {
     : [];
 
   return {
-    copyrightText: str(f.copyrightText, DEFAULT_FOOTER.copyrightText),
+    copyrightText: configuredStr(f.copyrightText, DEFAULT_FOOTER.copyrightText),
     columns: listOrDefault(columns, DEFAULT_FOOTER.columns),
     socialLinks: listOrDefault(socialLinks, DEFAULT_FOOTER.socialLinks),
   };

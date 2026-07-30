@@ -61,12 +61,19 @@ const SiteConfigSchema = new Schema<ISiteConfig>(
   {
     key: { type: String, required: true, unique: true },
     header: {
-      logoText: { type: String, default: "TbilisiTrip" },
+      // Empty means "not configured" — the resolver falls back to what the
+      // site renders itself (the `explore Tbilisi.` word mark). A non-empty
+      // default here silently overwrites the live branding the moment this
+      // document is created, which is how "TbilisiTrip" once leaked onto the
+      // homepage.
+      logoText: { type: String, default: "" },
       logoImageUrl: { type: String, default: "" },
       navLinks: { type: [NavLinkSchema], default: [] },
     },
     footer: {
-      copyrightText: { type: String, default: "© 2025 TbilisiTrip" },
+      // Empty means "not configured" — the footer computes the current year at
+      // render time. A hardcoded string would freeze the copyright year.
+      copyrightText: { type: String, default: "" },
       columns: { type: [FooterColumnSchema], default: [] },
       socialLinks: { type: [SocialLinkSchema], default: [] },
     },

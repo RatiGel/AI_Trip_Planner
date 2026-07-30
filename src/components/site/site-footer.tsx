@@ -1,38 +1,10 @@
 import { Link } from "@/i18n/navigation";
+import type { ResolvedFooter } from "@/lib/site-config-resolve";
 
-const LINKS = {
-  Discover: [
-    { label: "Sightseeing", href: "/discover?category=sight" },
-    { label: "Museums", href: "/discover?category=museum" },
-    { label: "Neighborhoods", href: "/discover" },
-    { label: "Parks & Nature", href: "/discover?category=nature" },
-  ],
-  Experiences: [
-    { label: "Tours & Guides", href: "/experiences" },
-    { label: "Day Trips", href: "/experiences?type=daytrip" },
-    { label: "Wellness", href: "/experiences?type=wellness" },
-    { label: "Outdoor", href: "/experiences?type=outdoor" },
-  ],
-  "Food & Drinks": [
-    { label: "Restaurants", href: "/food?type=restaurant" },
-    { label: "Cafes", href: "/food?type=cafe" },
-    { label: "Wine Bars", href: "/food?type=wine" },
-    { label: "Nightlife", href: "/food?type=nightlife" },
-  ],
-  "Travel Info": [
-    { label: "Getting Here", href: "/travel-info" },
-    { label: "Getting Around", href: "/travel-info#transport" },
-    { label: "City Card", href: "/tickets" },
-    { label: "Accommodation", href: "/hotels" },
-  ],
-  "For Business": [
-    { label: "List your business", href: "/list-your-business" },
-    { label: "Business dashboard", href: "/business" },
-  ],
-};
-
-export function SiteFooter() {
+export function SiteFooter({ config }: { config?: ResolvedFooter }) {
   const year = new Date().getFullYear();
+  const columns = config?.columns ?? [];
+  const socials = config?.socialLinks ?? [];
 
   return (
     <footer style={{ background: "#050505", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
@@ -48,23 +20,34 @@ export function SiteFooter() {
               modern culture, legendary hospitality.
             </p>
             <div className="flex gap-3">
-              {["Instagram", "TikTok", "YouTube"].map((s) => (
-                <span
-                  key={s}
-                  className="flex size-9 cursor-pointer items-center justify-center rounded-full text-[11px] font-bold text-white/40 transition-colors hover:text-white"
-                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}
-                >
-                  {s[0]}
-                </span>
-              ))}
+              {socials.map(({ platform, url }) =>
+                url ? (
+                  <a
+                    key={platform}
+                    href={url}
+                    className="flex size-9 cursor-pointer items-center justify-center rounded-full text-[11px] font-bold text-white/40 transition-colors hover:text-white"
+                    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}
+                  >
+                    {platform[0]}
+                  </a>
+                ) : (
+                  <span
+                    key={platform}
+                    className="flex size-9 items-center justify-center rounded-full text-[11px] font-bold text-white/40 transition-colors hover:text-white"
+                    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}
+                  >
+                    {platform[0]}
+                  </span>
+                )
+              )}
             </div>
           </div>
 
           {/* Link columns */}
-          {Object.entries(LINKS).map(([col, links]) => (
-            <div key={col}>
+          {columns.map(({ heading, links }) => (
+            <div key={heading}>
               <h4 className="mb-5 text-[11px] font-bold uppercase tracking-[2px]" style={{ color: "rgba(255,255,255,0.3)" }}>
-                {col}
+                {heading}
               </h4>
               <ul className="space-y-3">
                 {links.map((l) => (
@@ -88,7 +71,7 @@ export function SiteFooter() {
           className="mt-14 flex flex-col items-start justify-between gap-4 border-t pt-6 text-[13px] sm:flex-row sm:items-center"
           style={{ borderColor: "rgba(255,255,255,0.06)", color: "#555" }}
         >
-          <p>© {year} Tbilisi Tourism Portal. Built with ♥ in Georgia.</p>
+          <p>{config?.copyrightText || `© ${year} Tbilisi Tourism Portal. Built with ♥ in Georgia.`}</p>
           <div className="flex gap-5">
             <Link href="/en" className="transition-colors hover:text-white">EN</Link>
             <Link href="/ka" className="transition-colors hover:text-white">KA</Link>

@@ -94,3 +94,26 @@ test("footer columns: a malformed column is dropped while a valid sibling column
   });
   assert.deepEqual(f.columns, [{ heading: "Valid", links: [{ label: "L", href: "/h" }] }]);
 });
+
+test("retired schema defaults are treated as unconfigured, not as content", () => {
+  // The SiteConfig schema used to stamp these onto every new document. Nobody
+  // chose them and they do not match what the site renders, so honoring them
+  // silently downgraded the live branding.
+  const h = resolveHeader({ logoText: "TbilisiTrip", logoImageUrl: "", navLinks: [] });
+  assert.equal(h.logoText, DEFAULT_HEADER.logoText, "stale logoText must fall back");
+
+  const f = resolveFooter({ copyrightText: "© 2025 TbilisiTrip", columns: [], socialLinks: [] });
+  assert.equal(
+    f.copyrightText,
+    DEFAULT_FOOTER.copyrightText,
+    "stale copyrightText must fall back so the footer computes the live year"
+  );
+});
+
+test("a genuinely configured logo and copyright still win", () => {
+  const h = resolveHeader({ logoText: "MyCity", logoImageUrl: "", navLinks: [] });
+  assert.equal(h.logoText, "MyCity");
+
+  const f = resolveFooter({ copyrightText: "© 2031 MyCity", columns: [], socialLinks: [] });
+  assert.equal(f.copyrightText, "© 2031 MyCity");
+});
