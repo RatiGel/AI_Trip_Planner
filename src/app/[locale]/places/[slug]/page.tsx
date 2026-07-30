@@ -16,6 +16,7 @@ import { serializePlace, serializeDoc } from "@/lib/serialize";
 import { buildMetadata, SITE_URL } from "@/lib/seo";
 import { pickLocalized, hasTranslation } from "@/lib/i18n-content";
 import { JsonLd } from "@/components/site/json-ld";
+import { DeclareEditTarget } from "@/components/superadmin/edit-target";
 import type { Place } from "@/types";
 
 /** "old-tbilisi" -> "Old Tbilisi". Slugs leaked into titles and breadcrumbs. */
@@ -180,6 +181,7 @@ function PlaceContent({ place, similar }: { place: Place; similar: Place[] }) {
     <article className="container mx-auto grid gap-8 px-4 py-10 lg:grid-cols-3">
       <JsonLd data={placeSchema} />
       <JsonLd data={breadcrumbSchema} />
+      <DeclareEditTarget href={`/business/listings/${place.id}/edit`} />
       <div className="lg:col-span-2 space-y-6">
         <div className="grid gap-2 sm:grid-cols-3">
           <div className="relative col-span-2 row-span-2 aspect-[4/3] overflow-hidden rounded-2xl bg-muted">

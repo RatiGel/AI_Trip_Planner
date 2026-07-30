@@ -9,6 +9,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { AiChatFab } from "@/components/site/ai-chat-fab";
+import { EditTargetProvider } from "@/components/superadmin/edit-target";
+import { SuperadminEditBar } from "@/components/superadmin/edit-bar";
 import { Providers } from "@/components/providers";
 import { routing } from "@/i18n/routing";
 import { getAdminConfig, buildThemeCss } from "@/lib/get-admin-config";
@@ -118,11 +120,14 @@ export default async function LocaleLayout({
         )}
         <NextIntlClientProvider>
           <Providers>
-            <SiteHeader />
-            <main className="flex-1">{children}</main>
-            <SiteFooter />
-            <AiChatFab />
-            <Toaster richColors position="top-center" />
+            <EditTargetProvider>
+              <SiteHeader />
+              <main className="flex-1">{children}</main>
+              <SiteFooter />
+              <AiChatFab />
+              <SuperadminEditBar />
+              <Toaster richColors position="top-center" />
+            </EditTargetProvider>
           </Providers>
         </NextIntlClientProvider>
         <Analytics />
