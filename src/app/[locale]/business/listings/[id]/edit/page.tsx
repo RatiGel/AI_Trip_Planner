@@ -1,7 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
-import { auth } from "@/lib/auth";
-import { connectDB } from "@/lib/db";
-import { PlaceModel } from "@/lib/models/place";
+import { requireListingAccess, isDenied } from "@/lib/permissions";
+import { UserModel } from "@/lib/models/user";
 import { ListingForm } from "@/components/business/listing-form";
 import { redirect } from "@/i18n/navigation";
 import type { CategorySlug } from "@/types";
@@ -14,42 +13,54 @@ export default async function EditListingPage({
   const { locale, id } = await params;
   setRequestLocale(locale);
 
-  const session = await auth();
-  const userId = (session!.user as { id?: string }).id!;
+  const access = await requireListingAccess(id);
+  if (isDenied(access)) {
+    return redirect({ href: "/business/listings", locale });
+  }
+  const { place, actor, asSuperadmin } = access;
+  const p = place as any;
+  const editingSomeoneElse = asSuperadmin && String(place.ownerId ?? "") !== actor.id;
 
-  await connectDB();
-  const place = await PlaceModel.findById(id).lean() as any;
-
-  if (!place || place.ownerId !== userId) {
-    redirect({ href: "/business/listings", locale });
+  let ownerLabel = "";
+  if (editingSomeoneElse && place.ownerId) {
+    const owner = await UserModel.findById(String(place.ownerId))
+      .select("name email")
+      .lean() as { name?: string; email?: string } | null;
+    ownerLabel = owner ? `${owner.name ?? "Unknown"} (${owner.email ?? "no email"})` : "unassigned";
   }
 
   return (
     <div className="space-y-6">
+      {editingSomeoneElse && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm dark:border-amber-800 dark:bg-amber-950/30">
+          <span className="font-medium">Editing as superadmin</span>
+          {ownerLabel && <span className="text-muted-foreground"> — owner: {ownerLabel}</span>}
+        </div>
+      )}
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Edit listing</h1>
-        <p className="text-sm text-muted-foreground">{place.name}</p>
+        <p className="text-sm text-muted-foreground">{p.name}</p>
       </div>
       <ListingForm
         listingId={id}
-        status={place.status ?? "draft"}
+        status={p.status ?? "draft"}
         defaultValues={{
-          name: place.name ?? "",
-          nameKa: place.nameKa ?? "",
-          citySlug: place.citySlug ?? "",
-          address: place.geo?.address ?? "",
-          lng: place.geo?.lng ?? 0,
-          lat: place.geo?.lat ?? 0,
-          description: place.description ?? "",
-          descriptionKa: place.descriptionKa ?? "",
-          categories: (place.categories ?? []) as CategorySlug[],
-          priceLevel: place.priceLevel ?? 2,
-          phone: place.phone ?? "",
-          email: place.email ?? "",
-          website: place.website ?? "",
-          socials: place.socials ?? {},
-          openingHours: place.openingHours ?? [],
-          reservable: place.reservable ?? false,
+          name: p.name ?? "",
+          nameKa: p.nameKa ?? "",
+          citySlug: p.citySlug ?? "",
+          address: p.geo?.address ?? "",
+          lng: p.geo?.lng ?? 0,
+          lat: p.geo?.lat ?? 0,
+          description: p.description ?? "",
+          descriptionKa: p.descriptionKa ?? "",
+          categories: (p.categories ?? []) as CategorySlug[],
+          priceLevel: p.priceLevel ?? 2,
+          phone: p.phone ?? "",
+          email: p.email ?? "",
+          website: p.website ?? "",
+          socials: p.socials ?? {},
+          openingHours: p.openingHours ?? [],
+          reservable: p.reservable ?? false,
         }}
       />
     </div>

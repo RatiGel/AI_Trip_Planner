@@ -1,5 +1,6 @@
 import { Plus } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
+import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,12 +12,52 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { mockPlaces } from "@/lib/mock/places";
+import { connectDB } from "@/lib/db";
+import { PlaceModel } from "@/lib/models/place";
 
-export default function AdminPlaces() {
-  const t = useTranslations("admin");
-  const tCat = useTranslations("categories");
-  const locale = useLocale();
+const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  active: "default",
+  approved: "secondary",
+  pending: "secondary",
+  draft: "outline",
+  rejected: "destructive",
+};
+
+export default async function SuperadminPlaces({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
+  const t = await getTranslations("admin");
+  const tCat = await getTranslations("categories");
+
+  await connectDB();
+  const docs = (await PlaceModel.find()
+    .select("name nameKa citySlug categories rating status")
+    .sort({ createdAt: -1 })
+    .lean()) as Array<{
+    _id: unknown;
+    name?: string;
+    nameKa?: string;
+    citySlug?: string;
+    categories?: string[];
+    rating?: number;
+    status?: string;
+  }>;
+
+  const places = docs.map((p) => ({
+    id: String(p._id),
+    name: p.name ?? "",
+    nameKa: p.nameKa ?? "",
+    citySlug: p.citySlug ?? "",
+    categories: p.categories ?? [],
+    rating: typeof p.rating === "number" ? p.rating : null,
+    status: p.status ?? "active",
+  }));
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -34,24 +75,41 @@ export default function AdminPlaces() {
               <TableHead>Name</TableHead>
               <TableHead>City</TableHead>
               <TableHead>Categories</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="text-right">Rating</TableHead>
+              <TableHead className="text-right">{t("edit")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockPlaces.map((p) => (
+            {places.map((p) => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">
-                  {locale === "ka" ? p.nameKa : p.name}
+                  {locale === "ka" && p.nameKa ? p.nameKa : p.name}
                 </TableCell>
                 <TableCell className="text-muted-foreground">{p.citySlug}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {p.categories.map((c) => (
-                      <Badge key={c} variant="outline">{tCat(c)}</Badge>
+                      <Badge key={c} variant="outline">
+                        {tCat.has(c) ? tCat(c) : c}
+                      </Badge>
                     ))}
                   </div>
                 </TableCell>
-                <TableCell className="text-right tabular-nums">{p.rating.toFixed(1)}</TableCell>
+                <TableCell>
+                  <Badge variant={STATUS_VARIANT[p.status] ?? "secondary"}>{p.status}</Badge>
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {p.rating !== null ? p.rating.toFixed(1) : "—"}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Link
+                    href={`/business/listings/${p.id}/edit`}
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
+                    {t("edit")}
+                  </Link>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
