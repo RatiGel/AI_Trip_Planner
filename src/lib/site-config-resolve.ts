@@ -62,6 +62,16 @@ function listOrDefault<T>(cleaned: T[], fallback: T[]): T[] {
  * (the footer read "© 2025 TbilisiTrip" instead of the real word mark and the
  * current year). The schema no longer writes them, but documents created before
  * that fix still carry them, so they are ignored here too.
+ *
+ * TEMPORARY SCAFFOLDING — not permanent product behavior. It exists only to
+ * paper over documents written before the schema fix, pending the one-time
+ * migration in `scripts/fix-stale-site-config-defaults.ts`. Delete this set
+ * and `configuredStr` (reverting to plain `str`) once no live document
+ * contains these values.
+ *
+ * Known false positive while this shim is active: an admin who deliberately
+ * sets logoText or copyrightText to exactly one of these strings has that
+ * input silently discarded and sees the default instead. Narrow, but real.
  */
 const STALE_SCHEMA_DEFAULTS = new Set(["TbilisiTrip", "© 2025 TbilisiTrip"]);
 

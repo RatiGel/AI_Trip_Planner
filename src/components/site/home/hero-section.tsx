@@ -18,7 +18,8 @@ const ALLOWED_IMAGE_HOSTS = [
 
 function isAllowedImageHost(url: string): boolean {
   try {
-    return ALLOWED_IMAGE_HOSTS.includes(new URL(url).hostname);
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" && ALLOWED_IMAGE_HOSTS.includes(parsed.hostname);
   } catch {
     return false;
   }

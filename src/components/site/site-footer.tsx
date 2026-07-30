@@ -1,10 +1,11 @@
 import { Link } from "@/i18n/navigation";
+import { DEFAULT_FOOTER } from "@/lib/site-config-defaults";
 import type { ResolvedFooter } from "@/lib/site-config-resolve";
 
 export function SiteFooter({ config }: { config?: ResolvedFooter }) {
   const year = new Date().getFullYear();
-  const columns = config?.columns ?? [];
-  const socials = config?.socialLinks ?? [];
+  const columns = config?.columns ?? DEFAULT_FOOTER.columns;
+  const socials = config?.socialLinks ?? DEFAULT_FOOTER.socialLinks;
 
   return (
     <footer style={{ background: "#050505", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
