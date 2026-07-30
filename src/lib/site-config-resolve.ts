@@ -93,7 +93,12 @@ export function resolveFooter(raw: unknown): ResolvedFooter {
 }
 
 export function resolvePage(raw: unknown, key: string): ResolvedPage {
-  const base = DEFAULT_PAGES[key] ?? NEUTRAL_PAGE;
+  // Look up only DEFAULT_PAGES' own keys — a plain object literal inherits
+  // from Object.prototype, so an admin-typed CMS key like "__proto__",
+  // "constructor", or "toString" must never resolve to an inherited member.
+  const base = Object.prototype.hasOwnProperty.call(DEFAULT_PAGES, key)
+    ? DEFAULT_PAGES[key]
+    : NEUTRAL_PAGE;
   const p = obj(raw);
   return {
     heroTitle: str(p.heroTitle, base.heroTitle),

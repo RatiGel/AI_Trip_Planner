@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { resolveHeader, resolveFooter, resolvePage } from "./site-config-resolve";
-import { DEFAULT_HEADER, DEFAULT_FOOTER, DEFAULT_PAGES } from "./site-config-defaults";
+import { DEFAULT_HEADER, DEFAULT_FOOTER, DEFAULT_PAGES, NEUTRAL_PAGE } from "./site-config-defaults";
 
 test("an absent config resolves to the hardcoded defaults", () => {
   assert.deepEqual(resolveHeader(undefined), DEFAULT_HEADER);
@@ -74,4 +74,23 @@ test("a Mongoose Map-shaped pages value is read correctly", () => {
   // getSiteConfig().pages may arrive as a Map when not fully lean-converted.
   const asMap = new Map([["home", { heroTitle: "From a Map" }]]);
   assert.equal(resolvePage(asMap.get("home"), "home").heroTitle, "From a Map");
+});
+
+test("a page key naming an inherited Object.prototype property falls back to NEUTRAL_PAGE", () => {
+  // DEFAULT_PAGES is looked up by an admin-typed CMS key. Indexing a plain
+  // object literal with an untrusted key can accidentally resolve inherited
+  // Object.prototype members instead of falling through to the neutral base.
+  assert.deepEqual(resolvePage(undefined, "__proto__"), NEUTRAL_PAGE);
+  assert.deepEqual(resolvePage(undefined, "constructor"), NEUTRAL_PAGE);
+  assert.deepEqual(resolvePage(undefined, "toString"), NEUTRAL_PAGE);
+});
+
+test("footer columns: a malformed column is dropped while a valid sibling column is kept", () => {
+  const f = resolveFooter({
+    columns: [
+      { heading: "H", links: [] },
+      { heading: "Valid", links: [{ label: "L", href: "/h" }] },
+    ],
+  });
+  assert.deepEqual(f.columns, [{ heading: "Valid", links: [{ label: "L", href: "/h" }] }]);
 });
