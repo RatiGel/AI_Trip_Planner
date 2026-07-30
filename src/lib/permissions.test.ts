@@ -8,6 +8,7 @@ import {
   writableListingFields,
   resolveOwnerStatusTransition,
   postLoginPath,
+  isSafeCallbackPath,
 } from "./permissions";
 
 const superadmin = { id: "u1", email: "boss@example.com", role: "superadmin" as const };
@@ -89,4 +90,15 @@ test("postLoginPath routes each role to its home", () => {
   assert.equal(postLoginPath("admin"), "/trips", "deprecated role lands on the tourist page");
   assert.equal(postLoginPath(undefined), "/trips");
   assert.equal(postLoginPath(null), "/trips");
+});
+
+test("isSafeCallbackPath admits only same-origin relative paths", () => {
+  assert.equal(isSafeCallbackPath("/en/deals"), true);
+  assert.equal(isSafeCallbackPath("/trips"), true);
+  assert.equal(isSafeCallbackPath("https://evil.example.com"), false);
+  assert.equal(isSafeCallbackPath("//evil.example.com"), false, "protocol-relative URLs resolve as absolute in browsers");
+  assert.equal(isSafeCallbackPath("http://x.com"), false);
+  assert.equal(isSafeCallbackPath("javascript:alert(1)"), false);
+  assert.equal(isSafeCallbackPath(""), false);
+  assert.equal(isSafeCallbackPath("deals"), false, "bare relative path with no leading slash is rejected");
 });

@@ -10,7 +10,7 @@ import { useRouter } from "@/i18n/navigation";
 import { toast } from "sonner";
 import { Link } from "@/i18n/navigation";
 import { useReducedMotionSafe } from "@/hooks/use-reduced-motion-safe";
-import { postLoginPath } from "@/lib/permissions-core";
+import { postLoginPath, isSafeCallbackPath } from "@/lib/permissions-core";
 
 const PANEL_IMAGE =
   "https://images.unsplash.com/photo-1565008576549-57569a49371d?w=1400&q=70";
@@ -60,7 +60,7 @@ export function AuthCard({ mode }: { mode: "signin" | "signup" }) {
 
     const params = new URLSearchParams(window.location.search);
     const callbackUrl = params.get("callbackUrl");
-    if (callbackUrl) {
+    if (callbackUrl && isSafeCallbackPath(callbackUrl)) {
       router.push(callbackUrl);
     } else {
       const session = await getSession();

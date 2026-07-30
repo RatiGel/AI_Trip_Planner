@@ -108,3 +108,14 @@ export function postLoginPath(role: string | null | undefined): string {
   if (role === "business") return "/business";
   return "/trips";
 }
+
+/**
+ * Only same-origin relative paths may be followed after sign-in. An absolute
+ * URL ("https://evil.example.com") is passed through unchanged by next-intl's
+ * router, and a protocol-relative one ("//evil.example.com") is treated as
+ * absolute by browsers — either would send a freshly-authenticated visitor
+ * off-site.
+ */
+export function isSafeCallbackPath(url: string): boolean {
+  return url.startsWith("/") && !url.startsWith("//");
+}
