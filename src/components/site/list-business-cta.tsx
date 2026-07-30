@@ -11,7 +11,7 @@ import { Link } from "@/i18n/navigation";
  * Adaptive call-to-action for the "List your business" landing page.
  *  - guest         → sign up
  *  - tourist       → one-click upgrade to a business account, then go to the form
- *  - business/admin→ straight to the new-listing form
+ *  - business/superadmin → straight to the new-listing form
  */
 export function ListBusinessCTA() {
   const { data: session, status, update } = useSession();
@@ -19,7 +19,7 @@ export function ListBusinessCTA() {
   const [loading, setLoading] = useState(false);
 
   const role = (session?.user as { role?: string } | undefined)?.role;
-  const isBusiness = ["business", "admin", "superadmin"].includes(role ?? "");
+  const isBusiness = ["business", "superadmin"].includes(role ?? "");
 
   async function becomeBusiness() {
     setLoading(true);

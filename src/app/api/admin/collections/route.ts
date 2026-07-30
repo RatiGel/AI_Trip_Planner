@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import "@/lib/models/index";
 import mongoose from "mongoose";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireSuperadmin, isDenied } from "@/lib/permissions";
 
 export async function GET() {
-  const auth = await requireAdmin();
-  if (!auth.ok) return auth.response;
+  const actor = await requireSuperadmin();
+  if (isDenied(actor)) return actor;
 
   await connectDB();
   const names = mongoose.modelNames().sort();

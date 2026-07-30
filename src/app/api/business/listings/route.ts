@@ -1,21 +1,12 @@
-import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { PlaceModel } from "@/lib/models/place";
-
-async function requireBusiness() {
-  const session = await auth();
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session?.user || !["business", "admin", "superadmin"].includes(role ?? "")) {
-    return null;
-  }
-  return session;
-}
+import { requireBusiness, isDenied } from "@/lib/permissions";
 
 export async function GET() {
-  const session = await requireBusiness();
-  if (!session) return Response.json({ error: "Forbidden" }, { status: 403 });
+  const actor = await requireBusiness();
+  if (isDenied(actor)) return actor;
 
-  const userId = (session.user as { id?: string }).id!;
+  const userId = actor.id;
   await connectDB();
 
   const places = await PlaceModel.find({ ownerId: userId })
@@ -40,10 +31,10 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const session = await requireBusiness();
-  if (!session) return Response.json({ error: "Forbidden" }, { status: 403 });
+  const actor = await requireBusiness();
+  if (isDenied(actor)) return actor;
 
-  const userId = (session.user as { id?: string }).id!;
+  const userId = actor.id;
   const body = await req.json();
   const {
     name, nameKa, citySlug, address, lng, lat, description, descriptionKa,

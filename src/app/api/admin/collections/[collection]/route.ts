@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { connectDB } from "@/lib/db";
 import "@/lib/models/index";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireSuperadmin, isDenied } from "@/lib/permissions";
 
 type FieldDescriptor = {
   name: string;
@@ -34,8 +34,8 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ collection: string }> }
 ) {
-  const auth = await requireAdmin();
-  if (!auth.ok) return auth.response;
+  const actor = await requireSuperadmin();
+  if (isDenied(actor)) return actor;
 
   const { collection } = await params;
   const { searchParams } = new URL(req.url);
@@ -79,8 +79,8 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ collection: string }> }
 ) {
-  const auth = await requireAdmin();
-  if (!auth.ok) return auth.response;
+  const actor = await requireSuperadmin();
+  if (isDenied(actor)) return actor;
 
   const { collection } = await params;
   const body = await req.json();

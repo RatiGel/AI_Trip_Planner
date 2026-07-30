@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { PricingPlanModel } from "@/lib/models/pricing-plan";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireSuperadmin, isDenied } from "@/lib/permissions";
 
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdmin();
-  if (!auth.ok) return auth.response;
+  const actor = await requireSuperadmin();
+  if (isDenied(actor)) return actor;
 
   const { id } = await params;
   const body = await req.json();
@@ -22,8 +22,8 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdmin();
-  if (!auth.ok) return auth.response;
+  const actor = await requireSuperadmin();
+  if (isDenied(actor)) return actor;
 
   const { id } = await params;
   await connectDB();

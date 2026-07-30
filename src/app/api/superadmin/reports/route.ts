@@ -1,13 +1,11 @@
-import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { UserModel } from "@/lib/models/user";
 import { PlaceModel } from "@/lib/models/place";
+import { requireSuperadmin, isDenied } from "@/lib/permissions";
 
 export async function GET() {
-  const session = await auth();
-  if ((session?.user as { role?: string } | undefined)?.role !== "superadmin") {
-    return Response.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const actor = await requireSuperadmin();
+  if (isDenied(actor)) return actor;
 
   await connectDB();
 

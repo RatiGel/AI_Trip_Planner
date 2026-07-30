@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireSuperadmin, isDenied } from "@/lib/permissions";
 import { PlaceModel } from "@/lib/models/place";
 import { UserModel } from "@/lib/models/user";
 
 /** List listings awaiting moderation (pending review). */
 export async function GET() {
-  const gate = await requireAdmin();
-  if (!gate.ok) return gate.response;
+  const actor = await requireSuperadmin();
+  if (isDenied(actor)) return actor;
 
   await connectDB();
   const places = await PlaceModel.find({ status: "pending" })

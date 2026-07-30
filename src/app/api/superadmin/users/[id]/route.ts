@@ -1,13 +1,7 @@
-import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { UserModel } from "@/lib/models/user";
 import { AuditLogModel } from "@/lib/models/audit-log";
-
-async function requireSuperAdmin() {
-  const session = await auth();
-  if ((session?.user as { role?: string } | undefined)?.role !== "superadmin") return null;
-  return session;
-}
+import { requireSuperadmin, isDenied } from "@/lib/permissions";
 
 async function log(
   adminId: string,
@@ -23,12 +17,12 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireSuperAdmin();
-  if (!session) return Response.json({ error: "Forbidden" }, { status: 403 });
+  const actor = await requireSuperadmin();
+  if (isDenied(actor)) return actor;
 
   const { id } = await params;
-  const adminId = (session.user as { id?: string }).id!;
-  const adminEmail = session.user.email ?? "";
+  const adminId = actor.id;
+  const adminEmail = actor.email;
   const body = await req.json() as { name?: string; email?: string; role?: string; suspended?: boolean };
 
   await connectDB();
@@ -55,12 +49,12 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireSuperAdmin();
-  if (!session) return Response.json({ error: "Forbidden" }, { status: 403 });
+  const actor = await requireSuperadmin();
+  if (isDenied(actor)) return actor;
 
   const { id } = await params;
-  const adminId = (session.user as { id?: string }).id!;
-  const adminEmail = session.user.email ?? "";
+  const adminId = actor.id;
+  const adminEmail = actor.email;
 
   if (id === adminId) {
     return Response.json({ error: "Cannot delete your own account" }, { status: 400 });
