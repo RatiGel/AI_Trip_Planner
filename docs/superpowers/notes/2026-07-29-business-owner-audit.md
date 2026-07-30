@@ -33,21 +33,63 @@ UI in a browser):
   includes `"images"`. The PATCH handler copies `body.images` straight into
   the Mongoose update. Schema: `images: [String]`. All four stages agree.
 - **`services`**: form state is an array of `{name, nameKa, description,
-  priceGEL: string}` rows; on save, rows missing `name` or `priceGEL` are
-  dropped, and `priceGEL` is converted to a real number via `parseFloat`
-  before being sent. The resulting shape `{name, nameKa, description,
-  priceGEL: number}` matches `ServiceSchema` in `src/lib/models/place.ts`
-  field-for-field (`name` required, `priceGEL` required number min 0).
-  `writableListingFields` includes `"services"`. Confirmed no field-name or
-  shape mismatch at any of the four stages.
+  priceGEL: string}` rows; on save, rows missing `name` are dropped, and
+  `priceGEL` is converted to a real number via `parseFloat` before being
+  sent. The resulting shape `{name, nameKa, description, priceGEL: number}`
+  matches `ServiceSchema` in `src/lib/models/place.ts` field-for-field
+  (`name` required, `priceGEL` required number min 0). `writableListingFields`
+  includes `"services"`. This holds **for well-formed input only** — see
+  "FIXED" entries below for what was wrong and what changed.
 - **`reservationPriceGEL`**: form state is a string (empty = unset); on save,
-  an empty string becomes `undefined`, otherwise `parseFloat`. Because the
-  body is JSON-stringified, a value of `undefined` is dropped from the
-  request entirely — so leaving the field blank means "don't change this
-  field" rather than "clear it." This mirrors how every other optional field
-  in this form already behaves (e.g. `phone`, `website`) and is not a new
-  problem introduced here. When a number is present, it flows through
-  `writableListingFields` → PATCH → schema (`Number, min 0`) intact.
+  an empty string is now sent as an explicit `null`, otherwise `parseFloat`.
+  See "FIXED" entries below — this used to send `undefined` (dropped by
+  `JSON.stringify`, so the key was absent and the field could never be
+  cleared). It does **not** mirror `phone`/`website`: those are read via
+  `fd.get(...)`, which returns `""` for an empty input, so the key IS present
+  in the body and the PATCH route's `if (key in body)` guard writes `""` —
+  clearing the value on first save. `reservationPriceGEL` had no such path.
+
+## Findings from independent review — FIXED
+
+An independent review of this task's diff found three defects in the
+round-trip claims above. All three are now fixed.
+
+- **`services[].priceGEL` could write invalid data silently — FIXED.** The
+  client filter only checked `s.priceGEL.trim() !== ""`, so a non-numeric
+  entry like `"abc"` became `parseFloat("abc")` = `NaN`, which
+  `JSON.stringify` serializes to `null`. The PATCH route's
+  `findByIdAndUpdate` had no `runValidators: true`, so `ServiceSchema`'s
+  `required`/`min: 0` constraints on `priceGEL` never ran — a `null` or
+  negative price could land in MongoDB and the public page would render
+  `null ₾`. Fixed in `src/components/business/listing-form.tsx` (blocks
+  submit with a toast when a named service row has a non-finite or negative
+  price, instead of silently dropping the row) and
+  `src/app/api/business/listings/[id]/route.ts` (added
+  `runValidators: true` as a schema-level backstop).
+- **Owner-supplied image URLs could crash the public page — FIXED.**
+  `next.config.ts` restricts `next/image` `remotePatterns` to three CDNs
+  (`images.unsplash.com`, `source.unsplash.com`, `upload.wikimedia.org`),
+  but owners can paste any image URL into `ListingForm`. Every place that
+  rendered an owner-supplied `place.images[...]` through `next/image` would
+  throw at render time for a non-allow-listed host. Switched to a plain
+  `<img>` (same pattern already used for admin-supplied logos in
+  `site-header.tsx` and for listing thumbnails in `business/media/page.tsx`)
+  in: `src/app/[locale]/places/[slug]/page.tsx` (cover + gallery images),
+  `src/components/site/place-card.tsx`, `src/components/map/map-explorer.tsx`
+  (selected-place preview), and `src/app/[locale]/reserve/[placeId]/page.tsx`.
+  `src/components/site/home/featured-places.tsx` and
+  `src/app/[locale]/discover/page.tsx` were checked and left unchanged —
+  both currently render `mockPlaces`, not owner-controlled DB data, so they
+  are not exposed today.
+- **A booking fee could be set but never removed — FIXED.** Blanking
+  `reservationPriceGEL` sent `undefined`, which `JSON.stringify` drops from
+  the request body entirely, so the PATCH route's `if (key in body)` guard
+  never saw the key and never cleared the field — only an overwrite with
+  another positive number was possible. `ListingForm` now sends an explicit
+  `null` when the field is blank, and the PATCH route
+  (`src/app/api/business/listings/[id]/route.ts`) translates a `null` value
+  for any writable field into `$unset` instead of `$set`, so blanking the
+  field actually removes it.
 
 ## Deals question — recommendation
 
