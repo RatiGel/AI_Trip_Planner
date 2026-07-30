@@ -145,6 +145,20 @@ export function ListingForm({ listingId, status, defaultValues }: ListingFormPro
 
   async function save(form: HTMLFormElement, mode: "draft" | "submit") {
     const fd = new FormData(form);
+
+    // A service row with a name but a non-numeric or negative price would
+    // otherwise be silently dropped (data loss) or serialize to `null`/a
+    // negative number that slips past validation. Block the submit instead.
+    const invalidService = services.find((s) => {
+      if (!s.name.trim()) return false;
+      const n = parseFloat(s.priceGEL);
+      return !Number.isFinite(n) || n < 0;
+    });
+    if (invalidService) {
+      toast.error(`"${invalidService.name}" needs a valid, non-negative price (GEL)`);
+      return;
+    }
+
     const body = {
       name: fd.get("name") as string,
       nameKa: fd.get("nameKa") as string,
@@ -163,16 +177,25 @@ export function ListingForm({ listingId, status, defaultValues }: ListingFormPro
       openingHours: hours,
       reservable,
       images: images.map((url) => url.trim()).filter(Boolean),
+      // The guard above already rejected the submit if any named row has a
+      // non-finite or negative price, so every row that survives here (has
+      // a name) is safe to parse.
       services: services
-        .filter((s) => s.name.trim() && s.priceGEL.trim() !== "")
+        .filter((s) => s.name.trim())
         .map((s) => ({
           name: s.name.trim(),
           nameKa: s.nameKa.trim(),
           description: s.description.trim(),
           priceGEL: parseFloat(s.priceGEL),
         })),
+      // `null` (not `undefined`) when blank: `undefined` is dropped by
+      // JSON.stringify, so the key would be absent from the body and the
+      // PATCH route's `if (key in body)` guard would never clear an
+      // existing value — an owner could set a fee but never remove it.
+      // `null` survives JSON.stringify and the PATCH route below turns it
+      // into an explicit $unset.
       reservationPriceGEL:
-        reservationPriceGEL.trim() === "" ? undefined : parseFloat(reservationPriceGEL),
+        reservationPriceGEL.trim() === "" ? null : parseFloat(reservationPriceGEL),
       // create: draft flag picks status. edit: status field requests a transition.
       ...(isEdit
         ? { status: mode === "submit" ? "pending" : "draft" }

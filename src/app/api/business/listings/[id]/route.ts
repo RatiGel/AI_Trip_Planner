@@ -18,8 +18,17 @@ export async function PATCH(
 
   const body = await req.json();
   const update: Record<string, unknown> = {};
+  const unset: Record<string, ""> = {};
   for (const key of writableListingFields(asSuperadmin)) {
-    if (key in body) update[key] = body[key];
+    if (!(key in body)) continue;
+    // An explicit `null` means "clear this field" (e.g. reservationPriceGEL)
+    // rather than "leave it unset" — $set-ing null would store the literal
+    // value null instead of removing the key, so route it through $unset.
+    if (body[key] === null) {
+      unset[key] = "";
+    } else {
+      update[key] = body[key];
+    }
   }
 
   if (asSuperadmin) {
@@ -34,8 +43,14 @@ export async function PATCH(
     }
   }
 
+  const mongoUpdate: Record<string, unknown> = { $set: update };
+  if (Object.keys(unset).length > 0) mongoUpdate.$unset = unset;
+
   await connectDB();
-  const updated = await PlaceModel.findByIdAndUpdate(id, update, { new: true }).lean();
+  const updated = await PlaceModel.findByIdAndUpdate(id, mongoUpdate, {
+    new: true,
+    runValidators: true,
+  }).lean();
   return Response.json({ id: String((updated as { _id: unknown })._id) });
 }
 
