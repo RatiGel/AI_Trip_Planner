@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { auth } from "@/lib/auth";
+import { getActor } from "@/lib/permissions";
 import { connectDB } from "@/lib/db";
 import { createCheckout } from "@/lib/flitt";
 import { mockDeals } from "@/lib/mock/deals";
@@ -14,7 +14,7 @@ import type { VoucherRecipient } from "@/types";
 const LISTING_FEE_TETRI = 5000; // 50 GEL
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-const BUSINESS_ROLES = ["business", "admin", "superadmin"];
+const BUSINESS_ROLES = ["business", "superadmin"];
 
 interface Body {
   purpose: PaymentPurpose;
@@ -115,12 +115,12 @@ export async function POST(req: Request) {
   }
 
   // All purposes (including deals) require login — a voucher is keyed to the buyer.
-  const session = await auth();
-  if (!session?.user) {
+  const actor = await getActor();
+  if (!actor) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const userId = (session?.user as { id?: string } | undefined)?.id;
-  const role = (session?.user as { role?: string } | undefined)?.role ?? "tourist";
+  const userId = actor.id;
+  const role = actor.role;
 
   const orderId = `${body.purpose}_${randomUUID()}`;
   const locale = body.locale ?? "en";

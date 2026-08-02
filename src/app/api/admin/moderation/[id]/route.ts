@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireSuperadmin, isDenied } from "@/lib/permissions";
 import { PlaceModel } from "@/lib/models/place";
 
 /**
@@ -14,8 +14,8 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const gate = await requireAdmin();
-  if (!gate.ok) return gate.response;
+  const actor = await requireSuperadmin();
+  if (isDenied(actor)) return actor;
 
   const { id } = await params;
   const body = await req.json().catch(() => ({}));

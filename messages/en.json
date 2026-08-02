@@ -264,6 +264,15 @@
     "cms": "CMS",
     "database": "Database",
     "pricing": "Pricing",
+    "businesses": "Businesses",
+    "reports": "Reports",
+    "security": "Security",
+    "contentMod": "Content",
+    "groupPlatform": "Platform",
+    "groupContent": "Content",
+    "groupCommerce": "Commerce",
+    "groupDesign": "Design",
+    "groupSystem": "System",
     "newPlace": "New place",
     "newCity": "New city",
     "save": "Save",
@@ -1047,5 +1056,12 @@
     "cancel": "Cancel",
     "confirm": "Continue to payment",
     "total": "Total:"
+  },
+  "superadminBar": {
+    "title": "Superadmin",
+    "editListing": "Edit this listing",
+    "pageContent": "Page content",
+    "theme": "Theme",
+    "panel": "Panel"
   }
 }

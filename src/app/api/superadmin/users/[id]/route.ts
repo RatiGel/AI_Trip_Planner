@@ -1,13 +1,13 @@
-import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { UserModel } from "@/lib/models/user";
 import { AuditLogModel } from "@/lib/models/audit-log";
+import { requireSuperadmin, isDenied } from "@/lib/permissions";
 
-async function requireSuperAdmin() {
-  const session = await auth();
-  if ((session?.user as { role?: string } | undefined)?.role !== "superadmin") return null;
-  return session;
-}
+/**
+ * Roles a superadmin may assign. Excludes the deprecated "admin", which the
+ * schema still accepts for document compatibility but which grants no access.
+ */
+const ASSIGNABLE_ROLES = new Set(["tourist", "business", "superadmin"]);
 
 async function log(
   adminId: string,
@@ -23,12 +23,12 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireSuperAdmin();
-  if (!session) return Response.json({ error: "Forbidden" }, { status: 403 });
+  const actor = await requireSuperadmin();
+  if (isDenied(actor)) return actor;
 
   const { id } = await params;
-  const adminId = (session.user as { id?: string }).id!;
-  const adminEmail = session.user.email ?? "";
+  const adminId = actor.id;
+  const adminEmail = actor.email;
   const body = await req.json() as { name?: string; email?: string; role?: string; suspended?: boolean };
 
   await connectDB();
@@ -41,8 +41,17 @@ export async function PATCH(
   const update: Record<string, unknown> = {};
   if (body.name !== undefined) update.name = body.name;
   if (body.email !== undefined) update.email = body.email;
-  if (body.role !== undefined) update.role = body.role;
   if (body.suspended !== undefined) update.suspended = body.suspended;
+
+  // Assignable roles exclude the deprecated "admin" — it grants no access, so
+  // assigning it would lock the account out of every panel. findByIdAndUpdate
+  // does not run schema validators, so the enum is not a backstop here.
+  if (body.role !== undefined) {
+    if (!ASSIGNABLE_ROLES.has(body.role)) {
+      return Response.json({ error: "Invalid role" }, { status: 400 });
+    }
+    update.role = body.role;
+  }
 
   const updated = await UserModel.findByIdAndUpdate(id, update, { new: true }).lean();
   if (!updated) return Response.json({ error: "Not found" }, { status: 404 });
@@ -55,12 +64,12 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireSuperAdmin();
-  if (!session) return Response.json({ error: "Forbidden" }, { status: 403 });
+  const actor = await requireSuperadmin();
+  if (isDenied(actor)) return actor;
 
   const { id } = await params;
-  const adminId = (session.user as { id?: string }).id!;
-  const adminEmail = session.user.email ?? "";
+  const adminId = actor.id;
+  const adminEmail = actor.email;
 
   if (id === adminId) {
     return Response.json({ error: "Cannot delete your own account" }, { status: 400 });

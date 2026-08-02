@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { Star } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
@@ -24,12 +23,11 @@ export function PlaceCard({ place, className }: PlaceCardProps) {
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
         {place.images[0] ? (
-          <Image
+          // eslint-disable-next-line @next/next/no-img-element -- arbitrary owner-supplied host, not in next.config remotePatterns
+          <img
             src={place.images[0]}
             alt={name}
-            fill
-            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover transition group-hover:scale-105"
+            className="absolute inset-0 size-full object-cover transition group-hover:scale-105"
           />
         ) : null}
         {place.priceLevel ? (

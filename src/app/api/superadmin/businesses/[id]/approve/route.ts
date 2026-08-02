@@ -1,21 +1,19 @@
-import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { BusinessRequestModel } from "@/lib/models/business-request";
 import { UserModel } from "@/lib/models/user";
 import { AuditLogModel } from "@/lib/models/audit-log";
+import { requireSuperadmin, isDenied } from "@/lib/permissions";
 
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if ((session?.user as { role?: string } | undefined)?.role !== "superadmin") {
-    return Response.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const actor = await requireSuperadmin();
+  if (isDenied(actor)) return actor;
 
   const { id } = await params;
-  const adminId = (session!.user as { id?: string }).id!;
-  const adminEmail = session!.user.email ?? "";
+  const adminId = actor.id;
+  const adminEmail = actor.email;
 
   await connectDB();
 

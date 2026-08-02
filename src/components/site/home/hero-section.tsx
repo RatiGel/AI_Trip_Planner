@@ -8,8 +8,35 @@ import { Link } from "@/i18n/navigation";
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1565008576549-57569a49371d?w=1920&q=70";
 
-export function HeroSection() {
+// next.config.ts remotePatterns only allows these hosts; an admin-supplied
+// heroImageUrl on any other host would make next/image throw at runtime.
+const ALLOWED_IMAGE_HOSTS = [
+  "images.unsplash.com",
+  "source.unsplash.com",
+  "upload.wikimedia.org",
+];
+
+function isAllowedImageHost(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" && ALLOWED_IMAGE_HOSTS.includes(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
+export function HeroSection({
+  title,
+  subtitle,
+  imageUrl,
+}: {
+  title?: string;
+  subtitle?: string;
+  imageUrl?: string;
+} = {}) {
   const t = useTranslations("hero");
+  const resolvedImage = imageUrl || HERO_IMAGE;
+  const useNextImage = isAllowedImageHost(resolvedImage);
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "100svh", minHeight: "min(700px, 100svh)" }}>
@@ -20,16 +47,25 @@ export function HeroSection() {
         animate={{ scale: 1 }}
         transition={{ duration: 1.8, ease: [0.25, 0.46, 0.45, 0.94] }}
       >
-        <Image
-          src={HERO_IMAGE}
-          alt=""
-          fill
-          priority
-          fetchPriority="high"
-          sizes="100vw"
-          quality={70}
-          className="object-cover object-center"
-        />
+        {useNextImage ? (
+          <Image
+            src={resolvedImage}
+            alt=""
+            fill
+            priority
+            fetchPriority="high"
+            sizes="100vw"
+            quality={70}
+            className="object-cover object-center"
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element -- arbitrary admin-supplied host, not in next.config remotePatterns
+          <img
+            src={resolvedImage}
+            alt=""
+            className="absolute inset-0 size-full object-cover object-center"
+          />
+        )}
         {/* Gradient overlay for text contrast */}
         <div
           className="absolute inset-0"
@@ -58,14 +94,14 @@ export function HeroSection() {
           {/* Headline */}
           <h1 className="font-display mb-4 leading-[0.88] tracking-[-0.025em] text-white sm:mb-6"
             style={{ fontSize: "clamp(48px, 11vw, 120px)" }}>
-            {t("headline")}<br />
+            {title || t("headline")}<br />
             <em className="text-yellow-300">Tbilisi</em>
           </h1>
 
           {/* Sub */}
           <p className="mx-auto mb-7 max-w-lg font-light leading-relaxed text-white/80 sm:mb-10"
             style={{ fontSize: "clamp(15px, 2vw, 20px)" }}>
-            {t("sub")}
+            {subtitle || t("sub")}
           </p>
 
           {/* CTAs */}

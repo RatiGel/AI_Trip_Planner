@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import { connectDB } from "@/lib/db";
 import "@/lib/models/index";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireSuperadmin, isDenied } from "@/lib/permissions";
 
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ collection: string; id: string }> }
 ) {
-  const auth = await requireAdmin();
-  if (!auth.ok) return auth.response;
+  const actor = await requireSuperadmin();
+  if (isDenied(actor)) return actor;
 
   const { collection, id } = await params;
   const body = await req.json();
@@ -29,8 +29,8 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ collection: string; id: string }> }
 ) {
-  const auth = await requireAdmin();
-  if (!auth.ok) return auth.response;
+  const actor = await requireSuperadmin();
+  if (isDenied(actor)) return actor;
 
   const { collection, id } = await params;
 

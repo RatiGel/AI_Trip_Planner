@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { getActor } from "@/lib/permissions";
 import { connectDB } from "@/lib/db";
 import { UserModel } from "@/lib/models/user";
 
@@ -10,15 +10,14 @@ import { UserModel } from "@/lib/models/user";
  * (re-fetch / re-sign-in) for the new role to take effect in the UI.
  */
 export async function POST() {
-  const session = await auth();
-  const userId = (session?.user as { id?: string } | undefined)?.id;
-  const role = (session?.user as { role?: string } | undefined)?.role;
+  const actor = await getActor();
 
-  if (!session?.user || !userId) {
+  if (!actor) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const { id: userId, role } = actor;
 
-  if (["business", "admin", "superadmin"].includes(role ?? "")) {
+  if (["business", "superadmin"].includes(role)) {
     return Response.json({ ok: true, role });
   }
 

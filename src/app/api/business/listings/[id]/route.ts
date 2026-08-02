@@ -1,89 +1,77 @@
-import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { PlaceModel } from "@/lib/models/place";
+import {
+  requireListingAccess,
+  writableListingFields,
+  resolveOwnerStatusTransition,
+  isDenied,
+} from "@/lib/permissions";
 
-async function requireBusiness() {
-  const session = await auth();
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!session?.user || !["business", "admin", "superadmin"].includes(role ?? "")) {
-    return null;
-  }
-  return session;
-}
+/**
+ * Fields where an explicit `null` in the body means "clear this field".
+ *
+ * Deliberately an allowlist rather than a blanket rule: a future field that
+ * sends `null` meaning "leave unchanged" — an easy mistake, since `undefined`
+ * already carries that meaning here — would otherwise silently delete stored
+ * data. Anything outside this set is written literally.
+ */
+const NULL_CLEARS = new Set(["reservationPriceGEL"]);
 
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireBusiness();
-  if (!session) return Response.json({ error: "Forbidden" }, { status: 403 });
-
   const { id } = await params;
-  const userId = (session.user as { id?: string }).id!;
-  const role = (session.user as { role?: string }).role;
-
-  await connectDB();
-
-  const place = await PlaceModel.findById(id);
-  if (!place) return Response.json({ error: "Not found" }, { status: 404 });
-
-  const isOwner = place.ownerId === userId;
-  const isAdminOrSuper = ["admin", "superadmin"].includes(role ?? "");
-  if (!isOwner && !isAdminOrSuper) {
-    return Response.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const access = await requireListingAccess(id);
+  if (isDenied(access)) return access;
+  const { place, asSuperadmin } = access;
 
   const body = await req.json();
-  const allowed = [
-    "name", "nameKa", "citySlug", "description", "descriptionKa", "categories",
-    "priceLevel", "phone", "email", "website", "socials", "openingHours",
-    "reservable", "geo",
-  ];
   const update: Record<string, unknown> = {};
-  for (const key of allowed) {
-    if (key in body) update[key] = body[key];
-  }
-
-  // Status transitions an OWNER may trigger — never approve/activate themselves.
-  // submit: draft/rejected → pending. unpublish-to-draft: pending → draft.
-  // Admins/superadmins may set any status via the moderation panel instead.
-  if (isOwner && !isAdminOrSuper && typeof body.status === "string") {
-    if (body.status === "pending" && ["draft", "rejected"].includes(place.status)) {
-      update.status = "pending";
-      update.rejectionReason = "";
-    } else if (body.status === "draft" && place.status === "pending") {
-      update.status = "draft";
+  const unset: Record<string, ""> = {};
+  for (const key of writableListingFields(asSuperadmin)) {
+    if (!(key in body)) continue;
+    // `$set`-ing null would store the literal value null rather than removing
+    // the key, so a clearable field routes through $unset instead.
+    if (body[key] === null && NULL_CLEARS.has(key)) {
+      unset[key] = "";
+    } else {
+      update[key] = body[key];
     }
-  } else if (isAdminOrSuper && typeof body.status === "string") {
-    update.status = body.status;
   }
 
-  const updated = await PlaceModel.findByIdAndUpdate(id, update, { new: true }).lean();
-  return Response.json({ id: (updated as any)._id.toString() });
+  if (asSuperadmin) {
+    // Staff may set any status directly from the moderation panel.
+    if (typeof body.status === "string") update.status = body.status;
+  } else {
+    // Owners may only submit for review or withdraw a submission.
+    const next = resolveOwnerStatusTransition(String(place.status ?? "draft"), body.status);
+    if (next) {
+      update.status = next;
+      if (next === "pending") update.rejectionReason = "";
+    }
+  }
+
+  const mongoUpdate: Record<string, unknown> = { $set: update };
+  if (Object.keys(unset).length > 0) mongoUpdate.$unset = unset;
+
+  await connectDB();
+  const updated = await PlaceModel.findByIdAndUpdate(id, mongoUpdate, {
+    new: true,
+    runValidators: true,
+  }).lean();
+  return Response.json({ id: String((updated as { _id: unknown })._id) });
 }
 
 export async function DELETE(
-  req: Request,
+  _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireBusiness();
-  if (!session) return Response.json({ error: "Forbidden" }, { status: 403 });
-
   const { id } = await params;
-  const userId = (session.user as { id?: string }).id!;
-  const role = (session.user as { role?: string }).role;
+  const access = await requireListingAccess(id);
+  if (isDenied(access)) return access;
 
   await connectDB();
-
-  const place = await PlaceModel.findById(id);
-  if (!place) return Response.json({ error: "Not found" }, { status: 404 });
-
-  const isOwner = place.ownerId === userId;
-  const isAdminOrSuper = ["admin", "superadmin"].includes(role ?? "");
-  if (!isOwner && !isAdminOrSuper) {
-    return Response.json({ error: "Forbidden" }, { status: 403 });
-  }
-
   await PlaceModel.findByIdAndDelete(id);
   return Response.json({ ok: true });
 }

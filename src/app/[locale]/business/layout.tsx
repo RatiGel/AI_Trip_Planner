@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { setRequestLocale } from "next-intl/server";
 import { Link, redirect } from "@/i18n/navigation";
-import { auth } from "@/lib/auth";
+import { getActor, canAccessBusinessPanel } from "@/lib/permissions";
 
 const NAV = [
   { href: "/business", label: "Overview", Icon: LayoutDashboard },
@@ -18,8 +18,6 @@ const NAV = [
   { href: "/business/analytics", label: "Analytics", Icon: BarChart3 },
   { href: "/business/billing", label: "Billing", Icon: CreditCard },
 ];
-
-const ALLOWED_ROLES = ["business", "admin", "superadmin"];
 
 export default async function BusinessLayout({
   children,
@@ -31,9 +29,8 @@ export default async function BusinessLayout({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const session = await auth();
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (!role || !ALLOWED_ROLES.includes(role)) {
+  const actor = await getActor();
+  if (!canAccessBusinessPanel(actor)) {
     redirect({ href: "/", locale });
   }
 

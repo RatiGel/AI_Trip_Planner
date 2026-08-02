@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { AdminConfigModel } from "@/lib/models/admin-config";
-import { requireAdmin } from "@/lib/require-admin";
+import { requireSuperadmin, isDenied } from "@/lib/permissions";
 
 export async function GET() {
   await connectDB();
@@ -10,8 +10,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdmin();
-  if (!auth.ok) return auth.response;
+  const actor = await requireSuperadmin();
+  if (isDenied(actor)) return actor;
 
   const body = await req.json();
   await connectDB();

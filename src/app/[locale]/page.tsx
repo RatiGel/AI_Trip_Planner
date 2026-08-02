@@ -10,6 +10,8 @@ import { ListBusinessSection } from "@/components/site/home/list-business-sectio
 import { mockPlaces } from "@/lib/mock/places";
 import { buildMetadata, SITE_URL } from "@/lib/seo";
 import { JsonLd } from "@/components/site/json-ld";
+import { getSiteConfig } from "@/lib/get-site-config";
+import { resolvePage } from "@/lib/site-config-resolve";
 
 export async function generateMetadata({
   params,
@@ -35,6 +37,11 @@ export default async function HomePage({
   setRequestLocale(locale);
 
   const featuredPlaces = mockPlaces.slice(0, 4);
+
+  const siteConfig = await getSiteConfig();
+  const raw = siteConfig?.pages;
+  const homeRaw = raw instanceof Map ? raw.get("home") : (raw as Record<string, unknown> | undefined)?.home;
+  const home = resolvePage(homeRaw, "home");
 
   return (
     <div style={{ background: "var(--site-bg-base)" }}>
@@ -67,10 +74,10 @@ export default async function HomePage({
             "AI trip planner and travel guide for Tbilisi, Georgia — attractions, food, neighborhoods, maps and public-transit routes.",
         }}
       />
-      <HeroSection />
+      <HeroSection title={home.heroTitle} subtitle={home.heroSubtitle} imageUrl={home.heroImageUrl} />
       <StatsBar />
-      <CategoriesStrip />
-      <FeaturedPlaces places={featuredPlaces} />
+      {home.showCategories && <CategoriesStrip />}
+      {home.showFeaturedPlaces && <FeaturedPlaces places={featuredPlaces} />}
       <NeighborhoodsSection />
       <AIPlannerCTA />
       <ListBusinessSection />

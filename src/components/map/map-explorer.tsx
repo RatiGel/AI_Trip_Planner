@@ -2,7 +2,6 @@
 
 import "mapbox-gl/dist/mapbox-gl.css";
 import "leaflet/dist/leaflet.css";
-import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Crosshair, ListFilter, MapPin, Star, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -512,12 +511,11 @@ export function MapExplorer({ places }: { places: Place[] }) {
             <div className="pointer-events-auto overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
               {selected.images[0] && (
                 <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                  <Image
+                  {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary owner-supplied host, not in next.config remotePatterns */}
+                  <img
                     src={selected.images[0]}
                     alt={localName(selected)}
-                    fill
-                    sizes="320px"
-                    className="object-cover"
+                    className="absolute inset-0 size-full object-cover"
                   />
                 </div>
               )}

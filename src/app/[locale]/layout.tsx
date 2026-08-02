@@ -9,9 +9,13 @@ import { Toaster } from "@/components/ui/sonner";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { AiChatFab } from "@/components/site/ai-chat-fab";
+import { EditTargetProvider } from "@/components/superadmin/edit-target";
+import { SuperadminEditBar } from "@/components/superadmin/edit-bar";
 import { Providers } from "@/components/providers";
 import { routing } from "@/i18n/routing";
 import { getAdminConfig, buildThemeCss } from "@/lib/get-admin-config";
+import { getSiteConfig } from "@/lib/get-site-config";
+import { resolveHeader, resolveFooter } from "@/lib/site-config-resolve";
 import { SITE_URL } from "@/lib/seo";
 import "../globals.css";
 
@@ -95,8 +99,13 @@ export default async function LocaleLayout({
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
 
-  const adminConfig = await getAdminConfig();
+  const [adminConfig, siteConfig] = await Promise.all([
+    getAdminConfig(),
+    getSiteConfig(),
+  ]);
   const themeCss = adminConfig ? buildThemeCss(adminConfig) : null;
+  const header = resolveHeader(siteConfig?.header);
+  const footer = resolveFooter(siteConfig?.footer);
 
   return (
     <html
@@ -118,11 +127,14 @@ export default async function LocaleLayout({
         )}
         <NextIntlClientProvider>
           <Providers>
-            <SiteHeader />
-            <main className="flex-1">{children}</main>
-            <SiteFooter />
-            <AiChatFab />
-            <Toaster richColors position="top-center" />
+            <EditTargetProvider>
+              <SiteHeader config={header} />
+              <main className="flex-1">{children}</main>
+              <SiteFooter config={footer} />
+              <AiChatFab />
+              <SuperadminEditBar />
+              <Toaster richColors position="top-center" />
+            </EditTargetProvider>
           </Providers>
         </NextIntlClientProvider>
         <Analytics />

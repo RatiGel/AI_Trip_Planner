@@ -9,6 +9,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { AnnouncementBanner } from "./announcement-banner";
 import { LanguageSwitcher } from "./language-switcher";
 import { ThemeToggle } from "./theme-toggle";
+import type { ResolvedHeader } from "@/lib/site-config-resolve";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function SiteHeader() {
+export function SiteHeader({ config }: { config?: ResolvedHeader }) {
   const [scrolled, setScrolled] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -36,7 +37,6 @@ export function SiteHeader() {
   const role = (session?.user as { role?: string })?.role ?? "tourist";
   const ROLE_LABEL: Record<string, string> = {
     superadmin: "Super Admin",
-    admin: "Admin",
     business: "Business Owner",
   };
   const roleStamp =
@@ -104,6 +104,13 @@ export function SiteHeader() {
     { label: t("gettingAround"), href: "/tickets", children: [] },
   ];
 
+  // A configured nav replaces the translated one wholesale; an empty configured
+  // list means "keep the translated nav" (see site-config-defaults).
+  const navItems =
+    config && config.navLinks.length > 0
+      ? config.navLinks.map((l) => ({ label: l.label, href: l.href, icon: undefined, children: [] as { label: string; href: string }[] }))
+      : NAV;
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -170,20 +177,27 @@ export function SiteHeader() {
       <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-6 md:px-12 xl:grid xl:grid-cols-[1fr_auto_1fr]">
         {/* Logo */}
         <Link href="/" className="flex flex-col items-start leading-none" aria-label="explore Tbilisi — home">
-          <span
-            className="font-display italic text-[19px] tracking-[0.5px] -mb-1"
-            style={{ color: "#E8A020" }}
-          >
-            explore
-          </span>
-          <span className="font-display text-[30px] tracking-[-0.5px]" style={{ color: c.text }}>
-            Tbilisi<span style={{ color: "#E8A020" }}>.</span>
-          </span>
+          {config?.logoImageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- arbitrary admin-supplied host, not in next.config remotePatterns
+            <img src={config.logoImageUrl} alt={config.logoText || "Home"} className="h-9 w-auto object-contain" />
+          ) : (
+            <>
+              <span
+                className="font-display italic text-[19px] tracking-[0.5px] -mb-1"
+                style={{ color: "#E8A020" }}
+              >
+                explore
+              </span>
+              <span className="font-display text-[30px] tracking-[-0.5px]" style={{ color: c.text }}>
+                {config?.logoText || "Tbilisi"}<span style={{ color: "#E8A020" }}>.</span>
+              </span>
+            </>
+          )}
         </Link>
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-1 xl:flex">
-          {NAV.map((item) => (
+          {navItems.map((item) => (
             <div
               key={item.label}
               className="relative"
@@ -329,7 +343,7 @@ export function SiteHeader() {
                       <User className="size-4" /> Profile
                     </DropdownMenuItem>
 
-                    {(["business", "admin", "superadmin"] as string[]).includes(
+                    {(["business", "superadmin"] as string[]).includes(
                       (session.user as { role?: string }).role ?? ""
                     ) && (
                       <>
@@ -343,13 +357,6 @@ export function SiteHeader() {
                     {(session.user as { role?: string }).role === "business" && (
                       <DropdownMenuItem render={<Link href="/business" />} className={menuItemClass}>
                         <LayoutDashboard className="size-4" /> {tNav("myBusiness")}
-                      </DropdownMenuItem>
-                    )}
-                    {(["admin", "superadmin"] as string[]).includes(
-                      (session.user as { role?: string }).role ?? ""
-                    ) && (
-                      <DropdownMenuItem render={<Link href="/admin" />} className={menuItemClass}>
-                        <Shield className="size-4" /> {tNav("admin")}
                       </DropdownMenuItem>
                     )}
                     {(session.user as { role?: string }).role === "superadmin" && (
@@ -409,7 +416,7 @@ export function SiteHeader() {
             style={{ background: "var(--site-header-bg)", backdropFilter: "blur(20px)", borderColor: "var(--site-border-06)" }}
           >
             <nav className="flex flex-col gap-0.5 px-4 py-4">
-              {NAV.map((item) => (
+              {navItems.map((item) => (
                 <div key={item.label}>
                   <Link
                     href={item.href}

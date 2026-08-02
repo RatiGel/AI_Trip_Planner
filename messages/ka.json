@@ -264,6 +264,15 @@
     "cms": "კონტენტი",
     "database": "მონაცემები",
     "pricing": "ტარიფები",
+    "businesses": "ბიზნესები",
+    "reports": "ანგარიშები",
+    "security": "უსაფრთხოება",
+    "contentMod": "კონტენტი",
+    "groupPlatform": "პლატფორმა",
+    "groupContent": "კონტენტი",
+    "groupCommerce": "კომერცია",
+    "groupDesign": "დიზაინი",
+    "groupSystem": "სისტემა",
     "newPlace": "ახალი ადგილი",
     "newCity": "ახალი ქალაქი",
     "save": "შენახვა",
@@ -1047,5 +1056,12 @@
     "cancel": "გაუქმება",
     "confirm": "გადახდაზე გადასვლა",
     "total": "სულ:"
+  },
+  "superadminBar": {
+    "title": "სუპერადმინი",
+    "editListing": "ამ ობიექტის რედაქტირება",
+    "pageContent": "გვერდის კონტენტი",
+    "theme": "თემა",
+    "panel": "პანელი"
   }
 }

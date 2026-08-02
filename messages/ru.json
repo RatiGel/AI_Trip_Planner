@@ -264,6 +264,15 @@
     "cms": "Контент",
     "database": "База данных",
     "pricing": "Тарифы",
+    "businesses": "Компании",
+    "reports": "Отчёты",
+    "security": "Безопасность",
+    "contentMod": "Контент",
+    "groupPlatform": "Платформа",
+    "groupContent": "Контент",
+    "groupCommerce": "Коммерция",
+    "groupDesign": "Дизайн",
+    "groupSystem": "Система",
     "newPlace": "Новое место",
     "newCity": "Новый город",
     "save": "Сохранить",
@@ -1047,5 +1056,12 @@
     "cancel": "Отмена",
     "confirm": "Перейти к оплате",
     "total": "Итого:"
+  },
+  "superadminBar": {
+    "title": "Суперадмин",
+    "editListing": "Редактировать объект",
+    "pageContent": "Контент страницы",
+    "theme": "Тема",
+    "panel": "Панель"
   }
 }

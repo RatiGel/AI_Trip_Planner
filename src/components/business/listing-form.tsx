@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Save, Send } from "lucide-react";
+import { Save, Send, Plus, X } from "lucide-react";
 import { mockCities } from "@/lib/mock/cities";
 import { mockCategories } from "@/lib/mock/categories";
 import type { CategorySlug, ListingStatus, Socials } from "@/types";
@@ -25,6 +25,13 @@ interface OpeningHour {
   open: string;
   close: string;
   closed: boolean;
+}
+
+interface ServiceRow {
+  name: string;
+  nameKa: string;
+  description: string;
+  priceGEL: string;
 }
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -57,6 +64,9 @@ interface ListingFormProps {
     socials: Socials;
     openingHours: OpeningHour[];
     reservable: boolean;
+    images: string[];
+    services: { name: string; nameKa?: string; description?: string; priceGEL: number }[];
+    reservationPriceGEL?: number;
   };
 }
 
@@ -72,7 +82,53 @@ export function ListingForm({ listingId, status, defaultValues }: ListingFormPro
   const [priceLevel, setPriceLevel] = useState(String(defaultValues?.priceLevel ?? 2));
   const [hours, setHours] = useState<OpeningHour[]>(defaultHours(defaultValues?.openingHours));
   const [socials, setSocials] = useState<Socials>(defaultValues?.socials ?? {});
+  const [images, setImages] = useState<string[]>(defaultValues?.images ?? []);
+  const [services, setServices] = useState<ServiceRow[]>(
+    (defaultValues?.services ?? []).map((s) => ({
+      name: s.name,
+      nameKa: s.nameKa ?? "",
+      description: s.description ?? "",
+      priceGEL: String(s.priceGEL),
+    }))
+  );
+  const [reservationPriceGEL, setReservationPriceGEL] = useState(
+    defaultValues?.reservationPriceGEL != null ? String(defaultValues.reservationPriceGEL) : ""
+  );
   const [saving, setSaving] = useState<"draft" | "submit" | null>(null);
+
+  function setImage(i: number, value: string) {
+    setImages((prev) => prev.map((url, idx) => (idx === i ? value : url)));
+  }
+
+  function addImage() {
+    setImages((prev) => [...prev, ""]);
+  }
+
+  function removeImage(i: number) {
+    setImages((prev) => prev.filter((_, idx) => idx !== i));
+  }
+
+  function moveImage(i: number, dir: -1 | 1) {
+    setImages((prev) => {
+      const j = i + dir;
+      if (j < 0 || j >= prev.length) return prev;
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+  }
+
+  function setService(i: number, patch: Partial<ServiceRow>) {
+    setServices((prev) => prev.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
+  }
+
+  function addService() {
+    setServices((prev) => [...prev, { name: "", nameKa: "", description: "", priceGEL: "" }]);
+  }
+
+  function removeService(i: number) {
+    setServices((prev) => prev.filter((_, idx) => idx !== i));
+  }
 
   function toggleCat(c: CategorySlug) {
     setCats((prev) => {
@@ -89,6 +145,20 @@ export function ListingForm({ listingId, status, defaultValues }: ListingFormPro
 
   async function save(form: HTMLFormElement, mode: "draft" | "submit") {
     const fd = new FormData(form);
+
+    // A service row with a name but a non-numeric or negative price would
+    // otherwise be silently dropped (data loss) or serialize to `null`/a
+    // negative number that slips past validation. Block the submit instead.
+    const invalidService = services.find((s) => {
+      if (!s.name.trim()) return false;
+      const n = parseFloat(s.priceGEL);
+      return !Number.isFinite(n) || n < 0;
+    });
+    if (invalidService) {
+      toast.error(`"${invalidService.name}" needs a valid, non-negative price (GEL)`);
+      return;
+    }
+
     const body = {
       name: fd.get("name") as string,
       nameKa: fd.get("nameKa") as string,
@@ -106,6 +176,26 @@ export function ListingForm({ listingId, status, defaultValues }: ListingFormPro
       socials,
       openingHours: hours,
       reservable,
+      images: images.map((url) => url.trim()).filter(Boolean),
+      // The guard above already rejected the submit if any named row has a
+      // non-finite or negative price, so every row that survives here (has
+      // a name) is safe to parse.
+      services: services
+        .filter((s) => s.name.trim())
+        .map((s) => ({
+          name: s.name.trim(),
+          nameKa: s.nameKa.trim(),
+          description: s.description.trim(),
+          priceGEL: parseFloat(s.priceGEL),
+        })),
+      // `null` (not `undefined`) when blank: `undefined` is dropped by
+      // JSON.stringify, so the key would be absent from the body and the
+      // PATCH route's `if (key in body)` guard would never clear an
+      // existing value — an owner could set a fee but never remove it.
+      // `null` survives JSON.stringify and the PATCH route below turns it
+      // into an explicit $unset.
+      reservationPriceGEL:
+        reservationPriceGEL.trim() === "" ? null : parseFloat(reservationPriceGEL),
       // create: draft flag picks status. edit: status field requests a transition.
       ...(isEdit
         ? { status: mode === "submit" ? "pending" : "draft" }
@@ -289,6 +379,140 @@ export function ListingForm({ listingId, status, defaultValues }: ListingFormPro
               />
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Images */}
+      <section className="space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Photos
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          Add image URLs. The first image is used as the cover photo.
+        </p>
+        <div className="space-y-2">
+          {images.map((url, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <Input
+                type="url"
+                placeholder="https://…"
+                value={url}
+                onChange={(e) => setImage(i, e.target.value)}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                disabled={i === 0}
+                onClick={() => moveImage(i, -1)}
+                aria-label="Move up"
+              >
+                ↑
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                disabled={i === images.length - 1}
+                onClick={() => moveImage(i, 1)}
+                aria-label="Move down"
+              >
+                ↓
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => removeImage(i)}
+                aria-label="Remove image"
+              >
+                <X className="size-4" />
+              </Button>
+            </div>
+          ))}
+          <Button type="button" variant="outline" size="sm" onClick={addImage}>
+            <Plus className="size-4" />
+            Add image
+          </Button>
+        </div>
+      </section>
+
+      {/* Services & pricing */}
+      <section className="space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          Services &amp; pricing
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          List the paid services or products your business offers, with prices in GEL.
+        </p>
+        <div className="space-y-4">
+          {services.map((s, i) => (
+            <div key={i} className="space-y-2 rounded-xl border border-border p-3">
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor={`svc-name-${i}`}>Name (EN) *</Label>
+                  <Input
+                    id={`svc-name-${i}`}
+                    value={s.name}
+                    onChange={(e) => setService(i, { name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`svc-nameKa-${i}`}>Name (KA)</Label>
+                  <Input
+                    id={`svc-nameKa-${i}`}
+                    value={s.nameKa}
+                    onChange={(e) => setService(i, { nameKa: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor={`svc-desc-${i}`}>Description</Label>
+                <Textarea
+                  id={`svc-desc-${i}`}
+                  rows={2}
+                  value={s.description}
+                  onChange={(e) => setService(i, { description: e.target.value })}
+                />
+              </div>
+              <div className="flex items-end gap-2">
+                <div className="max-w-[160px] space-y-2">
+                  <Label htmlFor={`svc-price-${i}`}>Price (GEL) *</Label>
+                  <Input
+                    id={`svc-price-${i}`}
+                    type="number"
+                    min={0}
+                    step="any"
+                    value={s.priceGEL}
+                    onChange={(e) => setService(i, { priceGEL: e.target.value })}
+                  />
+                </div>
+                <Button type="button" variant="outline" size="icon" onClick={() => removeService(i)} aria-label="Remove service">
+                  <X className="size-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+          <Button type="button" variant="outline" size="sm" onClick={addService}>
+            <Plus className="size-4" />
+            Add service
+          </Button>
+        </div>
+
+        <div className="max-w-[220px] space-y-2">
+          <Label htmlFor="reservationPriceGEL">Reservation fee/deposit (GEL)</Label>
+          <Input
+            id="reservationPriceGEL"
+            type="number"
+            min={0}
+            step="any"
+            placeholder="0"
+            value={reservationPriceGEL}
+            onChange={(e) => setReservationPriceGEL(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Optional. Leave blank if reservations are free.
+          </p>
         </div>
       </section>
 
